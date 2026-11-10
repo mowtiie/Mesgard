@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mowtiie.mesgard.data.local.security.DatabasePassphraseProvider
+import com.mowtiie.mesgard.data.local.security.EncryptedFile
 import com.mowtiie.mesgard.data.local.security.KeystoreSecretCipher
 import com.mowtiie.mesgard.domain.model.MessageStatus
 import java.io.File
@@ -76,7 +77,7 @@ class EncryptedDatabaseTest {
         assertTrue(result.isFailure)
     }
 
-    private fun passphraseProvider() = DatabasePassphraseProvider(passphraseFile, KeystoreSecretCipher())
+    private fun passphraseProvider() = DatabasePassphraseProvider(EncryptedFile(passphraseFile, KeystoreSecretCipher()))
 
     private fun storeMessage(passphrase: ByteArray) = withDatabase(passphrase) { database ->
         database.messageDao().upsert(message())

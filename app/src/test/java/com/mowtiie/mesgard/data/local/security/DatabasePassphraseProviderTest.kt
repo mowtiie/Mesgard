@@ -20,44 +20,46 @@ class DatabasePassphraseProviderTest {
 
     @Test
     fun `creates a 32 byte passphrase when none is stored`() {
-        val passphrase = DatabasePassphraseProvider(storageFile, ReversingCipher).getOrCreate()
+        val passphrase = provider(storageFile, ReversingCipher).getOrCreate()
 
         assertEquals(EXPECTED_PASSPHRASE_BYTES, passphrase.size)
     }
 
     @Test
     fun `returns the same passphrase to a later provider using the same storage`() {
-        val created = DatabasePassphraseProvider(storageFile, ReversingCipher).getOrCreate()
+        val created = provider(storageFile, ReversingCipher).getOrCreate()
 
-        val restored = DatabasePassphraseProvider(storageFile, ReversingCipher).getOrCreate()
+        val restored = provider(storageFile, ReversingCipher).getOrCreate()
 
         assertArrayEquals(created, restored)
     }
 
     @Test
     fun `stores the passphrase only in encrypted form`() {
-        val passphrase = DatabasePassphraseProvider(storageFile, ReversingCipher).getOrCreate()
+        val passphrase = provider(storageFile, ReversingCipher).getOrCreate()
 
         assertFalse(storageFile.readBytes().contentEquals(passphrase))
     }
 
     @Test
     fun `generates a different passphrase for each installation`() {
-        val first = DatabasePassphraseProvider(File(temporaryFolder.root, "first.key"), ReversingCipher).getOrCreate()
-        val second = DatabasePassphraseProvider(File(temporaryFolder.root, "second.key"), ReversingCipher).getOrCreate()
+        val first = provider(File(temporaryFolder.root, "first.key"), ReversingCipher).getOrCreate()
+        val second = provider(File(temporaryFolder.root, "second.key"), ReversingCipher).getOrCreate()
 
         assertFalse(first.contentEquals(second))
     }
 
     @Test
     fun `does not write storage when the cipher fails`() {
-        val provider = DatabasePassphraseProvider(storageFile, FailingCipher)
+        val failingProvider = provider(storageFile, FailingCipher)
 
-        val result = runCatching { provider.getOrCreate() }
+        val result = runCatching { failingProvider.getOrCreate() }
 
         assertTrue(result.isFailure)
         assertFalse(storageFile.exists())
     }
+
+    private fun provider(file: File, cipher: SecretCipher) = DatabasePassphraseProvider(EncryptedFile(file, cipher))
 
     private object ReversingCipher : SecretCipher {
         override fun encrypt(plaintext: ByteArray): ByteArray = plaintext.reversedArray()

@@ -5,7 +5,8 @@ import androidx.room.Room
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.MessageDao
 import com.mowtiie.mesgard.data.local.security.DatabasePassphraseProvider
-import com.mowtiie.mesgard.data.local.security.KeystoreSecretCipher
+import com.mowtiie.mesgard.data.local.security.EncryptedFile
+import com.mowtiie.mesgard.data.local.security.SecretCipher
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,8 +24,11 @@ private const val PASSPHRASE_FILE_NAME = "database.key"
 internal object DatabaseModule {
     @Provides
     @Singleton
-    fun provideDatabasePassphraseProvider(@ApplicationContext context: Context): DatabasePassphraseProvider =
-        DatabasePassphraseProvider(File(context.noBackupFilesDir, PASSPHRASE_FILE_NAME), KeystoreSecretCipher())
+    fun provideDatabasePassphraseProvider(
+        @ApplicationContext context: Context,
+        cipher: SecretCipher,
+    ): DatabasePassphraseProvider =
+        DatabasePassphraseProvider(EncryptedFile(File(context.noBackupFilesDir, PASSPHRASE_FILE_NAME), cipher))
 
     @Provides
     @Singleton
