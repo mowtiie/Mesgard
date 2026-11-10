@@ -1,0 +1,36 @@
+build:
+  maxIssues: 0
+
+complexity:
+  LongMethod:
+    threshold: 40
+    ignoreAnnotated:
+      - Composable
+  LongParameterList:
+    functionThreshold: 6
+    constructorThreshold: 7
+    ignoreDefaultParameters: true
+    ignoreAnnotated:
+      - Composable
+  NestedBlockDepth:
+    threshold: 3
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated:
+      - Composable
+
+style:
+  MagicNumber:
+    excludes:
+      - "**/test/**"
+      - "**/ui/theme/**"
+    ignoreAnnotation: true
+    ignoreNamedArgument: true
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+  MaxLineLength:
+    maxLineLength: 120
+  UnusedPrivateMember:
+    ignoreAnnotated:
+      - Preview
