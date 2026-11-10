@@ -25,6 +25,9 @@ internal class SupabaseAuthRepository @Inject constructor(
 ) : AuthRepository {
     override val authState: Flow<AuthState> = auth.sessionStatus.map(::toAuthState)
 
+    override val currentUserId: String?
+        get() = auth.currentUserOrNull()?.id
+
     override suspend fun signIn(email: String, password: String): SignInResult = try {
         auth.signInWith(Email) {
             this.email = email

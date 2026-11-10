@@ -1,21 +1,17 @@
 package com.mowtiie.mesgard.data
 
-import android.util.Log
 import androidx.room.withTransaction
 import com.mowtiie.mesgard.data.local.ConversationListItem
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.remote.CONVERSATION_PAGE_SIZE
 import com.mowtiie.mesgard.data.remote.ConversationRemoteSource
+import com.mowtiie.mesgard.data.remote.attemptRemote
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.remote.toLastMessageEntity
+import com.mowtiie.mesgard.data.remote.toRefreshResult
 import com.mowtiie.mesgard.domain.model.ConversationSummary
-import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
-import io.github.jan.supabase.exceptions.HttpRequestException
-import io.github.jan.supabase.exceptions.RestException
-import java.io.IOException
-import java.time.format.DateTimeParseException
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -32,20 +28,10 @@ internal class OfflineFirstConversationRepository @Inject constructor(
     override fun observeConversations(): Flow<List<ConversationSummary>> =
         conversationDao.observeList(CONVERSATION_PAGE_SIZE).map { items -> items.map(::toSummary) }
 
-    override suspend fun refresh(): RefreshResult = try {
-        storeSummaries()
-        RefreshResult.Success
-    } catch (exception: HttpRequestException) {
-        networkFailure(exception)
-    } catch (exception: IOException) {
-        networkFailure(exception)
-    } catch (exception: RestException) {
-        unknownFailure(exception)
-    } catch (exception: IllegalArgumentException) {
-        unknownFailure(exception)
-    } catch (exception: DateTimeParseException) {
-        unknownFailure(exception)
-    }
+    override fun observeConversation(conversationId: String): Flow<ConversationSummary?> =
+        conversationDao.observeById(conversationId).map { item -> item?.let(::toSummary) }
+
+    override suspend fun refresh(): RefreshResult = attemptRemote(TAG) { storeSummaries() }.toRefreshResult()
 
     private suspend fun storeSummaries() {
         val summaries = remoteSource.fetchSummaries()
@@ -71,14 +57,4 @@ internal class OfflineFirstConversationRepository @Inject constructor(
         lastActivityAtEpochMillis = item.activityAtEpochMillis,
         unreadCount = item.unreadCount,
     )
-
-    private fun networkFailure(cause: Exception): RefreshResult {
-        Log.i(TAG, "Refresh could not reach the server", cause)
-        return RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
-    }
-
-    private fun unknownFailure(cause: Exception): RefreshResult {
-        Log.w(TAG, "Refresh failed", cause)
-        return RefreshResult.Failure(RefreshError.UNKNOWN)
-    }
 }

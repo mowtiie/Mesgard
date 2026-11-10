@@ -3,6 +3,8 @@ package com.mowtiie.mesgard.testing
 import com.mowtiie.mesgard.data.local.ConversationEntity
 import com.mowtiie.mesgard.data.local.MessageEntity
 import com.mowtiie.mesgard.data.remote.ConversationSummaryDto
+import com.mowtiie.mesgard.data.remote.MessageDto
+import com.mowtiie.mesgard.data.remote.SenderDto
 import com.mowtiie.mesgard.domain.model.ConversationType
 import com.mowtiie.mesgard.domain.model.MessageStatus
 
@@ -55,4 +57,22 @@ internal fun summaryDto(
     lastMessageSenderId = lastMessageBody?.let { TEST_SENDER_ID },
     lastMessageBody = lastMessageBody,
     lastMessageCreatedAt = lastMessageCreatedAt,
+)
+
+internal fun messageDto(
+    id: String,
+    conversationId: String,
+    senderId: String = TEST_SENDER_ID,
+    createdAt: String = "2026-11-10T08:00:00+00:00",
+    senderName: String? = "Ana",
+    deletedAt: String? = null,
+) = MessageDto(
+    id = id,
+    orgId = TEST_ORG_ID,
+    conversationId = conversationId,
+    senderId = senderId,
+    body = if (deletedAt == null) "Body of $id" else "",
+    createdAt = createdAt,
+    deletedAt = deletedAt,
+    sender = senderName?.let { SenderDto(id = senderId, displayName = it) },
 )

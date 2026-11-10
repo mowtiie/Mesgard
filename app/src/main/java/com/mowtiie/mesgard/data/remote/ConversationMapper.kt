@@ -4,7 +4,6 @@ import com.mowtiie.mesgard.data.local.ConversationEntity
 import com.mowtiie.mesgard.data.local.MessageEntity
 import com.mowtiie.mesgard.domain.model.ConversationType
 import com.mowtiie.mesgard.domain.model.MessageStatus
-import java.time.OffsetDateTime
 
 internal fun ConversationSummaryDto.toEntity() = ConversationEntity(
     id = conversationId,
@@ -28,5 +27,3 @@ internal fun ConversationSummaryDto.toLastMessageEntity(): MessageEntity? {
         status = MessageStatus.SENT,
     )
 }
-
-private fun parseEpochMillis(timestamp: String): Long = OffsetDateTime.parse(timestamp).toInstant().toEpochMilli()
