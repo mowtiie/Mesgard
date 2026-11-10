@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.di
 
 import android.content.Context
 import androidx.room.Room
+import com.mowtiie.mesgard.data.local.ConversationDao
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.MessageDao
 import com.mowtiie.mesgard.data.local.security.DatabasePassphraseProvider
@@ -41,6 +42,9 @@ internal object DatabaseModule {
             .openHelperFactory(SupportOpenHelperFactory(passphraseProvider.getOrCreate()))
             .build()
     }
+
+    @Provides
+    fun provideConversationDao(database: MesgardDatabase): ConversationDao = database.conversationDao()
 
     @Provides
     fun provideMessageDao(database: MesgardDatabase): MessageDao = database.messageDao()

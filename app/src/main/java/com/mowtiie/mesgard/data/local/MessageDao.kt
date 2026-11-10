@@ -11,6 +11,12 @@ internal interface MessageDao {
     @Upsert
     suspend fun upsert(message: MessageEntity)
 
+    @Upsert
+    suspend fun upsertAll(messages: List<MessageEntity>)
+
+    @Query("DELETE FROM messages WHERE conversation_id NOT IN (:keptConversationIds)")
+    suspend fun deleteOutsideConversations(keptConversationIds: List<String>)
+
     @Query(
         "SELECT * FROM messages WHERE conversation_id = :conversationId " +
             "ORDER BY created_at DESC, id DESC LIMIT :limit",

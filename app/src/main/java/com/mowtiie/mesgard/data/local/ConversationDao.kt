@@ -1,0 +1,39 @@
+package com.mowtiie.mesgard.data.local
+
+import androidx.room.Dao
+import androidx.room.Query
+import androidx.room.Upsert
+import com.mowtiie.mesgard.domain.model.ConversationType
+import kotlinx.coroutines.flow.Flow
+
+internal data class ConversationListItem(
+    val id: String,
+    val type: ConversationType,
+    val title: String?,
+    val unreadCount: Int,
+    val lastMessageBody: String?,
+    val activityAtEpochMillis: Long,
+)
+
+@Dao
+internal interface ConversationDao {
+    @Query(
+        """
+        SELECT c.id AS id, c.type AS type, c.title AS title, c.unread_count AS unreadCount,
+            m.body AS lastMessageBody, COALESCE(m.created_at, c.created_at) AS activityAtEpochMillis
+        FROM conversations AS c
+        LEFT JOIN messages AS m ON m.id = (
+            SELECT id FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC, id DESC LIMIT 1
+        )
+        ORDER BY (c.type = 'ANNOUNCEMENT') DESC, activityAtEpochMillis DESC, c.id DESC
+        LIMIT :limit
+        """,
+    )
+    fun observeList(limit: Int): Flow<List<ConversationListItem>>
+
+    @Upsert
+    suspend fun upsertAll(conversations: List<ConversationEntity>)
+
+    @Query("DELETE FROM conversations WHERE id NOT IN (:keptIds)")
+    suspend fun deleteAllExcept(keptIds: List<String>)
+}

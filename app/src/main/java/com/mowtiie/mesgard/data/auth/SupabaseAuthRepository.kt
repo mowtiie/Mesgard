@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.data.auth
 
 import android.util.Log
+import com.mowtiie.mesgard.data.local.LocalDataEraser
 import com.mowtiie.mesgard.domain.model.AuthState
 import com.mowtiie.mesgard.domain.model.SignInError
 import com.mowtiie.mesgard.domain.model.SignInResult
@@ -18,7 +19,10 @@ import kotlinx.coroutines.flow.map
 private const val TAG = "SupabaseAuthRepository"
 private const val INVALID_CREDENTIALS_CODE = "invalid_credentials"
 
-internal class SupabaseAuthRepository @Inject constructor(private val auth: Auth) : AuthRepository {
+internal class SupabaseAuthRepository @Inject constructor(
+    private val auth: Auth,
+    private val localDataEraser: LocalDataEraser,
+) : AuthRepository {
     override val authState: Flow<AuthState> = auth.sessionStatus.map(::toAuthState)
 
     override suspend fun signIn(email: String, password: String): SignInResult = try {
@@ -35,7 +39,13 @@ internal class SupabaseAuthRepository @Inject constructor(private val auth: Auth
         networkFailure(exception)
     }
 
-    override suspend fun signOut() = auth.signOut()
+    override suspend fun signOut() {
+        try {
+            auth.signOut()
+        } finally {
+            localDataEraser.eraseAll()
+        }
+    }
 
     private fun toAuthState(status: SessionStatus): AuthState = when (status) {
         SessionStatus.Initializing -> AuthState.Loading
