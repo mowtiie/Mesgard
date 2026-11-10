@@ -1,5 +1,5 @@
 begin;
-select plan(11);
+select plan(14);
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 4));
 select results_eq(
@@ -51,6 +51,24 @@ select is(
   ),
   0,
   'activity_before returns only older conversations'
+);
+
+select is(
+  (select can_post from public.list_conversation_summaries() where conversation_id = tests.seed_id('40', 'a', 3)),
+  false,
+  'a student cannot post in an announcement conversation'
+);
+select is(
+  (select can_post from public.list_conversation_summaries() where conversation_id = tests.seed_id('40', 'a', 2)),
+  true,
+  'a participant can post in a group conversation'
+);
+
+select tests.authenticate_as(tests.seed_id('20', 'a', 2));
+select is(
+  (select can_post from public.list_conversation_summaries() where conversation_id = tests.seed_id('40', 'a', 3)),
+  true,
+  'a staff member can post in an announcement conversation'
 );
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 6));
