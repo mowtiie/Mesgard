@@ -21,6 +21,8 @@ internal class SignInViewModel @Inject constructor(private val authRepository: A
 
     fun onPasswordChanged(password: String) = mutableUiState.update { it.copy(password = password, error = null) }
 
+    fun onErrorShown() = mutableUiState.update { it.copy(error = null) }
+
     fun onSignInClicked() {
         val current = mutableUiState.value
         if (!current.canSubmit) return

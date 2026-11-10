@@ -71,6 +71,18 @@ class SignInViewModelTest {
     }
 
     @Test
+    fun `clears the error once it has been shown`() {
+        coEvery { authRepository.signIn(any(), any()) } returns SignInResult.Failure(SignInError.NETWORK_UNAVAILABLE)
+        viewModel.onEmailChanged(EMAIL)
+        viewModel.onPasswordChanged(PASSWORD)
+        viewModel.onSignInClicked()
+
+        viewModel.onErrorShown()
+
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
     fun `ignores a second tap while a sign in is in progress`() {
         val pending = CompletableDeferred<SignInResult>()
         coEvery { authRepository.signIn(any(), any()) } coAnswers { pending.await() }
