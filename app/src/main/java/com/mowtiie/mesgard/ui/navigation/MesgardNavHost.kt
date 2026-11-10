@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.ui.chats.ConversationListRoute
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.profile.ProfileScreen
 
@@ -40,7 +41,7 @@ internal fun MesgardNavHost(
         },
     ) {
         NavHost(navController = navController, startDestination = ChatsRoute) {
-            composable<ChatsRoute> { TitledScreen(stringResource(R.string.tab_chats)) {} }
+            composable<ChatsRoute> { ConversationListRoute() }
             composable<ContactsRoute> { TitledScreen(stringResource(R.string.tab_contacts)) {} }
             composable<ProfileRoute> { ProfileScreen(onSignOut = onSignOut) }
             composable<SettingsRoute> { TitledScreen(stringResource(R.string.tab_settings)) {} }
