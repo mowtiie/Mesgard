@@ -37,6 +37,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         buildConfigField("String", "SUPABASE_URL", "\"${requiredSetting("supabase.url", "SUPABASE_URL")}\"")
         buildConfigField(
             "String",
@@ -92,6 +94,7 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
+    implementation("${libs.sqlcipher.android.get()}@aar")
     implementation(libs.ktor.client.okhttp)
     implementation(libs.supabase.auth)
     implementation(libs.supabase.postgrest)
@@ -100,6 +103,9 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     ksp(libs.hilt.compiler)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
