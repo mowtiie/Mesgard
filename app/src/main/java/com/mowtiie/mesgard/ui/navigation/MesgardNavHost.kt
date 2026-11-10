@@ -10,6 +10,7 @@ import com.mowtiie.mesgard.ui.start.StartScreen
 
 @Composable
 internal fun MesgardNavHost(
+    onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
@@ -18,6 +19,6 @@ internal fun MesgardNavHost(
         startDestination = StartRoute,
         modifier = modifier,
     ) {
-        composable<StartRoute> { StartScreen() }
+        composable<StartRoute> { StartScreen(onSignOut = onSignOut) }
     }
 }

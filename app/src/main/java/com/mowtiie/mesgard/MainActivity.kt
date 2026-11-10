@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.mowtiie.mesgard.ui.navigation.MesgardNavHost
+import com.mowtiie.mesgard.ui.MesgardApp
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MesgardTheme {
-                MesgardNavHost()
+                MesgardApp()
             }
         }
     }
