@@ -15,21 +15,34 @@ internal data class ConversationListItem(
     val activityAtEpochMillis: Long,
 )
 
+private const val CONVERSATION_ITEM_SELECT = """
+    SELECT c.id AS id, c.type AS type, c.title AS title, c.unread_count AS unreadCount,
+        m.body AS lastMessageBody, COALESCE(m.created_at, c.created_at) AS activityAtEpochMillis
+    FROM conversations AS c
+    LEFT JOIN messages AS m ON m.id = (
+        SELECT id FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC, id DESC LIMIT 1
+    )
+"""
+
 @Dao
 internal interface ConversationDao {
     @Query(
         """
-        SELECT c.id AS id, c.type AS type, c.title AS title, c.unread_count AS unreadCount,
-            m.body AS lastMessageBody, COALESCE(m.created_at, c.created_at) AS activityAtEpochMillis
-        FROM conversations AS c
-        LEFT JOIN messages AS m ON m.id = (
-            SELECT id FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC, id DESC LIMIT 1
-        )
+        $CONVERSATION_ITEM_SELECT
         ORDER BY (c.type = 'ANNOUNCEMENT') DESC, activityAtEpochMillis DESC, c.id DESC
         LIMIT :limit
         """,
     )
     fun observeList(limit: Int): Flow<List<ConversationListItem>>
+
+    @Query("$CONVERSATION_ITEM_SELECT WHERE c.id = :conversationId")
+    fun observeById(conversationId: String): Flow<ConversationListItem?>
+
+    @Query("SELECT org_id FROM conversations WHERE id = :conversationId")
+    suspend fun findOrgId(conversationId: String): String?
+
+    @Query("UPDATE conversations SET unread_count = 0 WHERE id = :conversationId")
+    suspend fun clearUnreadCount(conversationId: String)
 
     @Upsert
     suspend fun upsertAll(conversations: List<ConversationEntity>)

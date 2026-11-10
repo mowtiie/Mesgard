@@ -5,14 +5,16 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [MessageEntity::class, ConversationEntity::class],
-    version = 2,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    entities = [MessageEntity::class, ConversationEntity::class, ProfileEntity::class],
+    version = 3,
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 internal abstract class MesgardDatabase : RoomDatabase() {
     abstract fun messageDao(): MessageDao
 
     abstract fun conversationDao(): ConversationDao
+
+    abstract fun profileDao(): ProfileDao
 
     companion object {
         const val NAME = "mesgard.db"

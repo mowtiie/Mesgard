@@ -126,6 +126,48 @@ class ConversationDaoTest {
         }
     }
 
+    @Test
+    fun `observeById emits the conversation with its last message`() = runTest {
+        conversationDao.upsertAll(listOf(conversationEntity("chat", title = "Study group")))
+        messageDao.upsert(messageEntity(id = "m", conversationId = "chat", createdAt = OLDER, body = "Hi"))
+
+        conversationDao.observeById("chat").test {
+            val item = awaitItem()
+            assertEquals("Study group", item?.title)
+            assertEquals("Hi", item?.lastMessageBody)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `observeById emits null for an unknown conversation`() = runTest {
+        conversationDao.observeById("missing").test {
+            assertNull(awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `clearUnreadCount resets the unread count of one conversation`() = runTest {
+        conversationDao.upsertAll(
+            listOf(conversationEntity("read", unreadCount = 4), conversationEntity("other", unreadCount = 2)),
+        )
+
+        conversationDao.clearUnreadCount("read")
+
+        conversationDao.observeList(PAGE_SIZE).test {
+            assertEquals(mapOf("read" to 0, "other" to 2), awaitItem().associate { it.id to it.unreadCount })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `findOrgId returns the organization of a conversation`() = runTest {
+        conversationDao.upsertAll(listOf(conversationEntity("chat")))
+
+        assertEquals("org", conversationDao.findOrgId("chat"))
+    }
+
     private companion object {
         const val OLDER = 1_000L
         const val NEWER = 2_000L

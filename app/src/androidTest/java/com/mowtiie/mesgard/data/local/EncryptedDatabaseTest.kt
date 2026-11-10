@@ -84,7 +84,7 @@ class EncryptedDatabaseTest {
     }
 
     private fun readMessages(passphrase: ByteArray) = withDatabase(passphrase) { database ->
-        database.messageDao().observeLatest(CONVERSATION_ID, PAGE_SIZE).first()
+        database.messageDao().observeTimeline(CONVERSATION_ID, PAGE_SIZE).first()
     }
 
     private fun <T> withDatabase(passphrase: ByteArray, block: suspend (MesgardDatabase) -> T): T {

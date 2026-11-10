@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.mowtiie.mesgard.data.local.ConversationDao
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.MessageDao
+import com.mowtiie.mesgard.data.local.ProfileDao
 import com.mowtiie.mesgard.data.local.security.DatabasePassphraseProvider
 import com.mowtiie.mesgard.data.local.security.EncryptedFile
 import com.mowtiie.mesgard.data.local.security.SecretCipher
@@ -45,6 +46,9 @@ internal object DatabaseModule {
 
     @Provides
     fun provideConversationDao(database: MesgardDatabase): ConversationDao = database.conversationDao()
+
+    @Provides
+    fun provideProfileDao(database: MesgardDatabase): ProfileDao = database.profileDao()
 
     @Provides
     fun provideMessageDao(database: MesgardDatabase): MessageDao = database.messageDao()
