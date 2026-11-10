@@ -73,6 +73,18 @@ class ConversationListViewModelTest {
     }
 
     @Test
+    fun `clears the refresh error once it has been shown`() = runTest {
+        coEvery { repository.refresh() } returns RefreshResult.Failure(RefreshError.UNKNOWN)
+        val viewModel = ConversationListViewModel(repository)
+
+        viewModel.uiState.test {
+            assertEquals(RefreshError.UNKNOWN, expectMostRecentItem().refreshError)
+            viewModel.onRefreshErrorShown()
+            assertNull(awaitItem().refreshError)
+        }
+    }
+
+    @Test
     fun `reports refreshing while a refresh is in progress`() = runTest {
         val pending = CompletableDeferred<RefreshResult>()
         coEvery { repository.refresh() } coAnswers { pending.await() }

@@ -13,7 +13,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,10 +56,18 @@ internal fun ConversationRow(conversation: ConversationSummary, nowEpochMillis: 
                     text = formatActivityTime(conversation.lastActivityAtEpochMillis, nowEpochMillis),
                     style = MaterialTheme.typography.labelSmall,
                 )
-                if (hasUnread) Badge { Text(conversation.unreadCount.toString()) }
+                if (hasUnread) UnreadBadge(conversation.unreadCount)
             }
         },
     )
+}
+
+@Composable
+private fun UnreadBadge(count: Int) {
+    val description = pluralStringResource(R.plurals.conversation_unread_messages, count, count)
+    Badge(modifier = Modifier.semantics { contentDescription = description }) {
+        Text(formatUnreadCount(count))
+    }
 }
 
 @Composable

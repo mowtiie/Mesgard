@@ -19,4 +19,8 @@
     <string name="conversation_list_empty">No conversations yet.</string>
     <string name="refresh_error_network_unavailable">Unable to refresh. Check your connection.</string>
     <string name="refresh_error_unknown">Unable to refresh. Try again later.</string>
+    <plurals name="conversation_unread_messages">
+        <item quantity="one">%d unread message</item>
+        <item quantity="other">%d unread messages</item>
+    </plurals>
 </resources>

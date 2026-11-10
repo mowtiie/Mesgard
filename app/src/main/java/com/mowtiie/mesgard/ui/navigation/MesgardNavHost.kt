@@ -4,6 +4,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination
@@ -27,21 +30,28 @@ internal fun MesgardNavHost(
     navController: NavHostController = rememberNavController(),
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
+    var chatsScrollToTopRequests by rememberSaveable { mutableIntStateOf(0) }
     NavigationSuiteScaffold(
         modifier = modifier,
         navigationSuiteItems = {
             MainDestination.entries.forEach { destination ->
+                val selected = backStackEntry?.destination.isOn(destination)
                 item(
-                    selected = backStackEntry?.destination.isOn(destination),
-                    onClick = { navController.navigateToTopLevel(destination) },
-                    icon = { MainDestinationIcon(destination) },
+                    selected = selected,
+                    onClick = {
+                        when {
+                            !selected -> navController.navigateToTopLevel(destination)
+                            destination == MainDestination.CHATS -> chatsScrollToTopRequests++
+                        }
+                    },
+                    icon = { MainDestinationIcon(destination, selected) },
                     label = { Text(stringResource(destination.labelResource)) },
                 )
             }
         },
     ) {
         NavHost(navController = navController, startDestination = ChatsRoute) {
-            composable<ChatsRoute> { ConversationListRoute() }
+            composable<ChatsRoute> { ConversationListRoute(scrollToTopRequests = chatsScrollToTopRequests) }
             composable<ContactsRoute> { TitledScreen(stringResource(R.string.tab_contacts)) {} }
             composable<ProfileRoute> { ProfileScreen(onSignOut = onSignOut) }
             composable<SettingsRoute> { TitledScreen(stringResource(R.string.tab_settings)) {} }

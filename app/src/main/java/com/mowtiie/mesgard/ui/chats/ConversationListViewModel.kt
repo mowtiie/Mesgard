@@ -51,5 +51,9 @@ internal class ConversationListViewModel @Inject constructor(private val reposit
         }
     }
 
+    fun onRefreshErrorShown() {
+        refreshState.update { it.copy(error = null) }
+    }
+
     private data class RefreshState(val isRefreshing: Boolean = false, val error: RefreshError? = null)
 }
