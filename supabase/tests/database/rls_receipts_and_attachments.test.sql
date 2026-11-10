@@ -55,14 +55,8 @@ select lives_ok(
 );
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 5));
-select is(
-  (
-    with removed as (
-      delete from public.attachments where message_id = tests.seed_id('50', 'a', 3) returning 1
-    )
-    select count(*)::int from removed
-  ),
-  0,
+select is_empty(
+  format('delete from public.attachments where message_id = %L returning 1', tests.seed_id('50', 'a', 3)),
   'a participant cannot remove an attachment from the message of another user'
 );
 

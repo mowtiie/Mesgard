@@ -55,15 +55,11 @@ select throws_ok(
   null,
   'an organization admin cannot write audit entries for another organization'
 );
-select is(
-  (
-    with changed as (
-      update public.organizations set name = 'Hijacked' where id = tests.seed_id('10', 'b', 0)
-      returning 1
-    )
-    select count(*)::int from changed
+select is_empty(
+  format(
+    'update public.organizations set name = ''Hijacked'' where id = %L returning 1',
+    tests.seed_id('10', 'b', 0)
   ),
-  0,
   'an organization admin cannot update another organization'
 );
 

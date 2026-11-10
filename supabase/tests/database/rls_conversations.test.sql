@@ -33,18 +33,12 @@ select is(
 );
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 4));
-select is(
-  (
-    with changed as (
-      update public.conversation_participants
-      set muted = true
-      where conversation_id = tests.seed_id('40', 'a', 1)
-        and user_id = tests.seed_id('20', 'a', 2)
-      returning 1
-    )
-    select count(*)::int from changed
+select is_empty(
+  format(
+    $$update public.conversation_participants set muted = true
+      where conversation_id = %L and user_id = %L returning 1$$,
+    tests.seed_id('40', 'a', 1), tests.seed_id('20', 'a', 2)
   ),
-  0,
   'a participant cannot change the settings of another participant'
 );
 

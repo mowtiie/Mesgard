@@ -1,5 +1,5 @@
 begin;
-select plan(11);
+select plan(12);
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 6));
 select is(
@@ -62,16 +62,14 @@ select lives_ok(
   ),
   'retrying a send with the same identifier is idempotent'
 );
-select is(
-  (
-    with changed as (
-      update public.messages set body = 'Edited' where id = tests.seed_id('50', 'a', 99)
-      returning edited_at
-    )
-    select count(*)::int from changed where edited_at is not null
-  ),
-  1,
-  'editing the body of an own message stamps edited_at'
+select lives_ok(
+  format('update public.messages set body = ''Edited'' where id = %L', tests.seed_id('50', 'a', 99)),
+  'a sender can edit the body of their own message'
+);
+select isnt(
+  (select edited_at from public.messages where id = tests.seed_id('50', 'a', 99)),
+  null,
+  'editing the body of a message stamps edited_at'
 );
 select throws_ok(
   format('delete from public.messages where id = %L', tests.seed_id('50', 'a', 99)),
@@ -81,15 +79,8 @@ select throws_ok(
 );
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 2));
-select is(
-  (
-    with changed as (
-      update public.messages set body = 'Tampered' where id = tests.seed_id('50', 'a', 99)
-      returning 1
-    )
-    select count(*)::int from changed
-  ),
-  0,
+select is_empty(
+  format('update public.messages set body = ''Tampered'' where id = %L returning 1', tests.seed_id('50', 'a', 99)),
   'a participant cannot edit the message of another user'
 );
 

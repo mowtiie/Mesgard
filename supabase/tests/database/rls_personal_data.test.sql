@@ -16,15 +16,11 @@ select throws_ok(
   null,
   'a user cannot register a device token for another user'
 );
-select is(
-  (
-    with changed as (
-      update public.profiles set display_name = 'Renamed' where id = tests.seed_id('20', 'a', 4)
-      returning 1
-    )
-    select count(*)::int from changed
+select is_empty(
+  format(
+    'update public.profiles set display_name = ''Renamed'' where id = %L returning 1',
+    tests.seed_id('20', 'a', 4)
   ),
-  0,
   'a user cannot update the profile of another user'
 );
 
