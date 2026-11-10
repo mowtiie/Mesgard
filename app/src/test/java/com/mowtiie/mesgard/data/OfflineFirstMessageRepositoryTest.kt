@@ -1,7 +1,6 @@
 package com.mowtiie.mesgard.data
 
 import app.cash.turbine.test
-import com.mowtiie.mesgard.data.remote.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.work.MessageSendScheduler
 import com.mowtiie.mesgard.domain.model.MessageStatus
@@ -12,6 +11,7 @@ import com.mowtiie.mesgard.domain.model.SendRejection
 import com.mowtiie.mesgard.domain.model.SendResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.MAX_MESSAGE_LENGTH
+import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
 import com.mowtiie.mesgard.testing.conversationEntity
 import com.mowtiie.mesgard.testing.messageDto

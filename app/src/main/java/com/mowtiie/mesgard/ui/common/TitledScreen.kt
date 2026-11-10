@@ -15,13 +15,16 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 internal fun TitledScreen(
     title: String,
     modifier: Modifier = Modifier,
+    navigationIcon: @Composable () -> Unit = {},
     snackbarHost: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = { TopAppBar(title = { Text(title) }, scrollBehavior = scrollBehavior) },
+        topBar = {
+            TopAppBar(title = { Text(title) }, navigationIcon = navigationIcon, scrollBehavior = scrollBehavior)
+        },
         snackbarHost = snackbarHost,
         content = content,
     )

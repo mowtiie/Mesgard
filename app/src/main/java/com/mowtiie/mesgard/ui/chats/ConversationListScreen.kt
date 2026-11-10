@@ -30,6 +30,7 @@ import com.mowtiie.mesgard.ui.common.TitledScreen
 @Composable
 internal fun ConversationListRoute(
     scrollToTopRequests: Int,
+    onConversationClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConversationListViewModel = hiltViewModel(),
 ) {
@@ -39,6 +40,7 @@ internal fun ConversationListRoute(
         scrollToTopRequests = scrollToTopRequests,
         onRefresh = viewModel::onRefresh,
         onRefreshErrorShown = viewModel::onRefreshErrorShown,
+        onConversationClick = onConversationClick,
         modifier = modifier,
     )
 }
@@ -50,6 +52,7 @@ internal fun ConversationListScreen(
     scrollToTopRequests: Int,
     onRefresh: () -> Unit,
     onRefreshErrorShown: () -> Unit,
+    onConversationClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -76,13 +79,17 @@ internal fun ConversationListScreen(
             onRefresh = onRefresh,
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
-            ConversationList(uiState = uiState, listState = listState)
+            ConversationList(uiState = uiState, listState = listState, onConversationClick = onConversationClick)
         }
     }
 }
 
 @Composable
-private fun ConversationList(uiState: ConversationListUiState, listState: LazyListState) {
+private fun ConversationList(
+    uiState: ConversationListUiState,
+    listState: LazyListState,
+    onConversationClick: (String) -> Unit,
+) {
     val nowEpochMillis = System.currentTimeMillis()
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
         if (uiState.showEmptyMessage) {
@@ -96,7 +103,11 @@ private fun ConversationList(uiState: ConversationListUiState, listState: LazyLi
             }
         }
         items(uiState.conversations, key = { it.id }) { conversation ->
-            ConversationRow(conversation = conversation, nowEpochMillis = nowEpochMillis)
+            ConversationRow(
+                conversation = conversation,
+                nowEpochMillis = nowEpochMillis,
+                onClick = { onConversationClick(conversation.id) },
+            )
         }
     }
 }

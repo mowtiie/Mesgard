@@ -3,6 +3,12 @@ package com.mowtiie.mesgard.ui.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
+internal data object MainRoute
+
+@Serializable
+internal data class ConversationRoute(val conversationId: String)
+
+@Serializable
 internal data object ChatsRoute
 
 @Serializable

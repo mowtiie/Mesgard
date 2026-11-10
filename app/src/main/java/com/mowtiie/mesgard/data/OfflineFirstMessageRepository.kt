@@ -4,7 +4,6 @@ import androidx.room.withTransaction
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.MessageEntity
 import com.mowtiie.mesgard.data.local.TimelineMessage
-import com.mowtiie.mesgard.data.remote.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.data.remote.MessageDto
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.RemoteOutcome
@@ -21,6 +20,7 @@ import com.mowtiie.mesgard.domain.model.SendRejection
 import com.mowtiie.mesgard.domain.model.SendResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.MAX_MESSAGE_LENGTH
+import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.domain.repository.MessageRepository
 import java.time.Clock
 import java.util.UUID

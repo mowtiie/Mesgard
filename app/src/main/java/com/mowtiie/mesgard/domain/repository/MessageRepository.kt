@@ -7,6 +7,7 @@ import com.mowtiie.mesgard.domain.model.SendResult
 import kotlinx.coroutines.flow.Flow
 
 internal const val MAX_MESSAGE_LENGTH = 4000
+internal const val MESSAGE_PAGE_SIZE = 50
 
 internal interface MessageRepository {
     fun observeMessages(conversationId: String, limit: Int): Flow<List<Message>>

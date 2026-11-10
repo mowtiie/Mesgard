@@ -1,6 +1,6 @@
 package com.mowtiie.mesgard.ui.chats
 
-import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
@@ -24,16 +24,22 @@ import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.ConversationSummary
 import com.mowtiie.mesgard.domain.model.ConversationType
+import com.mowtiie.mesgard.ui.common.fallbackTitleResource
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val AvatarSize = 48.dp
 
 @Composable
-internal fun ConversationRow(conversation: ConversationSummary, nowEpochMillis: Long, modifier: Modifier = Modifier) {
+internal fun ConversationRow(
+    conversation: ConversationSummary,
+    nowEpochMillis: Long,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val title = conversation.title ?: stringResource(conversation.type.fallbackTitleResource())
     val hasUnread = conversation.unreadCount > 0
     ListItem(
-        modifier = modifier,
+        modifier = modifier.clickable(onClick = onClick),
         leadingContent = { Avatar(title) },
         headlineContent = {
             Text(
@@ -87,13 +93,6 @@ private fun Avatar(title: String) {
     }
 }
 
-@StringRes
-private fun ConversationType.fallbackTitleResource(): Int = when (this) {
-    ConversationType.DIRECT -> R.string.conversation_title_direct
-    ConversationType.GROUP -> R.string.conversation_title_group
-    ConversationType.ANNOUNCEMENT -> R.string.conversation_title_announcement
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun ConversationRowPreview() {
@@ -109,6 +108,7 @@ private fun ConversationRowPreview() {
                 canPost = true,
             ),
             nowEpochMillis = System.currentTimeMillis(),
+            onClick = {},
         )
     }
 }

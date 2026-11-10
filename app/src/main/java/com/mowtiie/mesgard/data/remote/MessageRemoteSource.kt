@@ -1,5 +1,6 @@
 package com.mowtiie.mesgard.data.remote
 
+import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
@@ -10,7 +11,6 @@ import javax.inject.Inject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-internal const val MESSAGE_PAGE_SIZE = 50
 private const val MESSAGES_TABLE = "messages"
 private const val MARK_READ_FUNCTION = "mark_conversation_read"
 private val MESSAGE_COLUMNS = Columns.raw("*, sender:profiles!messages_sender_id_fkey(id, display_name)")

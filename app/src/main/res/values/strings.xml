@@ -23,4 +23,17 @@
         <item quantity="one">%d unread message</item>
         <item quantity="other">%d unread messages</item>
     </plurals>
+    <string name="navigate_back">Back</string>
+    <string name="message_label">Message</string>
+    <string name="send_message">Send</string>
+    <string name="message_sending">Sending</string>
+    <string name="message_not_sent">Not sent</string>
+    <string name="message_retry">Retry</string>
+    <string name="message_edited">Edited</string>
+    <string name="message_deleted">This message was deleted</string>
+    <string name="conversation_empty">No messages yet.</string>
+    <string name="announcement_read_only">Only staff and administrators can post here.</string>
+    <string name="conversation_error_message_too_long">The message is too long.</string>
+    <string name="conversation_error_not_signed_in">Sign in again to send messages.</string>
+    <string name="conversation_error_unavailable">This conversation is no longer available.</string>
 </resources>
