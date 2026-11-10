@@ -13,3 +13,26 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Build output
+build/
+.kotlin/
+*.apk
+*.aab
+
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+*service-account*.json
+google-services.json
+
+# Local Supabase state
+supabase/.temp/
+supabase/.branches/
+supabase/functions/.env
+
+# Self-hosted deployment runtime data
+deploy/self-hosted/volumes/
