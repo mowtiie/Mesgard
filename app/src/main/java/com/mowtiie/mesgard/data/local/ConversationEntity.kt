@@ -13,4 +13,5 @@ internal data class ConversationEntity(
     val title: String?,
     @ColumnInfo(name = "created_at") val createdAtEpochMillis: Long,
     @ColumnInfo(name = "unread_count") val unreadCount: Int,
+    @ColumnInfo(name = "can_post", defaultValue = "1") val canPost: Boolean = true,
 )

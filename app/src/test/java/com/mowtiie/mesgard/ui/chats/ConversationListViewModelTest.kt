@@ -117,5 +117,6 @@ class ConversationListViewModelTest {
         lastMessagePreview = "Hello",
         lastActivityAtEpochMillis = 1_000L,
         unreadCount = 0,
+        canPost = true,
     )
 }

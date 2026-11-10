@@ -11,12 +11,14 @@ internal data class ConversationListItem(
     val type: ConversationType,
     val title: String?,
     val unreadCount: Int,
+    val canPost: Boolean,
     val lastMessageBody: String?,
     val activityAtEpochMillis: Long,
 )
 
 private const val CONVERSATION_ITEM_SELECT = """
     SELECT c.id AS id, c.type AS type, c.title AS title, c.unread_count AS unreadCount,
+        c.can_post AS canPost,
         m.body AS lastMessageBody, COALESCE(m.created_at, c.created_at) AS activityAtEpochMillis
     FROM conversations AS c
     LEFT JOIN messages AS m ON m.id = (

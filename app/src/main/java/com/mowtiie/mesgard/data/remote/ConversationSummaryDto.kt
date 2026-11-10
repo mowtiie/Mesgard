@@ -11,6 +11,7 @@ internal data class ConversationSummaryDto(
     val title: String? = null,
     @SerialName("created_at") val createdAt: String,
     @SerialName("unread_count") val unreadCount: Int,
+    @SerialName("can_post") val canPost: Boolean = true,
     @SerialName("last_message_id") val lastMessageId: String? = null,
     @SerialName("last_message_sender_id") val lastMessageSenderId: String? = null,
     @SerialName("last_message_body") val lastMessageBody: String? = null,

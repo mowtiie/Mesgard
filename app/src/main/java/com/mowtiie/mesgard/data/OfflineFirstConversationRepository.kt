@@ -56,5 +56,6 @@ internal class OfflineFirstConversationRepository @Inject constructor(
         lastMessagePreview = item.lastMessageBody,
         lastActivityAtEpochMillis = item.activityAtEpochMillis,
         unreadCount = item.unreadCount,
+        canPost = item.canPost,
     )
 }

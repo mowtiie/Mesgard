@@ -7,4 +7,5 @@ internal data class ConversationSummary(
     val lastMessagePreview: String?,
     val lastActivityAtEpochMillis: Long,
     val unreadCount: Int,
+    val canPost: Boolean,
 )

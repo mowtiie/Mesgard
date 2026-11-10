@@ -12,6 +12,7 @@ internal fun ConversationSummaryDto.toEntity() = ConversationEntity(
     title = title,
     createdAtEpochMillis = parseEpochMillis(createdAt),
     unreadCount = unreadCount,
+    canPost = canPost,
 )
 
 internal fun ConversationSummaryDto.toLastMessageEntity(): MessageEntity? {

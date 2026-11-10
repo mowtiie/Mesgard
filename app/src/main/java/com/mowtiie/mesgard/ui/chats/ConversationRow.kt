@@ -106,6 +106,7 @@ private fun ConversationRowPreview() {
                 lastMessagePreview = "Reminder: bring your project proposals tomorrow.",
                 lastActivityAtEpochMillis = System.currentTimeMillis(),
                 unreadCount = 3,
+                canPost = true,
             ),
             nowEpochMillis = System.currentTimeMillis(),
         )
