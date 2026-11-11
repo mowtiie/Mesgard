@@ -25,6 +25,9 @@
     </plurals>
     <string name="navigate_back">Back</string>
     <string name="message_label">Message</string>
+    <string name="typing_one">%1$s is typing</string>
+    <string name="typing_two">%1$s and %2$s are typing</string>
+    <string name="typing_several">Several people are typing</string>
     <string name="send_message">Send</string>
     <string name="message_sending">Sending</string>
     <string name="message_not_sent">Not sent</string>

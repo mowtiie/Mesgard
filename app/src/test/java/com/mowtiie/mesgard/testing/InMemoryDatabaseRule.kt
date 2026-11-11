@@ -14,6 +14,8 @@ class InMemoryDatabaseRule : ExternalResource() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         database = Room.inMemoryDatabaseBuilder(context, MesgardDatabase::class.java)
             .allowMainThreadQueries()
+            .setQueryExecutor(Runnable::run)
+            .setTransactionExecutor(Runnable::run)
             .build()
     }
 

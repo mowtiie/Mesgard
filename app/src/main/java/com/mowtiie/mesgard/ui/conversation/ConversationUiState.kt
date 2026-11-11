@@ -18,6 +18,7 @@ internal data class ConversationUiState(
     val canPost: Boolean = true,
     val messages: List<Message> = emptyList(),
     val draft: String = "",
+    val typingNames: List<String> = emptyList(),
     val isLoaded: Boolean = false,
     val isLoadingOlder: Boolean = false,
     val error: ConversationError? = null,

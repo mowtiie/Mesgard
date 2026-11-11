@@ -14,6 +14,7 @@ import com.mowtiie.mesgard.domain.model.SendResult
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.domain.repository.MessageRepository
+import com.mowtiie.mesgard.domain.repository.TypingRepository
 import com.mowtiie.mesgard.domain.sync.RealtimeSync
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
@@ -22,6 +23,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -48,6 +50,14 @@ class ConversationViewModelTest {
     private val realtimeSync = mockk<RealtimeSync> {
         every { this@mockk.reconnections } returns
             this@ConversationViewModelTest.reconnections
+    }
+    private val typingNames = MutableStateFlow(emptyList<String>())
+    private lateinit var ownTyping: Flow<Unit>
+    private val typingRepository = mockk<TypingRepository> {
+        every { observeTypingNames(CONVERSATION_ID, any()) } answers {
+            ownTyping = secondArg()
+            typingNames
+        }
     }
     private val messageRepository = mockk<MessageRepository> {
         every { observeMessages(CONVERSATION_ID, any()) } returns messages
@@ -277,10 +287,46 @@ class ConversationViewModelTest {
         coVerify(exactly = 0) { messageRepository.markConversationRead(any()) }
     }
 
+    @Test
+    fun `exposes who is typing`() = runTest {
+        typingNames.value = listOf("Ana")
+
+        viewModel().uiState.test { assertEquals(listOf("Ana"), expectMostRecentItem().typingNames) }
+    }
+
+    @Test
+    fun `signals typing when the draft has text`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            ownTyping.test {
+                viewModel.onDraftChanged("Hel")
+                awaitItem()
+                cancelAndIgnoreRemainingEvents()
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `does not signal typing when the draft is cleared`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            ownTyping.test {
+                viewModel.onDraftChanged("   ")
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     private fun viewModel() = ConversationViewModel(
         savedStateHandle = SavedStateHandle(mapOf("conversationId" to CONVERSATION_ID)),
         conversationRepository = conversationRepository,
         messageRepository = messageRepository,
+        typingRepository = typingRepository,
         realtimeSync = realtimeSync,
     )
 

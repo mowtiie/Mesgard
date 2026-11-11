@@ -9,7 +9,6 @@ import com.mowtiie.mesgard.data.auth.SupabaseAuthRepository
 import com.mowtiie.mesgard.data.local.LocalDataEraser
 import com.mowtiie.mesgard.data.local.RoomLocalDataEraser
 import com.mowtiie.mesgard.data.lock.TimedAppLock
-import com.mowtiie.mesgard.data.sync.RealtimeMessageSync
 import com.mowtiie.mesgard.data.work.MessageSendScheduler
 import com.mowtiie.mesgard.data.work.WorkManagerMessageSendScheduler
 import com.mowtiie.mesgard.domain.lock.AppLock
@@ -19,7 +18,6 @@ import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.GroupRepository
 import com.mowtiie.mesgard.domain.repository.MessageRepository
 import com.mowtiie.mesgard.domain.repository.NotificationSettingsRepository
-import com.mowtiie.mesgard.domain.sync.RealtimeSync
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -55,9 +53,6 @@ internal abstract class RepositoryModule {
 
     @Binds
     abstract fun bindMessageSendScheduler(scheduler: WorkManagerMessageSendScheduler): MessageSendScheduler
-
-    @Binds
-    abstract fun bindRealtimeSync(sync: RealtimeMessageSync): RealtimeSync
 
     @Binds
     abstract fun bindAppLock(lock: TimedAppLock): AppLock

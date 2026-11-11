@@ -14,6 +14,8 @@ import com.mowtiie.mesgard.data.remote.SupabaseMessageRealtimeSource
 import com.mowtiie.mesgard.data.remote.SupabaseMessageRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseProfileRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseSettingsRemoteSource
+import com.mowtiie.mesgard.data.remote.SupabaseTypingRemoteSource
+import com.mowtiie.mesgard.data.remote.TypingRemoteSource
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -42,4 +44,7 @@ internal abstract class RemoteSourceModule {
 
     @Binds
     abstract fun bindGroupRemoteSource(source: SupabaseGroupRemoteSource): GroupRemoteSource
+
+    @Binds
+    abstract fun bindTypingRemoteSource(source: SupabaseTypingRemoteSource): TypingRemoteSource
 }

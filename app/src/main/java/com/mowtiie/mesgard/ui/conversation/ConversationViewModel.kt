@@ -13,11 +13,14 @@ import com.mowtiie.mesgard.domain.model.SendResult
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.domain.repository.MessageRepository
+import com.mowtiie.mesgard.domain.repository.TypingRepository
 import com.mowtiie.mesgard.domain.sync.RealtimeSync
 import com.mowtiie.mesgard.ui.navigation.ConversationRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +29,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -37,24 +41,29 @@ internal class ConversationViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     conversationRepository: ConversationRepository,
     private val messageRepository: MessageRepository,
+    typingRepository: TypingRepository,
     realtimeSync: RealtimeSync,
 ) : ViewModel() {
     private val conversationId = savedStateHandle.toRoute<ConversationRoute>().conversationId
     private val visibleLimit = MutableStateFlow(MESSAGE_PAGE_SIZE)
     private val localState = MutableStateFlow(LocalState())
+    private val ownTyping =
+        MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<ConversationUiState> = combine(
         conversationRepository.observeConversation(conversationId),
         visibleLimit.flatMapLatest { messageRepository.observeMessages(conversationId, it) },
+        typingRepository.observeTypingNames(conversationId, ownTyping).onStart { emit(emptyList()) },
         localState,
-    ) { conversation, messages, local ->
+    ) { conversation, messages, typingNames, local ->
         ConversationUiState(
             title = conversation?.title,
             type = conversation?.type,
             canPost = conversation?.canPost ?: true,
             messages = messages,
             draft = local.draft,
+            typingNames = typingNames,
             isLoaded = true,
             isLoadingOlder = local.isLoadingOlder,
             error = local.error,
@@ -73,7 +82,10 @@ internal class ConversationViewModel @Inject constructor(
         }
     }
 
-    fun onDraftChanged(draft: String) = localState.update { it.copy(draft = draft) }
+    fun onDraftChanged(draft: String) {
+        localState.update { it.copy(draft = draft) }
+        if (draft.isNotBlank()) ownTyping.tryEmit(Unit)
+    }
 
     fun onSendClicked() {
         val draft = localState.value.draft

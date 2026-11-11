@@ -99,6 +99,7 @@ internal fun ConversationScreen(
                 onLoadOlder = onLoadOlder,
                 modifier = Modifier.weight(1f),
             )
+            if (uiState.canPost && uiState.typingNames.isNotEmpty()) TypingIndicator(uiState.typingNames)
             if (uiState.canPost) {
                 MessageComposer(
                     draft = uiState.draft,
