@@ -49,6 +49,7 @@ internal class SupabaseAttachmentRemoteSource @Inject constructor(private val cl
                         attachments.forEach {
                             add(
                                 buildJsonObject {
+                                    put("id", it.id)
                                     put("storage_path", it.storagePath)
                                     put("file_name", it.fileName)
                                 },

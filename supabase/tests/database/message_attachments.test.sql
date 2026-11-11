@@ -1,5 +1,5 @@
 begin;
-select plan(14);
+select plan(15);
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 6));
 select throws_ok(
@@ -34,8 +34,8 @@ select lives_ok(
 select lives_ok(
   format(
     $$select public.send_message(%L, %L, '', jsonb_build_array(
-      jsonb_build_object('storage_path', '%s/%s/photo', 'file_name', 'photo.png')))$$,
-    tests.seed_id('50', 'a', 98), tests.seed_id('40', 'a', 1),
+      jsonb_build_object('id', %L, 'storage_path', '%s/%s/photo', 'file_name', 'photo.png')))$$,
+    tests.seed_id('50', 'a', 98), tests.seed_id('40', 'a', 1), tests.seed_id('60', 'a', 99),
     tests.seed_id('40', 'a', 1), tests.seed_id('50', 'a', 98)
   ),
   'a participant can send a message that has only an attachment'
@@ -52,6 +52,11 @@ select results_eq(
   ),
   $$values ('image/png'::text, 2048::bigint, 'photo.png'::text)$$,
   'the attachment takes its type and size from Storage'
+);
+select is(
+  (select id from public.attachments where message_id = tests.seed_id('50', 'a', 98)),
+  tests.seed_id('60', 'a', 99),
+  'the attachment keeps the identifier chosen by the client'
 );
 select lives_ok(
   format(
