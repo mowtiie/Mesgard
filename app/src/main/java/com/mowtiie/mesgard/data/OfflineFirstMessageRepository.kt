@@ -8,6 +8,7 @@ import com.mowtiie.mesgard.data.remote.MessageDto
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.RemoteOutcome
 import com.mowtiie.mesgard.data.remote.attemptRemote
+import com.mowtiie.mesgard.data.remote.parseEpochMillis
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.remote.toRefreshResult
 import com.mowtiie.mesgard.data.remote.toSenderProfile
@@ -47,19 +48,22 @@ internal class OfflineFirstMessageRepository @Inject constructor(
             items.map { toMessage(it, currentUserId) }
         }
 
-    override suspend fun refresh(conversationId: String): RefreshResult =
-        attemptRemote(TAG) { storeMessages(remoteSource.fetchLatest(conversationId)) }.toRefreshResult()
+    override suspend fun refresh(conversationId: String): RefreshResult = attemptRemote(TAG) {
+        storeLatestPage(conversationId, remoteSource.fetchLatest(conversationId))
+    }.toRefreshResult()
 
     override suspend fun loadOlder(conversationId: String): PageResult {
         val oldest = messageDao.findOldestSentCreatedAt(conversationId)
         val outcome = attemptRemote(TAG) {
-            val page = if (oldest == null) {
-                remoteSource.fetchLatest(conversationId)
+            if (oldest == null) {
+                val latest = remoteSource.fetchLatest(conversationId)
+                storeLatestPage(conversationId, latest)
+                latest.size < MESSAGE_PAGE_SIZE
             } else {
-                remoteSource.fetchOlder(conversationId, beforeEpochMillis = oldest + 1)
+                val older = remoteSource.fetchOlder(conversationId, beforeEpochMillis = oldest + 1)
+                storeMessages(older)
+                older.size < MESSAGE_PAGE_SIZE
             }
-            storeMessages(page)
-            page.size < MESSAGE_PAGE_SIZE
         }
         return when (outcome) {
             is RemoteOutcome.Success -> PageResult.Loaded(endReached = outcome.value)
@@ -108,6 +112,15 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         senderId == null -> SendRejection.NOT_SIGNED_IN
         conversationDao.findOrgId(conversationId) == null -> SendRejection.CONVERSATION_UNAVAILABLE
         else -> null
+    }
+
+    private suspend fun storeLatestPage(conversationId: String, page: List<MessageDto>) {
+        database.withTransaction {
+            storeMessages(page)
+            if (page.size >= MESSAGE_PAGE_SIZE) {
+                messageDao.deleteSentOlderThan(conversationId, page.minOf { parseEpochMillis(it.createdAt) })
+            }
+        }
     }
 
     private suspend fun storeMessages(messages: List<MessageDto>) {

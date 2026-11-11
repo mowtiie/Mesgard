@@ -59,6 +59,11 @@ internal interface MessageDao {
     )
     suspend fun findNewestIncomingId(conversationId: String, currentUserId: String): String?
 
+    @Query(
+        "DELETE FROM messages WHERE conversation_id = :conversationId AND status = 'SENT' AND created_at < :before",
+    )
+    suspend fun deleteSentOlderThan(conversationId: String, before: Long)
+
     @Query("UPDATE messages SET status = :status WHERE id = :messageId")
     suspend fun updateStatus(messageId: String, status: MessageStatus)
 

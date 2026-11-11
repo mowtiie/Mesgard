@@ -154,6 +154,25 @@ class MessageDaoTest {
         assertEquals(NEWER, stored?.createdAtEpochMillis)
     }
 
+    @Test
+    fun `deleteSentOlderThan removes only older sent messages of the conversation`() = runTest {
+        messageDao.upsertAll(
+            listOf(
+                messageEntity("old", CONVERSATION_ID, OLDER),
+                messageEntity("new", CONVERSATION_ID, NEWER),
+                messageEntity("pending", CONVERSATION_ID, OLDER, status = MessageStatus.PENDING),
+                messageEntity("elsewhere", "other-conversation", OLDER),
+            ),
+        )
+
+        messageDao.deleteSentOlderThan(CONVERSATION_ID, before = NEWER)
+
+        assertEquals(
+            listOf(null, "new", "pending", "elsewhere"),
+            listOf("old", "new", "pending", "elsewhere").map { messageDao.findById(it)?.id },
+        )
+    }
+
     private companion object {
         const val CONVERSATION_ID = "conversation"
         const val OLDER = 1_000L

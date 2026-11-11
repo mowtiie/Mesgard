@@ -247,6 +247,31 @@ class OfflineFirstMessageRepositoryTest {
         assertEquals(MessageStatus.PENDING, databaseRule.database.messageDao().findById("pending")?.status)
     }
 
+    @Test
+    fun `refresh with a full page drops older stored messages so the history stays contiguous`() = runTest {
+        val dao = databaseRule.database.messageDao()
+        dao.upsert(messageEntity("ancient", CONVERSATION_ID, 1_000L))
+        dao.upsert(messageEntity("pending-old", CONVERSATION_ID, 1_000L, status = MessageStatus.PENDING))
+        coEvery { remoteSource.fetchLatest(CONVERSATION_ID) } returns
+            List(MESSAGE_PAGE_SIZE) { messageDto("m-$it", CONVERSATION_ID, createdAt = "2026-11-10T08:00:00+00:00") }
+
+        repository.refresh(CONVERSATION_ID)
+
+        assertEquals(null, dao.findById("ancient"))
+        assertEquals(MessageStatus.PENDING, dao.findById("pending-old")?.status)
+    }
+
+    @Test
+    fun `refresh with a short page keeps the older stored messages`() = runTest {
+        val dao = databaseRule.database.messageDao()
+        dao.upsert(messageEntity("ancient", CONVERSATION_ID, 1_000L))
+        coEvery { remoteSource.fetchLatest(CONVERSATION_ID) } returns listOf(messageDto("m", CONVERSATION_ID))
+
+        repository.refresh(CONVERSATION_ID)
+
+        assertEquals("ancient", dao.findById("ancient")?.id)
+    }
+
     private suspend fun pendingMessages() = databaseRule.database.messageDao()
         .observeTimeline(CONVERSATION_ID, PAGE)
         .first()
