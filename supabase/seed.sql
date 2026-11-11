@@ -190,4 +190,7 @@ select
   ('30000000-0000-4000-8000-000000000' || organization.letter || '01')::uuid
 from seed_ids as organization;
 
+insert into private.push_settings (function_url, webhook_secret)
+values ('http://kong:8000/functions/v1/send-push', 'local-development-webhook-secret');
+
 drop table seed_conversations, seed_groups, seed_ids, seed_roster, seed_organizations;

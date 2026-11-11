@@ -1,7 +1,7 @@
 -- Local-only helpers for pgTAP tests. Never apply to a production database.
 
 create schema if not exists tests;
-grant usage on schema tests to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
 
 create function tests.authenticate_as(user_id uuid)
 returns void
@@ -39,4 +39,4 @@ as $$
   select (kind_prefix || '000000-0000-4000-8000-000000000' || organization_letter || lpad(item_number::text, 2, '0'))::uuid;
 $$;
 
-grant execute on all functions in schema tests to anon, authenticated;
+grant execute on all functions in schema tests to anon, authenticated, service_role;
