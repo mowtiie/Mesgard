@@ -45,7 +45,13 @@ internal fun ConversationRow(
         },
         supportingContent = {
             Text(
-                text = conversation.lastMessagePreview ?: stringResource(R.string.conversation_no_messages),
+                text = when {
+                    conversation.lastMessagePreview == null -> stringResource(R.string.conversation_no_messages)
+                    conversation.lastMessagePreview.isBlank() -> stringResource(
+                        R.string.conversation_attachment_preview,
+                    )
+                    else -> conversation.lastMessagePreview
+                },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

@@ -25,6 +25,7 @@
     <string name="conversation_title_group">Group chat</string>
     <string name="conversation_title_announcement">Announcements</string>
     <string name="conversation_no_messages">No messages yet</string>
+    <string name="conversation_attachment_preview">Attachment</string>
     <string name="conversation_list_empty">No conversations yet.</string>
     <string name="refresh_error_network_unavailable">Unable to refresh. Check your connection.</string>
     <string name="refresh_error_unknown">Unable to refresh. Try again later.</string>
