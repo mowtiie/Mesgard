@@ -4,10 +4,12 @@ import type { Delivery } from "./payload.ts";
 
 const SECRET = "a-long-enough-webhook-secret";
 
-function delivery(token: string): Delivery {
+function delivery(name: string): Delivery {
   return {
-    fcm_token: token,
-    recipient_id: `user-${token}`,
+    endpoint: `https://push.example.org/${name}`,
+    p256dh: "p256dh",
+    auth_secret: "auth",
+    recipient_id: `user-${name}`,
     preview: "sender_only",
     conversation_id: "conversation-1",
     conversation_type: "direct",
@@ -29,30 +31,31 @@ function request(options: { method?: string; secret?: string | null; body?: unkn
 
 function dependencies(
   deliveries: Delivery[],
-  outcomes: Record<string, SendOutcome> = {},
+  options: { outcomes?: Record<string, SendOutcome>; blocked?: string[] } = {},
 ) {
-  const deletedTokens: string[] = [];
-  const sentTokens: string[] = [];
+  const deleted: string[] = [];
+  const sent: string[] = [];
   const value: HandlerDependencies = {
     webhookSecret: SECRET,
     listDeliveries: () => Promise.resolve(deliveries),
-    sendMessage: (message) => {
-      sentTokens.push(message.message.token);
-      return Promise.resolve(outcomes[message.message.token] ?? "sent");
+    isEndpointAllowed: (endpoint) => Promise.resolve(!(options.blocked ?? []).includes(endpoint)),
+    sendMessage: (item) => {
+      sent.push(item.endpoint);
+      return Promise.resolve(options.outcomes?.[item.endpoint] ?? "sent");
     },
-    deleteToken: (token) => {
-      deletedTokens.push(token);
+    deleteSubscription: (endpoint) => {
+      deleted.push(endpoint);
       return Promise.resolve();
     },
   };
-  return { value, deletedTokens, sentTokens };
+  return { value, deleted, sent };
 }
 
 Deno.test("rejects a request without the webhook secret", async () => {
-  const { value, sentTokens } = dependencies([delivery("a")]);
+  const { value, sent } = dependencies([delivery("a")]);
   const response = await handlePush(request({ secret: null }), value);
   assertEquals(response.status, 401);
-  assertEquals(sentTokens, []);
+  assertEquals(sent, []);
 });
 
 Deno.test("rejects a request with a wrong webhook secret", async () => {
@@ -81,26 +84,36 @@ Deno.test("rejects a body without a message identifier", async () => {
 });
 
 Deno.test("sends one message per delivery and reports the counts", async () => {
-  const { value, sentTokens } = dependencies([delivery("a"), delivery("b")]);
+  const { value, sent } = dependencies([delivery("a"), delivery("b")]);
   const response = await handlePush(request(), value);
   assertEquals(response.status, 200);
   assertEquals(await response.json(), { sent: 2, removed: 0, failed: 0 });
-  assertEquals(sentTokens.sort(), ["a", "b"]);
+  assertEquals(sent.sort(), ["https://push.example.org/a", "https://push.example.org/b"]);
 });
 
-Deno.test("removes tokens that FCM reports as invalid and keeps the others", async () => {
-  const { value, deletedTokens } = dependencies(
+Deno.test("removes subscriptions that the push service reports as gone and keeps the others", async () => {
+  const { value, deleted } = dependencies(
     [delivery("a"), delivery("b"), delivery("c")],
-    { b: "invalid_token", c: "failed" },
+    { outcomes: { "https://push.example.org/b": "gone", "https://push.example.org/c": "failed" } },
   );
   const response = await handlePush(request(), value);
   assertEquals(await response.json(), { sent: 1, removed: 1, failed: 1 });
-  assertEquals(deletedTokens, ["b"]);
+  assertEquals(deleted, ["https://push.example.org/b"]);
+});
+
+Deno.test("does not post to an endpoint that is not allowed and keeps the subscription", async () => {
+  const { value, sent, deleted } = dependencies([delivery("a"), delivery("b")], {
+    blocked: ["https://push.example.org/a"],
+  });
+  const response = await handlePush(request(), value);
+  assertEquals(await response.json(), { sent: 1, removed: 0, failed: 1 });
+  assertEquals(sent, ["https://push.example.org/b"]);
+  assertEquals(deleted, []);
 });
 
 Deno.test("does nothing when the message has no deliveries", async () => {
-  const { value, sentTokens } = dependencies([]);
+  const { value, sent } = dependencies([]);
   const response = await handlePush(request(), value);
   assertEquals(await response.json(), { sent: 0, removed: 0, failed: 0 });
-  assertEquals(sentTokens, []);
+  assertEquals(sent, []);
 });

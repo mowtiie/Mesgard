@@ -1,7 +1,9 @@
 export type PreviewMode = "sender_and_text" | "sender_only" | "hidden";
 
 export interface Delivery {
-  fcm_token: string;
+  endpoint: string;
+  p256dh: string;
+  auth_secret: string;
   recipient_id: string;
   preview: PreviewMode;
   conversation_id: string;
@@ -43,18 +45,8 @@ export function buildContent(delivery: Delivery): PushContent {
   return { title, body: isDirect ? GENERIC_BODY : `${sender} sent a message` };
 }
 
-// A data message lets the app build the notification, so no text is added by the FCM service or the system.
-export function buildFcmMessage(delivery: Delivery) {
+// The app builds the notification from this JSON, so no text is added by the push service or the system.
+export function buildPushBody(delivery: Delivery): string {
   const { title, body } = buildContent(delivery);
-  return {
-    message: {
-      token: delivery.fcm_token,
-      data: {
-        conversation_id: delivery.conversation_id,
-        title,
-        body,
-      },
-      android: { priority: "HIGH" },
-    },
-  };
+  return JSON.stringify({ conversation_id: delivery.conversation_id, title, body });
 }

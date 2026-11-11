@@ -1,12 +1,13 @@
-import { buildFcmMessage, type Delivery } from "./payload.ts";
+import type { Delivery } from "./payload.ts";
 
-export type SendOutcome = "sent" | "invalid_token" | "failed";
+export type SendOutcome = "sent" | "gone" | "failed";
 
 export interface HandlerDependencies {
   webhookSecret: string;
   listDeliveries(messageId: string): Promise<Delivery[]>;
-  sendMessage(message: ReturnType<typeof buildFcmMessage>): Promise<SendOutcome>;
-  deleteToken(fcmToken: string): Promise<void>;
+  isEndpointAllowed(endpoint: string): Promise<boolean>;
+  sendMessage(delivery: Delivery): Promise<SendOutcome>;
+  deleteSubscription(endpoint: string): Promise<void>;
 }
 
 export const WEBHOOK_SECRET_HEADER = "x-webhook-secret";
@@ -26,6 +27,16 @@ function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
 
+async function deliver(delivery: Delivery, dependencies: HandlerDependencies): Promise<SendOutcome> {
+  if (!await dependencies.isEndpointAllowed(delivery.endpoint)) {
+    console.error("A push subscription points at an endpoint that is not allowed");
+    return "failed";
+  }
+  const outcome = await dependencies.sendMessage(delivery);
+  if (outcome === "gone") await dependencies.deleteSubscription(delivery.endpoint);
+  return outcome;
+}
+
 export async function handlePush(request: Request, dependencies: HandlerDependencies): Promise<Response> {
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
@@ -39,18 +50,12 @@ export async function handlePush(request: Request, dependencies: HandlerDependen
   if (typeof messageId !== "string" || messageId.length === 0) return json({ error: "invalid_request" }, 400);
 
   const deliveries = await dependencies.listDeliveries(messageId);
-  const outcomes = await Promise.all(
-    deliveries.map(async (delivery) => {
-      const outcome = await dependencies.sendMessage(buildFcmMessage(delivery));
-      if (outcome === "invalid_token") await dependencies.deleteToken(delivery.fcm_token);
-      return outcome;
-    }),
-  );
+  const outcomes = await Promise.all(deliveries.map((delivery) => deliver(delivery, dependencies)));
 
   return json(
     {
       sent: outcomes.filter((outcome) => outcome === "sent").length,
-      removed: outcomes.filter((outcome) => outcome === "invalid_token").length,
+      removed: outcomes.filter((outcome) => outcome === "gone").length,
       failed: outcomes.filter((outcome) => outcome === "failed").length,
     },
     200,

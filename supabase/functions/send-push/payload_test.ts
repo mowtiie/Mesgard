@@ -1,9 +1,11 @@
 import { assertEquals, assertNotMatch } from "jsr:@std/assert@1";
-import { buildContent, buildFcmMessage, type Delivery, GENERIC_BODY, MAX_TEXT_LENGTH, truncate } from "./payload.ts";
+import { buildContent, buildPushBody, type Delivery, GENERIC_BODY, MAX_TEXT_LENGTH, truncate } from "./payload.ts";
 
 function delivery(overrides: Partial<Delivery> = {}): Delivery {
   return {
-    fcm_token: "token-1",
+    endpoint: "https://push.example.org/endpoint-1",
+    p256dh: "p256dh",
+    auth_secret: "auth",
     recipient_id: "user-1",
     preview: "sender_only",
     conversation_id: "conversation-1",
@@ -65,15 +67,15 @@ Deno.test("truncation does not split a character made of two code units", () => 
   assertEquals(Array.from(text).length, MAX_TEXT_LENGTH);
 });
 
-Deno.test("the FCM message is a high priority data message for the token", () => {
-  const { message } = buildFcmMessage(delivery());
-  assertEquals(message.token, "token-1");
-  assertEquals(message.android.priority, "HIGH");
-  assertEquals(message.data, { conversation_id: "conversation-1", title: "Ana Reyes", body: GENERIC_BODY });
-  assertEquals("notification" in message, false);
+Deno.test("the push body carries only the conversation, title and body", () => {
+  assertEquals(JSON.parse(buildPushBody(delivery())), {
+    conversation_id: "conversation-1",
+    title: "Ana Reyes",
+    body: GENERIC_BODY,
+  });
 });
 
-Deno.test("the FCM message never contains text that the preview mode does not allow", () => {
-  const serialized = JSON.stringify(buildFcmMessage(delivery({ preview: "sender_only", body: "secret text" })));
+Deno.test("the push body never contains text that the preview mode does not allow", () => {
+  const serialized = buildPushBody(delivery({ preview: "sender_only", body: "secret text" }));
   assertNotMatch(serialized, /secret text/);
 });
