@@ -222,4 +222,74 @@ class ContactsViewModelTest {
             assertEquals(setOf("ana", "ben"), awaitItem().onlineUserIds)
         }
     }
+
+    @Test
+    fun `filters the roster by the search query ignoring case`() = runTest {
+        contacts.value = listOf(ana, Contact("org", "ben", "Ben Cruz", OrgRole.STUDENT))
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onQueryChanged("CRU")
+            val state = awaitItem()
+            assertEquals(listOf("Ben Cruz"), state.contacts.map { it.displayName })
+            assertEquals(2, state.totalContacts)
+            assertFalse(state.showNoResults)
+        }
+    }
+
+    @Test
+    fun `shows no results when nothing matches but keeps the search field`() = runTest {
+        contacts.value = listOf(ana)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onQueryChanged("zzz")
+            val state = awaitItem()
+            assertTrue(state.showNoResults)
+            assertTrue(state.showSearch)
+            assertFalse(state.showEmptyMessage)
+        }
+    }
+
+    @Test
+    fun `filters the groups and keeps the sections switch while searching`() = runTest {
+        groups.value = listOf(sectionA, sectionA.copy(id = "science", name = "Science"))
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onQueryChanged("sci")
+            val state = awaitItem()
+            assertEquals(listOf("Science"), state.groups.map { it.name })
+            assertTrue(state.showSections)
+            viewModel.onQueryChanged("nothing")
+            assertTrue(awaitItem().showSections)
+        }
+    }
+
+    @Test
+    fun `a blank query shows everything`() = runTest {
+        contacts.value = listOf(ana)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onQueryChanged("   ")
+            assertEquals(1, awaitItem().contacts.size)
+        }
+    }
+
+    @Test
+    fun `hides the search field when there are no contacts and no query`() = runTest {
+        viewModel().uiState.test { assertFalse(expectMostRecentItem().showSearch) }
+    }
+
+    @Test
+    fun `matches a query inside a name and ignores surrounding spaces`() {
+        assertTrue(matchesQuery("Ana Reyes", " rey "))
+        assertTrue(matchesQuery("Ana Reyes", ""))
+        assertFalse(matchesQuery("Ana Reyes", "ben"))
+    }
 }

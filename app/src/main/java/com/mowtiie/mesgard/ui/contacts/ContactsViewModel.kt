@@ -35,10 +35,14 @@ internal class ContactsViewModel @Inject constructor(
         groupRepository.observeGroups(),
         presenceTracker.onlineUserIds,
         localState,
-    ) { contacts, groups, onlineUserIds, local ->
+    ) { allContacts, allGroups, onlineUserIds, local ->
+        val startableGroups = allGroups.filter { it.canStartConversation }
         ContactsUiState(
-            contacts = contacts,
-            groups = groups.filter { it.canStartConversation },
+            contacts = allContacts.filter { matchesQuery(it.displayName, local.query) },
+            groups = startableGroups.filter { matchesQuery(it.name, local.query) },
+            totalContacts = allContacts.size,
+            totalGroups = startableGroups.size,
+            query = local.query,
             onlineUserIds = onlineUserIds,
             selectedSection = local.selectedSection,
             isLoaded = true,
@@ -70,6 +74,8 @@ internal class ContactsViewModel @Inject constructor(
 
     fun onSectionSelected(section: ContactsSection) = localState.update { it.copy(selectedSection = section) }
 
+    fun onQueryChanged(query: String) = localState.update { it.copy(query = query) }
+
     fun onContactClicked(contact: Contact) = startConversation { contactRepository.startDirectConversation(contact) }
 
     fun onGroupClicked(group: Group) = startConversation { groupRepository.startGroupConversation(group) }
@@ -95,6 +101,7 @@ internal class ContactsViewModel @Inject constructor(
 
     private data class LocalState(
         val selectedSection: ContactsSection = ContactsSection.PEOPLE,
+        val query: String = "",
         val isRefreshing: Boolean = false,
         val isStartingConversation: Boolean = false,
         val conversationToOpen: String? = null,
@@ -110,4 +117,9 @@ private fun RefreshError.toRefreshError() = when (this) {
 private fun RefreshError.toStartError() = when (this) {
     RefreshError.NETWORK_UNAVAILABLE -> ContactsError.START_NETWORK_UNAVAILABLE
     RefreshError.UNKNOWN -> ContactsError.START_UNKNOWN
+}
+
+internal fun matchesQuery(name: String, query: String): Boolean {
+    val trimmed = query.trim()
+    return trimmed.isEmpty() || name.contains(trimmed, ignoreCase = true)
 }

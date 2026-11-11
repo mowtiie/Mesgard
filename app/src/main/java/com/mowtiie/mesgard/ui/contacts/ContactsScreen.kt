@@ -50,6 +50,7 @@ internal fun ContactsScreenRoute(
         onContactClicked = viewModel::onContactClicked,
         onGroupClicked = viewModel::onGroupClicked,
         onSectionSelected = viewModel::onSectionSelected,
+        onQueryChanged = viewModel::onQueryChanged,
         onConversationOpened = {
             uiState.conversationToOpen?.let(onConversationStarted)
             viewModel.onConversationOpened()
@@ -67,6 +68,7 @@ internal fun ContactsScreen(
     onContactClicked: (Contact) -> Unit,
     onGroupClicked: (Group) -> Unit,
     onSectionSelected: (ContactsSection) -> Unit,
+    onQueryChanged: (String) -> Unit,
     onConversationOpened: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
@@ -91,6 +93,7 @@ internal fun ContactsScreen(
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (uiState.isStartingConversation) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             if (uiState.showSections) SectionSwitch(uiState.section, onSectionSelected)
+            if (uiState.showSearch) ContactsSearchBar(uiState.query, onQueryChanged)
             PullToRefreshBox(
                 isRefreshing = uiState.isRefreshing,
                 onRefresh = onRefresh,
@@ -134,6 +137,16 @@ private fun ContactList(
                 Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         text = stringResource(R.string.contacts_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
+        }
+        if (uiState.showNoResults) {
+            item(key = "no-results") {
+                Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = stringResource(R.string.contacts_no_results),
                         style = MaterialTheme.typography.bodyLarge,
                     )
                 }
