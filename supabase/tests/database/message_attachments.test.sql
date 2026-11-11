@@ -125,7 +125,8 @@ select is(
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 2));
 select is(
-  (select count(*)::int from storage.objects where bucket_id = 'message-attachments'),
+  (select count(*)::int from storage.objects
+    where bucket_id = 'message-attachments' and name like '%/' || tests.seed_id('50', 'a', 98) || '/%'),
   1,
   'another participant can read the attachment file'
 );
