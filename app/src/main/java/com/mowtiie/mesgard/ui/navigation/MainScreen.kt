@@ -20,7 +20,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.mowtiie.mesgard.ui.chats.ConversationListRoute
 import com.mowtiie.mesgard.ui.contacts.ContactsScreenRoute
-import com.mowtiie.mesgard.ui.profile.ProfileScreen
+import com.mowtiie.mesgard.ui.profile.ProfileScreenRoute
 import com.mowtiie.mesgard.ui.settings.SettingsScreenRoute
 
 @Composable
@@ -60,7 +60,7 @@ internal fun MainScreen(
                 )
             }
             composable<ContactsRoute> { ContactsScreenRoute(onConversationStarted = onConversationClick) }
-            composable<ProfileRoute> { ProfileScreen(onSignOut = onSignOut) }
+            composable<ProfileRoute> { ProfileScreenRoute(onSignOut = onSignOut) }
             composable<SettingsRoute> { SettingsScreenRoute() }
         }
     }

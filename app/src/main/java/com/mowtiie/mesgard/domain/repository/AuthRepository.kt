@@ -9,6 +9,8 @@ internal interface AuthRepository {
 
     val currentUserId: String?
 
+    val currentUserEmail: String?
+
     suspend fun signIn(email: String, password: String): SignInResult
 
     suspend fun signOut()

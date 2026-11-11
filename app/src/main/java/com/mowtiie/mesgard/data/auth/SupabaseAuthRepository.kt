@@ -28,6 +28,9 @@ internal class SupabaseAuthRepository @Inject constructor(
     override val currentUserId: String?
         get() = auth.currentUserOrNull()?.id
 
+    override val currentUserEmail: String?
+        get() = auth.currentUserOrNull()?.email
+
     override suspend fun signIn(email: String, password: String): SignInResult = try {
         auth.signInWith(Email) {
             this.email = email
