@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.domain.model.MessageStatus
+import com.mowtiie.mesgard.ui.connectivity.LocalIsOffline
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val BubbleMaxWidth = 320.dp
@@ -91,7 +92,7 @@ private fun metadata(message: Message): String {
     val parts = listOfNotNull(
         formatMessageTime(message.createdAtEpochMillis),
         if (message.isEdited && !message.isDeleted) stringResource(R.string.message_edited) else null,
-        if (message.status == MessageStatus.PENDING) stringResource(R.string.message_sending) else null,
+        if (message.status == MessageStatus.PENDING) pendingLabel() else null,
     )
     return parts.joinToString(METADATA_SEPARATOR)
 }
@@ -139,3 +140,10 @@ private fun previewMessage(isOwn: Boolean, body: String, status: MessageStatus =
     status = status,
     isOwn = isOwn,
 )
+
+@Composable
+private fun pendingLabel(): String = if (LocalIsOffline.current) {
+    stringResource(R.string.message_waiting_for_network)
+} else {
+    stringResource(R.string.message_sending)
+}
