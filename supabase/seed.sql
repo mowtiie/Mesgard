@@ -175,10 +175,12 @@ select
   now()
 from seed_ids as organization;
 
-insert into public.device_tokens (user_id, fcm_token)
+insert into public.push_subscriptions (user_id, endpoint, p256dh, auth_secret)
 select
   ('20000000-0000-4000-8000-000000000' || organization.letter || '04')::uuid,
-  'seed-fcm-token-' || organization.slug
+  'https://push.example.invalid/seed-' || organization.slug,
+  'seed-p256dh-key-' || organization.slug,
+  'seed-auth-secret-' || organization.slug
 from seed_ids as organization;
 
 insert into public.audit_logs (org_id, actor_id, action, target_type, target_id)

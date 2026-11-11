@@ -3,18 +3,18 @@ select plan(5);
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 5));
 select is(
-  (select count(*)::int from public.device_tokens),
+  (select count(*)::int from public.push_subscriptions),
   0,
-  'a user cannot read the device tokens of another user'
+  'a user cannot read the push subscriptions of another user'
 );
 select throws_ok(
   format(
-    $$insert into public.device_tokens (user_id, fcm_token) values (%L, 'stolen-token')$$,
+    $$insert into public.push_subscriptions (user_id, endpoint, p256dh, auth_secret) values (%L, 'https://example.invalid/x', 'p256dh-key-stolen-0', 'auth-secret-stolen-0')$$,
     tests.seed_id('20', 'a', 4)
   ),
   '42501',
   null,
-  'a user cannot register a device token for another user'
+  'a user cannot register a push subscription for another user'
 );
 select is_empty(
   format(
@@ -26,17 +26,17 @@ select is_empty(
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 4));
 select is(
-  (select count(*)::int from public.device_tokens),
+  (select count(*)::int from public.push_subscriptions),
   1,
-  'a user can read their own device tokens'
+  'a user can read their own push subscriptions'
 );
 
 select tests.authenticate_as_anonymous();
 select throws_ok(
-  'select * from public.device_tokens',
+  'select * from public.push_subscriptions',
   '42501',
   null,
-  'anonymous users cannot read device tokens'
+  'anonymous users cannot read push subscriptions'
 );
 
 select * from finish();

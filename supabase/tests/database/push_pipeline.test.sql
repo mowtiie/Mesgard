@@ -1,5 +1,5 @@
 begin;
-select plan(18);
+select plan(20);
 
 
 -- Message 2 is sent by staff one in a direct conversation with student one, who has a device token.
@@ -15,7 +15,7 @@ select is(
 select is(
   (select recipient_id from public.list_push_deliveries(tests.seed_id('50', 'a', 2))),
   tests.seed_id('20', 'a', 4),
-  'the recipient is the participant with a device token'
+  'the recipient is the participant with a push subscription'
 );
 select is(
   (select preview from public.list_push_deliveries(tests.seed_id('50', 'a', 2))),
@@ -100,28 +100,29 @@ select throws_ok(
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 5));
 select lives_ok(
-  $$select public.register_device_token('seed-fcm-token-rnhs')$$,
-  'a user can register a device token'
+  $$select public.register_push_subscription('https://push.example.invalid/seed-rnhs', 'new-p256dh-key-0000', 'new-auth-secret-000')$$,
+  'a user can register a push subscription'
 );
 select is(
-  (select count(*)::int from public.device_tokens where fcm_token = 'seed-fcm-token-rnhs'),
+  (select count(*)::int from public.push_subscriptions where endpoint = 'https://push.example.invalid/seed-rnhs'),
   1,
-  'registering a token already held by another user moves it'
+  'registering an endpoint already held by another user moves it'
 );
 select is(
-  (select user_id from public.device_tokens where fcm_token = 'seed-fcm-token-rnhs'),
+  (select user_id from public.push_subscriptions where endpoint = 'https://push.example.invalid/seed-rnhs'),
   tests.seed_id('20', 'a', 5),
-  'the token now belongs to the caller'
+  'the endpoint now belongs to the caller'
 );
 
 select tests.authenticate_as_anonymous();
 select throws_ok(
-  $$select public.register_device_token('anonymous-token')$$,
+  $$select public.register_push_subscription('https://push.example.invalid/anonymous', 'p256dh-key-anonymous', 'auth-secret-anonymous')$$,
   '42501',
   null,
-  'anonymous users cannot register a device token'
+  'anonymous users cannot register a push subscription'
 );
 
+select tests.authenticate_as(tests.seed_id('20', 'a', 5));select throws_ok(  $$select public.register_push_subscription('ftp://push.example.invalid/x', 'new-p256dh-key-0000', 'new-auth-secret-000')$$,  '23514',  null,  'an endpoint that is not an HTTP URL is rejected');select public.register_push_subscription('https://push.example.invalid/seed-rnhs', 'rotated-p256dh-key-00', 'rotated-auth-secret-0');select is(  (select p256dh from public.push_subscriptions where endpoint = 'https://push.example.invalid/seed-rnhs'),  'rotated-p256dh-key-00',  'registering the same endpoint again replaces its keys');
 -- The webhook trigger queues a request only when push settings exist and never blocks a message.
 reset role;
 delete from private.push_settings;
