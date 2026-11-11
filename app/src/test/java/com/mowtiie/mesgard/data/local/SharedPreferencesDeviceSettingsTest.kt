@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.data.local
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.mowtiie.mesgard.domain.model.LockTimeout
+import com.mowtiie.mesgard.domain.model.NotificationPreview
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -43,6 +44,19 @@ class SharedPreferencesDeviceSettingsTest {
         preferences.edit().putString("lock_timeout", "TEN_MINUTES").commit()
 
         assertEquals(LockTimeout.ONE_MINUTE, SharedPreferencesDeviceSettings(preferences).settings.value.lockTimeout)
+    }
+
+    @Test
+    fun `defaults to showing only the sender in notifications and keeps a changed mode`() {
+        val settings = SharedPreferencesDeviceSettings(preferences)
+        assertEquals(NotificationPreview.SENDER_ONLY, settings.settings.value.notificationPreview)
+
+        settings.setNotificationPreview(NotificationPreview.HIDDEN)
+
+        assertEquals(
+            NotificationPreview.HIDDEN,
+            SharedPreferencesDeviceSettings(preferences).settings.value.notificationPreview,
+        )
     }
 
     @Test

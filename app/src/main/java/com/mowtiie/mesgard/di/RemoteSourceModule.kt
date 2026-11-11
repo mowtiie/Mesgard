@@ -5,11 +5,13 @@ import com.mowtiie.mesgard.data.remote.ConversationRemoteSource
 import com.mowtiie.mesgard.data.remote.MessageRealtimeSource
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.ProfileRemoteSource
+import com.mowtiie.mesgard.data.remote.SettingsRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseContactRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseConversationRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseMessageRealtimeSource
 import com.mowtiie.mesgard.data.remote.SupabaseMessageRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseProfileRemoteSource
+import com.mowtiie.mesgard.data.remote.SupabaseSettingsRemoteSource
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -29,6 +31,9 @@ internal abstract class RemoteSourceModule {
 
     @Binds
     abstract fun bindProfileRemoteSource(source: SupabaseProfileRemoteSource): ProfileRemoteSource
+
+    @Binds
+    abstract fun bindSettingsRemoteSource(source: SupabaseSettingsRemoteSource): SettingsRemoteSource
 
     @Binds
     abstract fun bindContactRemoteSource(source: SupabaseContactRemoteSource): ContactRemoteSource

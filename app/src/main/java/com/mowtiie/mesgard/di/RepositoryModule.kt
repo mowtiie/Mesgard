@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.di
 import com.mowtiie.mesgard.data.OfflineFirstContactRepository
 import com.mowtiie.mesgard.data.OfflineFirstConversationRepository
 import com.mowtiie.mesgard.data.OfflineFirstMessageRepository
+import com.mowtiie.mesgard.data.OfflineFirstNotificationSettingsRepository
 import com.mowtiie.mesgard.data.auth.SupabaseAuthRepository
 import com.mowtiie.mesgard.data.local.LocalDataEraser
 import com.mowtiie.mesgard.data.local.RoomLocalDataEraser
@@ -15,6 +16,7 @@ import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MessageRepository
+import com.mowtiie.mesgard.domain.repository.NotificationSettingsRepository
 import com.mowtiie.mesgard.domain.sync.RealtimeSync
 import dagger.Binds
 import dagger.Module
@@ -40,6 +42,11 @@ internal abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindContactRepository(repository: OfflineFirstContactRepository): ContactRepository
+
+    @Binds
+    abstract fun bindNotificationSettingsRepository(
+        repository: OfflineFirstNotificationSettingsRepository,
+    ): NotificationSettingsRepository
 
     @Binds
     abstract fun bindMessageSendScheduler(scheduler: WorkManagerMessageSendScheduler): MessageSendScheduler

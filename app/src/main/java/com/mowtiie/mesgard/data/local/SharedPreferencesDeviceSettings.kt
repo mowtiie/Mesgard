@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.data.local
 import android.content.SharedPreferences
 import com.mowtiie.mesgard.domain.model.DeviceSettings
 import com.mowtiie.mesgard.domain.model.LockTimeout
+import com.mowtiie.mesgard.domain.model.NotificationPreview
 import com.mowtiie.mesgard.domain.repository.DeviceSettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,6 +13,7 @@ internal const val DEVICE_SETTINGS_FILE = "device_settings"
 private const val KEY_SCREEN_PRIVACY = "screen_privacy_enabled"
 private const val KEY_APP_LOCK = "app_lock_enabled"
 private const val KEY_LOCK_TIMEOUT = "lock_timeout"
+private const val KEY_NOTIFICATION_PREVIEW = "notification_preview"
 
 internal class SharedPreferencesDeviceSettings(private val preferences: SharedPreferences) :
     DeviceSettingsRepository {
@@ -34,6 +36,11 @@ internal class SharedPreferencesDeviceSettings(private val preferences: SharedPr
         mutableSettings.value = mutableSettings.value.copy(lockTimeout = timeout)
     }
 
+    override fun setNotificationPreview(preview: NotificationPreview) {
+        preferences.edit().putString(KEY_NOTIFICATION_PREVIEW, preview.name).apply()
+        mutableSettings.value = mutableSettings.value.copy(notificationPreview = preview)
+    }
+
     private fun read(): DeviceSettings {
         val defaults = DeviceSettings()
         return DeviceSettings(
@@ -42,6 +49,9 @@ internal class SharedPreferencesDeviceSettings(private val preferences: SharedPr
             lockTimeout = preferences.getString(KEY_LOCK_TIMEOUT, null)
                 ?.let { name -> LockTimeout.entries.firstOrNull { it.name == name } }
                 ?: defaults.lockTimeout,
+            notificationPreview = preferences.getString(KEY_NOTIFICATION_PREVIEW, null)
+                ?.let { name -> NotificationPreview.entries.firstOrNull { it.name == name } }
+                ?: defaults.notificationPreview,
         )
     }
 }

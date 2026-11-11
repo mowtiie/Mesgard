@@ -9,8 +9,20 @@ internal enum class LockTimeout(val milliseconds: Long) {
     FIVE_MINUTES(FIVE_MINUTES_MS),
 }
 
+internal enum class NotificationPreview(val serverValue: String) {
+    SENDER_AND_TEXT("sender_and_text"),
+    SENDER_ONLY("sender_only"),
+    HIDDEN("hidden"),
+    ;
+
+    companion object {
+        fun fromServerValue(value: String?): NotificationPreview? = entries.firstOrNull { it.serverValue == value }
+    }
+}
+
 internal data class DeviceSettings(
     val screenPrivacyEnabled: Boolean = true,
     val appLockEnabled: Boolean = false,
     val lockTimeout: LockTimeout = LockTimeout.ONE_MINUTE,
+    val notificationPreview: NotificationPreview = NotificationPreview.SENDER_ONLY,
 )
