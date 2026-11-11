@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    name: Android (ktlint, detekt, lint, unit tests, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # The build reads these for BuildConfig only; the unit tests never contact a server.
+      SUPABASE_URL: http://127.0.0.1:54321
+      SUPABASE_ANON_KEY: ci-placeholder-anon-key
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Check style, static analysis, lint, tests and build
+        run: ./gradlew ktlintCheck detekt lintDebug testDebugUnitTest assembleDebug --console=plain
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-reports
+          path: |
+            app/build/reports
+            app/build/test-results
+          if-no-files-found: ignore
+
+  database:
+    name: Database (migrations, RLS and pgTAP tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.1.0
+
+      - name: Start the local Supabase stack (applies migrations and seed)
+        run: supabase start
+
+      - name: Run the pgTAP tests
+        run: supabase test db
+
+      - name: Stop the local stack
+        if: always()
+        run: supabase stop --no-backup
+
+  edge-functions:
+    name: Edge Functions (format, types, tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: supabase/functions/send-push
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.1.4
+
+      - name: Check formatting
+        run: deno fmt --check
+
+      - name: Check types
+        run: deno check index.ts
+
+      - name: Run tests
+        run: deno test
