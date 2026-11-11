@@ -36,4 +36,11 @@
     <string name="conversation_error_message_too_long">The message is too long.</string>
     <string name="conversation_error_not_signed_in">Sign in again to send messages.</string>
     <string name="conversation_error_unavailable">This conversation is no longer available.</string>
+    <string name="contacts_empty">No contacts yet.</string>
+    <string name="role_org_admin">Administrator</string>
+    <string name="role_staff">Staff</string>
+    <string name="role_student">Student</string>
+    <string name="role_member">Member</string>
+    <string name="start_conversation_error_network_unavailable">Unable to start the conversation. Check your connection.</string>
+    <string name="start_conversation_error_unknown">Unable to start the conversation. Try again later.</string>
 </resources>

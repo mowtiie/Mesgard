@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.chats.ConversationListRoute
 import com.mowtiie.mesgard.ui.common.TitledScreen
+import com.mowtiie.mesgard.ui.contacts.ContactsScreenRoute
 import com.mowtiie.mesgard.ui.profile.ProfileScreen
 
 @Composable
@@ -58,7 +59,7 @@ internal fun MainScreen(
                     onConversationClick = onConversationClick,
                 )
             }
-            composable<ContactsRoute> { TitledScreen(stringResource(R.string.tab_contacts)) {} }
+            composable<ContactsRoute> { ContactsScreenRoute(onConversationStarted = onConversationClick) }
             composable<ProfileRoute> { ProfileScreen(onSignOut = onSignOut) }
             composable<SettingsRoute> { TitledScreen(stringResource(R.string.tab_settings)) {} }
         }

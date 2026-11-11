@@ -1,14 +1,10 @@
 package com.mowtiie.mesgard.ui.chats
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,14 +16,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.ConversationSummary
 import com.mowtiie.mesgard.domain.model.ConversationType
+import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
-
-private val AvatarSize = 48.dp
 
 @Composable
 internal fun ConversationRow(
@@ -40,7 +34,7 @@ internal fun ConversationRow(
     val hasUnread = conversation.unreadCount > 0
     ListItem(
         modifier = modifier.clickable(onClick = onClick),
-        leadingContent = { Avatar(title) },
+        leadingContent = { InitialAvatar(title) },
         headlineContent = {
             Text(
                 text = title,
@@ -73,23 +67,6 @@ private fun UnreadBadge(count: Int) {
     val description = pluralStringResource(R.plurals.conversation_unread_messages, count, count)
     Badge(modifier = Modifier.semantics { contentDescription = description }) {
         Text(formatUnreadCount(count))
-    }
-}
-
-@Composable
-private fun Avatar(title: String) {
-    Surface(
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        modifier = Modifier.size(AvatarSize),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = title.firstOrNull()?.uppercase().orEmpty(),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-        }
     }
 }
 
