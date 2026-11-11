@@ -30,3 +30,6 @@ port = 54323
 enabled = true
 site_url = "http://127.0.0.1:3000"
 jwt_expiry = 3600
+
+[functions.send-push]
+verify_jwt = false
