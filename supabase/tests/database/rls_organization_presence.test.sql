@@ -1,5 +1,5 @@
 begin;
-select plan(8);
+select plan(10);
 
 select is(
   private.organization_id_from_topic('org:' || tests.seed_id('10', 'a', 0)),
@@ -35,6 +35,23 @@ select is(
   (select count(*)::int from realtime.messages where topic = 'org:' || tests.seed_id('10', 'a', 0)),
   0,
   'a member of another organization cannot see presence in the organization'
+);
+reset role;
+insert into realtime.messages (topic, extension, payload, event, private)
+values ('org:' || tests.seed_id('10', 'a', 0), 'broadcast', '{}', 'ping', true);
+select tests.authenticate_as(tests.seed_id('20', 'a', 4));
+select set_config('realtime.topic', 'org:' || tests.seed_id('10', 'a', 0), true);
+select is(
+  (select count(*)::int from realtime.messages where extension = 'broadcast' and topic = 'org:' || tests.seed_id('10', 'a', 0)),
+  1,
+  'a member can read the broadcast extension of the organization channel'
+);
+select tests.authenticate_as(tests.seed_id('20', 'b', 4));
+select set_config('realtime.topic', 'org:' || tests.seed_id('10', 'a', 0), true);
+select is(
+  (select count(*)::int from realtime.messages where extension = 'broadcast' and topic = 'org:' || tests.seed_id('10', 'a', 0)),
+  0,
+  'a member of another organization cannot read the broadcast extension of the organization channel'
 );
 
 select tests.authenticate_as_anonymous();
