@@ -13,6 +13,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -24,10 +27,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.Group
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.TitledScreen
@@ -43,6 +48,8 @@ internal fun ContactsScreenRoute(
         uiState = uiState,
         onRefresh = viewModel::onRefresh,
         onContactClicked = viewModel::onContactClicked,
+        onGroupClicked = viewModel::onGroupClicked,
+        onSectionSelected = viewModel::onSectionSelected,
         onConversationOpened = {
             uiState.conversationToOpen?.let(onConversationStarted)
             viewModel.onConversationOpened()
@@ -58,6 +65,8 @@ internal fun ContactsScreen(
     uiState: ContactsUiState,
     onRefresh: () -> Unit,
     onContactClicked: (Contact) -> Unit,
+    onGroupClicked: (Group) -> Unit,
+    onSectionSelected: (ContactsSection) -> Unit,
     onConversationOpened: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
@@ -81,19 +90,44 @@ internal fun ContactsScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (uiState.isStartingConversation) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            if (uiState.showSections) SectionSwitch(uiState.section, onSectionSelected)
             PullToRefreshBox(
                 isRefreshing = uiState.isRefreshing,
                 onRefresh = onRefresh,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                ContactList(uiState = uiState, onContactClicked = onContactClicked)
+                ContactList(uiState, onContactClicked, onGroupClicked)
             }
         }
     }
 }
 
 @Composable
-private fun ContactList(uiState: ContactsUiState, onContactClicked: (Contact) -> Unit) {
+private fun SectionSwitch(
+    selected: ContactsSection,
+    onSectionSelected: (ContactsSection) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val sections = ContactsSection.entries
+    SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        sections.forEachIndexed { index, section ->
+            SegmentedButton(
+                selected = section == selected,
+                onClick = { onSectionSelected(section) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = sections.size),
+            ) {
+                Text(stringResource(section.labelResource()))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContactList(
+    uiState: ContactsUiState,
+    onContactClicked: (Contact) -> Unit,
+    onGroupClicked: (Group) -> Unit,
+) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         if (uiState.showEmptyMessage) {
             item(key = "empty") {
@@ -105,15 +139,33 @@ private fun ContactList(uiState: ContactsUiState, onContactClicked: (Contact) ->
                 }
             }
         }
-        items(uiState.contacts, key = { "${it.orgId}:${it.userId}" }) { contact ->
-            ListItem(
-                modifier = Modifier.clickable(enabled = !uiState.isStartingConversation) { onContactClicked(contact) },
-                leadingContent = { InitialAvatar(contact.displayName) },
-                headlineContent = { Text(contact.displayName) },
-                supportingContent = { Text(stringResource(contact.role.labelResource())) },
-            )
+        if (uiState.section == ContactsSection.PEOPLE) {
+            items(uiState.contacts, key = { "contact:${it.orgId}:${it.userId}" }) { contact ->
+                ListItem(
+                    modifier = Modifier.clickable(enabled = !uiState.isStartingConversation) {
+                        onContactClicked(contact)
+                    },
+                    leadingContent = { InitialAvatar(contact.displayName) },
+                    headlineContent = { Text(contact.displayName) },
+                    supportingContent = { Text(stringResource(contact.role.labelResource())) },
+                )
+            }
+        } else {
+            items(uiState.groups, key = { "group:${it.id}" }) { group ->
+                ListItem(
+                    modifier = Modifier.clickable(enabled = !uiState.isStartingConversation) { onGroupClicked(group) },
+                    leadingContent = { InitialAvatar(group.name) },
+                    headlineContent = { Text(group.name) },
+                )
+            }
         }
     }
+}
+
+@StringRes
+private fun ContactsSection.labelResource(): Int = when (this) {
+    ContactsSection.PEOPLE -> R.string.contacts_section_people
+    ContactsSection.GROUPS -> R.string.contacts_section_groups
 }
 
 @StringRes

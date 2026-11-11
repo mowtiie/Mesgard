@@ -3,10 +3,12 @@ package com.mowtiie.mesgard.ui.contacts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.Group
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.StartConversationResult
 import com.mowtiie.mesgard.domain.repository.ContactRepository
+import com.mowtiie.mesgard.domain.repository.GroupRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,12 +22,21 @@ import kotlinx.coroutines.launch
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
 @HiltViewModel
-internal class ContactsViewModel @Inject constructor(private val repository: ContactRepository) : ViewModel() {
+internal class ContactsViewModel @Inject constructor(
+    private val contactRepository: ContactRepository,
+    private val groupRepository: GroupRepository,
+) : ViewModel() {
     private val localState = MutableStateFlow(LocalState())
 
-    val uiState: StateFlow<ContactsUiState> = combine(repository.observeContacts(), localState) { contacts, local ->
+    val uiState: StateFlow<ContactsUiState> = combine(
+        contactRepository.observeContacts(),
+        groupRepository.observeGroups(),
+        localState,
+    ) { contacts, groups, local ->
         ContactsUiState(
             contacts = contacts,
+            groups = groups.filter { it.canStartConversation },
+            selectedSection = local.selectedSection,
             isLoaded = true,
             isRefreshing = local.isRefreshing,
             isStartingConversation = local.isStartingConversation,
@@ -46,18 +57,28 @@ internal class ContactsViewModel @Inject constructor(private val repository: Con
         if (localState.value.isRefreshing) return
         localState.update { it.copy(isRefreshing = true) }
         viewModelScope.launch {
-            val result = repository.refresh()
-            localState.update {
-                it.copy(isRefreshing = false, error = (result as? RefreshResult.Failure)?.error?.toRefreshError())
-            }
+            val failure = listOf(contactRepository.refresh(), groupRepository.refresh())
+                .filterIsInstance<RefreshResult.Failure>()
+                .firstOrNull()
+            localState.update { it.copy(isRefreshing = false, error = failure?.error?.toRefreshError()) }
         }
     }
 
-    fun onContactClicked(contact: Contact) {
+    fun onSectionSelected(section: ContactsSection) = localState.update { it.copy(selectedSection = section) }
+
+    fun onContactClicked(contact: Contact) = startConversation { contactRepository.startDirectConversation(contact) }
+
+    fun onGroupClicked(group: Group) = startConversation { groupRepository.startGroupConversation(group) }
+
+    fun onConversationOpened() = localState.update { it.copy(conversationToOpen = null) }
+
+    fun onErrorShown() = localState.update { it.copy(error = null) }
+
+    private fun startConversation(start: suspend () -> StartConversationResult) {
         if (localState.value.isStartingConversation) return
         localState.update { it.copy(isStartingConversation = true) }
         viewModelScope.launch {
-            when (val result = repository.startDirectConversation(contact)) {
+            when (val result = start()) {
                 is StartConversationResult.Started ->
                     localState.update {
                         it.copy(isStartingConversation = false, conversationToOpen = result.conversationId)
@@ -68,11 +89,8 @@ internal class ContactsViewModel @Inject constructor(private val repository: Con
         }
     }
 
-    fun onConversationOpened() = localState.update { it.copy(conversationToOpen = null) }
-
-    fun onErrorShown() = localState.update { it.copy(error = null) }
-
     private data class LocalState(
+        val selectedSection: ContactsSection = ContactsSection.PEOPLE,
         val isRefreshing: Boolean = false,
         val isStartingConversation: Boolean = false,
         val conversationToOpen: String? = null,
