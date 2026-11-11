@@ -41,7 +41,11 @@ internal class AppViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             authRepository.authState.collect { state ->
-                if (state is AuthState.SignedIn) realtimeSync.start(viewModelScope) else stopWhenSignedOut()
+                when (state) {
+                    is AuthState.SignedIn -> realtimeSync.start(viewModelScope)
+                    AuthState.SignedOut -> stopWhenSignedOut()
+                    AuthState.Loading -> Unit
+                }
             }
         }
     }

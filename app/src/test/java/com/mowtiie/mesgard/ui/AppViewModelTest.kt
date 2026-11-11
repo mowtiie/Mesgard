@@ -97,6 +97,15 @@ class AppViewModelTest {
     }
 
     @Test
+    fun `keeps the lock while the session is still loading`() = runTest {
+        viewModel()
+
+        authStates.emit(AuthState.Loading)
+
+        verify(exactly = 0) { appLock.unlock() }
+    }
+
+    @Test
     fun `clears the lock when the user is signed out`() = runTest {
         viewModel()
 
