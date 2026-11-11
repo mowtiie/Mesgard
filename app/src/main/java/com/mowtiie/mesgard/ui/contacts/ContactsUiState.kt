@@ -46,9 +46,11 @@ internal data class ContactsUiState(
         get() = isLoaded && totalContacts == 0 && !isRefreshing && section == ContactsSection.PEOPLE
 
     val showNoResults: Boolean
-        get() = isFiltering &&
-            when (section) {
-                ContactsSection.PEOPLE -> contacts.isEmpty()
-                ContactsSection.GROUPS -> groups.isEmpty()
-            }
+        get() = showNoResults(section)
+
+    fun showNoResults(forSection: ContactsSection): Boolean = isFiltering &&
+        when (forSection) {
+            ContactsSection.PEOPLE -> contacts.isEmpty()
+            ContactsSection.GROUPS -> groups.isEmpty()
+        }
 }

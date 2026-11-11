@@ -2,7 +2,6 @@ package com.mowtiie.mesgard.ui.chats
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,7 +17,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -26,7 +28,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.RefreshError
-import com.mowtiie.mesgard.ui.common.ListSearchBar
+import com.mowtiie.mesgard.ui.common.OverflowMenu
+import com.mowtiie.mesgard.ui.common.RefreshMenuItem
+import com.mowtiie.mesgard.ui.common.SearchAction
+import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 
 @Composable
@@ -73,22 +78,44 @@ internal fun ConversationListScreen(
         if (scrollToTopRequests > 0) listState.animateScrollToItem(0)
     }
 
+    var isSearching by rememberSaveable { mutableStateOf(false) }
+    val closeSearch = {
+        isSearching = false
+        onQueryChanged("")
+    }
+
     TitledScreen(
         title = stringResource(R.string.tab_chats),
         modifier = modifier,
+        actions = {
+            if (uiState.showSearch) SearchAction { isSearching = true }
+            OverflowMenu { dismiss ->
+                RefreshMenuItem(enabled = !uiState.isRefreshing) {
+                    dismiss()
+                    onRefresh()
+                }
+            }
+        },
+        searchBar = if (isSearching) {
+            {
+                SearchAppBar(
+                    query = uiState.query,
+                    onQueryChange = onQueryChanged,
+                    onClose = closeSearch,
+                    placeholder = stringResource(R.string.chats_search_placeholder),
+                )
+            }
+        } else {
+            null
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (uiState.showSearch) {
-                ListSearchBar(uiState.query, onQueryChanged, stringResource(R.string.chats_search_placeholder))
-            }
-            PullToRefreshBox(
-                isRefreshing = uiState.isRefreshing,
-                onRefresh = onRefresh,
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                ConversationList(uiState = uiState, listState = listState, onConversationClick = onConversationClick)
-            }
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.padding(padding).fillMaxSize(),
+        ) {
+            ConversationList(uiState = uiState, listState = listState, onConversationClick = onConversationClick)
         }
     }
 }
