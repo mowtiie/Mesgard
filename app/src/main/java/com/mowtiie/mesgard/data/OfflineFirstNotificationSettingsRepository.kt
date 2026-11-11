@@ -32,10 +32,9 @@ internal class OfflineFirstNotificationSettingsRepository @Inject constructor(
     }
 
     override suspend fun setPreview(preview: NotificationPreview): RefreshResult {
-        val userId = authRepository.currentUserId ?: return RefreshResult.Failure(RefreshError.UNKNOWN)
         val previous = deviceSettings.settings.value.notificationPreview
         deviceSettings.setNotificationPreview(preview)
-        val outcome = attemptRemote(TAG) { remoteSource.saveUserPreview(userId, preview.serverValue) }
+        val outcome = attemptRemote(TAG) { remoteSource.saveUserPreview(preview.serverValue) }
         if (outcome is RemoteOutcome.Failure) deviceSettings.setNotificationPreview(previous)
         return outcome.toRefreshResult()
     }

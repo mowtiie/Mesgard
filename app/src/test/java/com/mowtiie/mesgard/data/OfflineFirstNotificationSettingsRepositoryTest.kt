@@ -67,19 +67,19 @@ class OfflineFirstNotificationSettingsRepositoryTest {
 
     @Test
     fun `setting a mode shows it immediately and saves it for the user`() = runTest {
-        coEvery { remoteSource.saveUserPreview(USER_ID, "hidden") } returns Unit
+        coEvery { remoteSource.saveUserPreview("hidden") } returns Unit
 
         val result = repository.setPreview(NotificationPreview.HIDDEN)
 
         assertEquals(RefreshResult.Success, result)
         assertEquals(NotificationPreview.HIDDEN, deviceSettings.settings.value.notificationPreview)
-        coVerify(exactly = 1) { remoteSource.saveUserPreview(USER_ID, "hidden") }
+        coVerify(exactly = 1) { remoteSource.saveUserPreview("hidden") }
     }
 
     @Test
     fun `setting a mode restores the previous mode when saving fails`() = runTest {
         deviceSettings.setNotificationPreview(NotificationPreview.SENDER_ONLY)
-        coEvery { remoteSource.saveUserPreview(any(), any()) } throws IOException("offline")
+        coEvery { remoteSource.saveUserPreview(any()) } throws IOException("offline")
 
         val result = repository.setPreview(NotificationPreview.HIDDEN)
 
