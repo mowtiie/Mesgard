@@ -55,11 +55,27 @@ jobs:
         with:
           version: 3.1.0
 
-      - name: Start the local Supabase stack (applies migrations and seed)
-        run: supabase start
+      # Only the database, auth (the auth schema) and realtime (the realtime schema) are needed by the tests.
+      - name: Start a minimal local Supabase stack (applies migrations and seed)
+        run: |
+          for attempt in 1 2 3; do
+            supabase start -x imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor,storage-api,kong,postgrest && exit 0
+            echo "supabase start failed (attempt $attempt)"
+            supabase stop --no-backup || true
+          done
+          exit 1
 
       - name: Run the pgTAP tests
         run: supabase test db
+
+      - name: Show container logs
+        if: failure()
+        run: |
+          docker ps -a
+          for container in $(docker ps -aq); do
+            echo "=== $(docker inspect --format '{{.Name}}' "$container")"
+            docker logs --tail 40 "$container" 2>&1
+          done
 
       - name: Stop the local stack
         if: always()
