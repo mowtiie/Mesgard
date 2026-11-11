@@ -2,9 +2,11 @@ package com.mowtiie.mesgard.testing
 
 import com.mowtiie.mesgard.data.local.ContactEntity
 import com.mowtiie.mesgard.data.local.ConversationEntity
+import com.mowtiie.mesgard.data.local.GroupEntity
 import com.mowtiie.mesgard.data.local.MessageEntity
 import com.mowtiie.mesgard.data.remote.ContactDto
 import com.mowtiie.mesgard.data.remote.ConversationSummaryDto
+import com.mowtiie.mesgard.data.remote.GroupDto
 import com.mowtiie.mesgard.data.remote.MessageDto
 import com.mowtiie.mesgard.data.remote.SenderDto
 import com.mowtiie.mesgard.domain.model.ConversationType
@@ -91,4 +93,13 @@ internal fun contactEntity(userId: String, name: String = "Name $userId", role: 
     userId = userId,
     displayName = name,
     role = role,
+)
+
+internal fun groupDto(id: String, name: String = "Name $id") = GroupDto(id = id, orgId = TEST_ORG_ID, name = name)
+
+internal fun groupEntity(id: String, name: String = "Name $id", canStartConversation: Boolean = true) = GroupEntity(
+    id = id,
+    orgId = TEST_ORG_ID,
+    name = name,
+    canStartConversation = canStartConversation,
 )

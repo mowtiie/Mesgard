@@ -2,12 +2,14 @@ package com.mowtiie.mesgard.di
 
 import com.mowtiie.mesgard.data.remote.ContactRemoteSource
 import com.mowtiie.mesgard.data.remote.ConversationRemoteSource
+import com.mowtiie.mesgard.data.remote.GroupRemoteSource
 import com.mowtiie.mesgard.data.remote.MessageRealtimeSource
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.ProfileRemoteSource
 import com.mowtiie.mesgard.data.remote.SettingsRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseContactRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseConversationRemoteSource
+import com.mowtiie.mesgard.data.remote.SupabaseGroupRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseMessageRealtimeSource
 import com.mowtiie.mesgard.data.remote.SupabaseMessageRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseProfileRemoteSource
@@ -37,4 +39,7 @@ internal abstract class RemoteSourceModule {
 
     @Binds
     abstract fun bindContactRemoteSource(source: SupabaseContactRemoteSource): ContactRemoteSource
+
+    @Binds
+    abstract fun bindGroupRemoteSource(source: SupabaseGroupRemoteSource): GroupRemoteSource
 }

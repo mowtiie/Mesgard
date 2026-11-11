@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.di
 
 import com.mowtiie.mesgard.data.OfflineFirstContactRepository
 import com.mowtiie.mesgard.data.OfflineFirstConversationRepository
+import com.mowtiie.mesgard.data.OfflineFirstGroupRepository
 import com.mowtiie.mesgard.data.OfflineFirstMessageRepository
 import com.mowtiie.mesgard.data.OfflineFirstNotificationSettingsRepository
 import com.mowtiie.mesgard.data.auth.SupabaseAuthRepository
@@ -15,6 +16,7 @@ import com.mowtiie.mesgard.domain.lock.AppLock
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
+import com.mowtiie.mesgard.domain.repository.GroupRepository
 import com.mowtiie.mesgard.domain.repository.MessageRepository
 import com.mowtiie.mesgard.domain.repository.NotificationSettingsRepository
 import com.mowtiie.mesgard.domain.sync.RealtimeSync
@@ -42,6 +44,9 @@ internal abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindContactRepository(repository: OfflineFirstContactRepository): ContactRepository
+
+    @Binds
+    abstract fun bindGroupRepository(repository: OfflineFirstGroupRepository): GroupRepository
 
     @Binds
     abstract fun bindNotificationSettingsRepository(
