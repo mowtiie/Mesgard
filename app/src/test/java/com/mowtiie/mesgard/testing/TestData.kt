@@ -1,7 +1,9 @@
 package com.mowtiie.mesgard.testing
 
+import com.mowtiie.mesgard.data.local.ContactEntity
 import com.mowtiie.mesgard.data.local.ConversationEntity
 import com.mowtiie.mesgard.data.local.MessageEntity
+import com.mowtiie.mesgard.data.remote.ContactDto
 import com.mowtiie.mesgard.data.remote.ConversationSummaryDto
 import com.mowtiie.mesgard.data.remote.MessageDto
 import com.mowtiie.mesgard.data.remote.SenderDto
@@ -75,4 +77,18 @@ internal fun messageDto(
     createdAt = createdAt,
     deletedAt = deletedAt,
     sender = senderName?.let { SenderDto(id = senderId, displayName = it) },
+)
+
+internal fun contactDto(userId: String, name: String = "Name $userId", role: String = "student") = ContactDto(
+    orgId = TEST_ORG_ID,
+    userId = userId,
+    role = role,
+    user = SenderDto(id = userId, displayName = name),
+)
+
+internal fun contactEntity(userId: String, name: String = "Name $userId", role: String = "student") = ContactEntity(
+    orgId = TEST_ORG_ID,
+    userId = userId,
+    displayName = name,
+    role = role,
 )

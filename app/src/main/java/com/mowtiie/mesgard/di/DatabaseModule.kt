@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.di
 
 import android.content.Context
 import androidx.room.Room
+import com.mowtiie.mesgard.data.local.ContactDao
 import com.mowtiie.mesgard.data.local.ConversationDao
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.MessageDao
@@ -46,6 +47,9 @@ internal object DatabaseModule {
 
     @Provides
     fun provideConversationDao(database: MesgardDatabase): ConversationDao = database.conversationDao()
+
+    @Provides
+    fun provideContactDao(database: MesgardDatabase): ContactDao = database.contactDao()
 
     @Provides
     fun provideProfileDao(database: MesgardDatabase): ProfileDao = database.profileDao()
