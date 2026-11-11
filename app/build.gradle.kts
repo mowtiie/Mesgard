@@ -69,6 +69,11 @@ android {
     }
 }
 
+// The Firebase configuration is supplied per developer and per deployment; without it the app builds and push stays off.
+if (file("google-services.json").exists()) {
+    pluginManager.apply(libs.plugins.google.services.get().pluginId)
+}
+
 room {
     schemaDirectory("$projectDir/schemas")
 }
@@ -101,6 +106,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
     implementation("${libs.sqlcipher.android.get()}@aar")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.supabase.auth)
     implementation(libs.supabase.postgrest)

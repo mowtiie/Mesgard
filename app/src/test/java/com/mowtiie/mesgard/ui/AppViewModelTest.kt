@@ -5,12 +5,14 @@ import com.mowtiie.mesgard.domain.lock.AppLock
 import com.mowtiie.mesgard.domain.model.AuthState
 import com.mowtiie.mesgard.domain.model.DeviceSettings
 import com.mowtiie.mesgard.domain.presence.PresenceTracker
+import com.mowtiie.mesgard.domain.push.PushRegistration
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.sync.RealtimeSync
 import com.mowtiie.mesgard.testing.FakeDeviceSettings
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -31,11 +33,13 @@ class AppViewModelTest {
     }
     private val realtimeSync = mockk<RealtimeSync>(relaxed = true)
     private val presenceTracker = mockk<PresenceTracker>(relaxed = true)
+    private val pushRegistration = mockk<PushRegistration>(relaxed = true)
     private val locked = MutableStateFlow(true)
     private val appLock = mockk<AppLock>(relaxed = true) { every { isLocked } returns locked }
     private val deviceSettings = FakeDeviceSettings(DeviceSettings(appLockEnabled = true))
 
-    private fun viewModel() = AppViewModel(authRepository, realtimeSync, presenceTracker, appLock, deviceSettings)
+    private fun viewModel() =
+        AppViewModel(authRepository, realtimeSync, presenceTracker, pushRegistration, appLock, deviceSettings)
 
     @Test
     fun `starts in the loading state until the session is known`() = runTest {
@@ -63,7 +67,10 @@ class AppViewModelTest {
 
         viewModel().onSignOutClicked()
 
-        coVerify(exactly = 1) { authRepository.signOut() }
+        coVerifyOrder {
+            pushRegistration.unregister()
+            authRepository.signOut()
+        }
     }
 
     @Test
@@ -73,6 +80,7 @@ class AppViewModelTest {
         authStates.emit(AuthState.SignedIn(USER_ID))
         verify(exactly = 1) { realtimeSync.start(any()) }
         verify(exactly = 1) { presenceTracker.start(any()) }
+        coVerify(exactly = 1) { pushRegistration.register() }
 
         authStates.emit(AuthState.SignedOut)
         verify(atLeast = 1) { realtimeSync.stop() }

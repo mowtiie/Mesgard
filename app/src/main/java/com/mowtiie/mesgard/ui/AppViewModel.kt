@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.mowtiie.mesgard.domain.lock.AppLock
 import com.mowtiie.mesgard.domain.model.AuthState
 import com.mowtiie.mesgard.domain.presence.PresenceTracker
+import com.mowtiie.mesgard.domain.push.PushRegistration
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.DeviceSettingsRepository
 import com.mowtiie.mesgard.domain.sync.RealtimeSync
@@ -23,6 +24,7 @@ internal class AppViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val realtimeSync: RealtimeSync,
     private val presenceTracker: PresenceTracker,
+    private val pushRegistration: PushRegistration,
     private val appLock: AppLock,
     deviceSettings: DeviceSettingsRepository,
 ) : ViewModel() {
@@ -55,6 +57,7 @@ internal class AppViewModel @Inject constructor(
     private fun startRealtime() {
         realtimeSync.start(viewModelScope)
         presenceTracker.start(viewModelScope)
+        viewModelScope.launch { pushRegistration.register() }
     }
 
     private fun stopWhenSignedOut() {
@@ -64,6 +67,9 @@ internal class AppViewModel @Inject constructor(
     }
 
     fun onSignOutClicked() {
-        viewModelScope.launch { authRepository.signOut() }
+        viewModelScope.launch {
+            pushRegistration.unregister()
+            authRepository.signOut()
+        }
     }
 }

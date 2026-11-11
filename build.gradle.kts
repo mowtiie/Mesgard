@@ -7,4 +7,5 @@ plugins {
     alias(libs.plugins.room) apply false
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.google.services) apply false
 }
