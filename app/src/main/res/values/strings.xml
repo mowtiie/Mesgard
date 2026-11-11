@@ -46,4 +46,23 @@
     <string name="lock_title">Mesgard is locked</string>
     <string name="lock_unlock_button">Unlock</string>
     <string name="lock_prompt_title">Unlock Mesgard</string>
+    <string name="settings_security">Security</string>
+    <string name="settings_screen_privacy">Screen privacy</string>
+    <string name="settings_screen_privacy_summary">Block screenshots and screen recording in Mesgard.</string>
+    <string name="settings_app_lock">App lock</string>
+    <string name="settings_app_lock_summary">Require your fingerprint, face or screen lock to open Mesgard.</string>
+    <string name="settings_lock_timeout">Lock the app</string>
+    <string name="lock_timeout_immediately">Immediately</string>
+    <string name="lock_timeout_one_minute">After 1 minute</string>
+    <string name="lock_timeout_five_minutes">After 5 minutes</string>
+    <string name="settings_notifications">Notification content</string>
+    <string name="preview_sender_and_text">Sender and message</string>
+    <string name="preview_sender_and_text_summary">Show who sent the message and its text.</string>
+    <string name="preview_sender_only">Sender only</string>
+    <string name="preview_sender_only_summary">Show who sent the message, but not its text.</string>
+    <string name="preview_hidden">Hide details</string>
+    <string name="preview_hidden_summary">Show only that a message arrived.</string>
+    <string name="settings_error_device_lock_required">Set a screen lock on this device to use app lock.</string>
+    <string name="settings_error_preview_network_unavailable">Unable to save the setting. Check your connection.</string>
+    <string name="settings_error_preview_unknown">Unable to save the setting. Try again later.</string>
 </resources>
