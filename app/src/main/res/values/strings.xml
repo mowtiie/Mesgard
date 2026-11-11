@@ -82,6 +82,16 @@
     <string name="lock_title">Mesgard is locked</string>
     <string name="lock_unlock_button">Unlock</string>
     <string name="lock_prompt_title">Unlock Mesgard</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_contrast">Contrast</string>
+    <string name="settings_dynamic_color">Dynamic color</string>
+    <string name="settings_dynamic_color_summary">Use colors from your wallpaper. Contrast levels are not available while this is on.</string>
+    <string name="theme_system">System default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="contrast_standard">Standard</string>
+    <string name="contrast_medium">Medium</string>
+    <string name="contrast_high">High</string>
     <string name="settings_security">Security</string>
     <string name="settings_screen_privacy">Screen privacy</string>
     <string name="settings_screen_privacy_summary">Block screenshots and screen recording in Mesgard.</string>

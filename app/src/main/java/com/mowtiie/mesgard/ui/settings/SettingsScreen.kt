@@ -7,16 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,8 +20,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,8 +32,6 @@ import com.mowtiie.mesgard.ui.lock.AuthOutcome
 import com.mowtiie.mesgard.ui.lock.BiometricAuthenticator
 import kotlinx.coroutines.launch
 import org.unifiedpush.android.connector.UnifiedPush
-
-private val SectionHeaderPadding = 16.dp
 
 @Composable
 internal fun SettingsScreenRoute(modifier: Modifier = Modifier, viewModel: SettingsViewModel = hiltViewModel()) {
@@ -112,6 +102,7 @@ internal fun SettingsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+            AppearanceSection()
             SectionHeader(R.string.settings_security)
             SwitchRow(
                 title = R.string.settings_screen_privacy,
@@ -142,55 +133,6 @@ internal fun SettingsScreen(
                 },
                 selected = uiState.settings.notificationPreview,
                 onSelected = onNotificationPreviewSelected,
-            )
-        }
-    }
-}
-
-private data class RadioLabel(@StringRes val title: Int, @StringRes val summary: Int? = null)
-
-@Composable
-private fun SectionHeader(@StringRes title: Int) {
-    Text(
-        text = stringResource(title),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(
-            start = SectionHeaderPadding,
-            end = SectionHeaderPadding,
-            top = SectionHeaderPadding,
-        ),
-    )
-}
-
-@Composable
-private fun SwitchRow(
-    @StringRes title: Int,
-    @StringRes summary: Int,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    ListItem(
-        modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
-        headlineContent = { Text(stringResource(title)) },
-        supportingContent = { Text(stringResource(summary)) },
-        trailingContent = { Switch(checked = checked, onCheckedChange = null) },
-    )
-}
-
-@Composable
-private fun <T> RadioGroup(options: List<Pair<T, RadioLabel>>, selected: T, onSelected: (T) -> Unit) {
-    Column(modifier = Modifier.selectableGroup()) {
-        options.forEach { (value, label) ->
-            ListItem(
-                modifier = Modifier.selectable(
-                    selected = value == selected,
-                    role = Role.RadioButton,
-                    onClick = { onSelected(value) },
-                ),
-                leadingContent = { RadioButton(selected = value == selected, onClick = null) },
-                headlineContent = { Text(stringResource(label.title)) },
-                supportingContent = label.summary?.let { summary -> { Text(stringResource(summary)) } },
             )
         }
     }

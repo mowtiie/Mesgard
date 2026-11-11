@@ -2,8 +2,10 @@ package com.mowtiie.mesgard.data.local
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.mowtiie.mesgard.domain.model.ContrastLevel
 import com.mowtiie.mesgard.domain.model.LockTimeout
 import com.mowtiie.mesgard.domain.model.NotificationPreview
+import com.mowtiie.mesgard.domain.model.ThemeMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -66,5 +68,38 @@ class SharedPreferencesDeviceSettingsTest {
         settings.setAppLockEnabled(true)
 
         assertTrue(settings.settings.value.appLockEnabled)
+    }
+
+    @Test
+    fun `defaults to the system theme, standard contrast and no dynamic color`() {
+        val settings = SharedPreferencesDeviceSettings(preferences).settings.value
+
+        assertEquals(ThemeMode.SYSTEM, settings.themeMode)
+        assertEquals(ContrastLevel.STANDARD, settings.contrast)
+        assertFalse(settings.dynamicColor)
+    }
+
+    @Test
+    fun `keeps the appearance choices for a later instance`() {
+        val first = SharedPreferencesDeviceSettings(preferences)
+        first.setThemeMode(ThemeMode.DARK)
+        first.setContrast(ContrastLevel.HIGH)
+        first.setDynamicColor(true)
+
+        val restored = SharedPreferencesDeviceSettings(preferences).settings.value
+
+        assertEquals(ThemeMode.DARK, restored.themeMode)
+        assertEquals(ContrastLevel.HIGH, restored.contrast)
+        assertTrue(restored.dynamicColor)
+    }
+
+    @Test
+    fun `falls back to the defaults when a stored appearance value is unknown`() {
+        preferences.edit().putString("theme_mode", "SEPIA").putString("contrast", "EXTREME").commit()
+
+        val settings = SharedPreferencesDeviceSettings(preferences).settings.value
+
+        assertEquals(ThemeMode.SYSTEM, settings.themeMode)
+        assertEquals(ContrastLevel.STANDARD, settings.contrast)
     }
 }

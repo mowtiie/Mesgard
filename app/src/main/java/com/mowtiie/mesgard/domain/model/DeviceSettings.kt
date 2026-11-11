@@ -20,9 +20,24 @@ internal enum class NotificationPreview(val serverValue: String) {
     }
 }
 
+internal enum class ThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK,
+}
+
+internal enum class ContrastLevel {
+    STANDARD,
+    MEDIUM,
+    HIGH,
+}
+
 internal data class DeviceSettings(
     val screenPrivacyEnabled: Boolean = true,
     val appLockEnabled: Boolean = false,
     val lockTimeout: LockTimeout = LockTimeout.ONE_MINUTE,
     val notificationPreview: NotificationPreview = NotificationPreview.SENDER_ONLY,
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val contrast: ContrastLevel = ContrastLevel.STANDARD,
+    val dynamicColor: Boolean = false,
 )
