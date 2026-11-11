@@ -1,0 +1,297 @@
+package com.mowtiie.mesgard.ui.conversation
+
+import androidx.lifecycle.SavedStateHandle
+import app.cash.turbine.test
+import com.mowtiie.mesgard.domain.model.ConversationSummary
+import com.mowtiie.mesgard.domain.model.ConversationType
+import com.mowtiie.mesgard.domain.model.Message
+import com.mowtiie.mesgard.domain.model.MessageStatus
+import com.mowtiie.mesgard.domain.model.PageResult
+import com.mowtiie.mesgard.domain.model.RefreshError
+import com.mowtiie.mesgard.domain.model.RefreshResult
+import com.mowtiie.mesgard.domain.model.SendRejection
+import com.mowtiie.mesgard.domain.model.SendResult
+import com.mowtiie.mesgard.domain.repository.ConversationRepository
+import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
+import com.mowtiie.mesgard.domain.repository.MessageRepository
+import com.mowtiie.mesgard.testing.MainDispatcherRule
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
+class ConversationViewModelTest {
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val conversation = MutableStateFlow<ConversationSummary?>(summary())
+    private val messages = MutableStateFlow(emptyList<Message>())
+    private val conversationRepository = mockk<ConversationRepository> {
+        every { observeConversation(CONVERSATION_ID) } returns conversation
+    }
+    private val messageRepository = mockk<MessageRepository> {
+        every { observeMessages(CONVERSATION_ID, any()) } returns messages
+        coEvery { refresh(CONVERSATION_ID) } returns RefreshResult.Success
+        coEvery { markConversationRead(CONVERSATION_ID) } returns RefreshResult.Success
+    }
+
+    @Test
+    fun `exposes the conversation details and its messages`() = runTest {
+        messages.value = listOf(message("m1"))
+
+        viewModel().uiState.test {
+            val state = expectMostRecentItem()
+            assertEquals("Study group", state.title)
+            assertEquals(ConversationType.GROUP, state.type)
+            assertEquals(listOf("m1"), state.messages.map { it.id })
+            assertTrue(state.isLoaded)
+        }
+    }
+
+    @Test
+    fun `refreshes the messages when it is created`() = runTest {
+        viewModel().uiState.test { cancelAndIgnoreRemainingEvents() }
+
+        coVerify(exactly = 1) { messageRepository.refresh(CONVERSATION_ID) }
+    }
+
+    @Test
+    fun `reports a refresh failure and clears it once shown`() = runTest {
+        coEvery { messageRepository.refresh(CONVERSATION_ID) } returns
+            RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            assertEquals(ConversationError.NETWORK_UNAVAILABLE, expectMostRecentItem().error)
+            viewModel.onErrorShown()
+            assertNull(awaitItem().error)
+        }
+    }
+
+    @Test
+    fun `shows sender names in group and announcement conversations but not in direct ones`() = runTest {
+        conversation.value = summary(type = ConversationType.DIRECT)
+        viewModel().uiState.test { assertFalse(expectMostRecentItem().showSenderNames) }
+
+        conversation.value = summary(type = ConversationType.ANNOUNCEMENT)
+        viewModel().uiState.test { assertTrue(expectMostRecentItem().showSenderNames) }
+    }
+
+    @Test
+    fun `reports whether the user can post`() = runTest {
+        conversation.value = summary(canPost = false)
+
+        viewModel().uiState.test { assertFalse(expectMostRecentItem().canPost) }
+    }
+
+    @Test
+    fun `shows the empty message once loaded without messages`() = runTest {
+        viewModel().uiState.test { assertTrue(expectMostRecentItem().showEmptyMessage) }
+    }
+
+    @Test
+    fun `cannot send a blank draft`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.onDraftChanged("   ")
+
+        viewModel.uiState.test { assertFalse(expectMostRecentItem().canSend) }
+    }
+
+    @Test
+    fun `cannot send a draft that is longer than the limit`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.onDraftChanged("a".repeat(MAX_LENGTH + 1))
+
+        viewModel.uiState.test { assertFalse(expectMostRecentItem().canSend) }
+    }
+
+    @Test
+    fun `sends the draft and clears it once it is queued`() = runTest {
+        coEvery { messageRepository.send(CONVERSATION_ID, "Hello") } returns SendResult.Queued
+        val viewModel = viewModel()
+        viewModel.onDraftChanged("Hello")
+
+        viewModel.onSendClicked()
+
+        coVerify(exactly = 1) { messageRepository.send(CONVERSATION_ID, "Hello") }
+        viewModel.uiState.test { assertEquals("", expectMostRecentItem().draft) }
+    }
+
+    @Test
+    fun `keeps the draft and reports the reason when sending is rejected`() = runTest {
+        coEvery { messageRepository.send(any(), any()) } returns
+            SendResult.Rejected(SendRejection.MESSAGE_TOO_LONG)
+        val viewModel = viewModel()
+        viewModel.onDraftChanged("Hello")
+
+        viewModel.onSendClicked()
+
+        viewModel.uiState.test {
+            val state = expectMostRecentItem()
+            assertEquals("Hello", state.draft)
+            assertEquals(ConversationError.MESSAGE_TOO_LONG, state.error)
+        }
+    }
+
+    @Test
+    fun `does not send a blank draft`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onDraftChanged("  ")
+
+        viewModel.onSendClicked()
+
+        coVerify(exactly = 0) { messageRepository.send(any(), any()) }
+    }
+
+    @Test
+    fun `retries a failed message through the repository`() = runTest {
+        coEvery { messageRepository.retry("failed") } returns Unit
+
+        viewModel().onRetryClicked("failed")
+
+        coVerify(exactly = 1) { messageRepository.retry("failed") }
+    }
+
+    @Test
+    fun `loading older messages widens the window and fetches the previous page`() = runTest {
+        coEvery { messageRepository.loadOlder(CONVERSATION_ID) } returns PageResult.Loaded(endReached = false)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onLoadOlder()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        verify { messageRepository.observeMessages(CONVERSATION_ID, MESSAGE_PAGE_SIZE * 2) }
+        coVerify(exactly = 1) { messageRepository.loadOlder(CONVERSATION_ID) }
+    }
+
+    @Test
+    fun `stops fetching older messages once the history is complete`() = runTest {
+        coEvery { messageRepository.loadOlder(CONVERSATION_ID) } returns PageResult.Loaded(endReached = true)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onLoadOlder()
+            viewModel.onLoadOlder()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify(exactly = 1) { messageRepository.loadOlder(CONVERSATION_ID) }
+    }
+
+    @Test
+    fun `reports that older messages are loading and ignores a second request meanwhile`() = runTest {
+        val pending = CompletableDeferred<PageResult>()
+        coEvery { messageRepository.loadOlder(CONVERSATION_ID) } coAnswers { pending.await() }
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onLoadOlder()
+            viewModel.onLoadOlder()
+            assertTrue(expectMostRecentItem().isLoadingOlder)
+            pending.complete(PageResult.Loaded(endReached = false))
+            assertFalse(expectMostRecentItem().isLoadingOlder)
+        }
+
+        coVerify(exactly = 1) { messageRepository.loadOlder(CONVERSATION_ID) }
+    }
+
+    @Test
+    fun `reports a failure to load older messages`() = runTest {
+        coEvery { messageRepository.loadOlder(CONVERSATION_ID) } returns
+            PageResult.Failure(RefreshError.UNKNOWN)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onLoadOlder()
+            val state = expectMostRecentItem()
+            assertEquals(ConversationError.UNKNOWN, state.error)
+            assertFalse(state.isLoadingOlder)
+        }
+    }
+
+    @Test
+    fun `marks the conversation as read when a new incoming message arrives`() = runTest {
+        viewModel()
+
+        messages.value = listOf(message("incoming"))
+
+        coVerify(exactly = 1) { messageRepository.markConversationRead(CONVERSATION_ID) }
+    }
+
+    @Test
+    fun `marks the conversation as read once for the same incoming message`() = runTest {
+        viewModel()
+
+        messages.value = listOf(message("incoming"))
+        messages.value = listOf(message("mine", isOwn = true), message("incoming"))
+
+        coVerify(exactly = 1) { messageRepository.markConversationRead(CONVERSATION_ID) }
+    }
+
+    @Test
+    fun `does not mark the conversation as read for own or unsent messages`() = runTest {
+        viewModel()
+
+        messages.value = listOf(
+            message("mine", isOwn = true),
+            message("pending", status = MessageStatus.PENDING),
+        )
+
+        coVerify(exactly = 0) { messageRepository.markConversationRead(any()) }
+    }
+
+    private fun viewModel() = ConversationViewModel(
+        savedStateHandle = SavedStateHandle(mapOf("conversationId" to CONVERSATION_ID)),
+        conversationRepository = conversationRepository,
+        messageRepository = messageRepository,
+    )
+
+    private fun summary(type: ConversationType = ConversationType.GROUP, canPost: Boolean = true) = ConversationSummary(
+        id = CONVERSATION_ID,
+        type = type,
+        title = "Study group",
+        lastMessagePreview = null,
+        lastActivityAtEpochMillis = 0L,
+        unreadCount = 0,
+        canPost = canPost,
+    )
+
+    private fun message(id: String, isOwn: Boolean = false, status: MessageStatus = MessageStatus.SENT) = Message(
+        id = id,
+        conversationId = CONVERSATION_ID,
+        senderId = if (isOwn) "me" else "other",
+        senderName = "Ana",
+        body = "Hello",
+        createdAtEpochMillis = 1_000L,
+        isEdited = false,
+        isDeleted = false,
+        status = status,
+        isOwn = isOwn,
+    )
+
+    private companion object {
+        const val CONVERSATION_ID = "chat"
+        const val MAX_LENGTH = 4000
+    }
+}
