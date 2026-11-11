@@ -9,14 +9,20 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.domain.model.AuthState
 import com.mowtiie.mesgard.ui.auth.SignInRoute
+import com.mowtiie.mesgard.ui.lock.LockScreenRoute
 import com.mowtiie.mesgard.ui.navigation.MesgardNavHost
 
 @Composable
 internal fun MesgardApp(viewModel: AppViewModel = hiltViewModel()) {
     val authState by viewModel.authState.collectAsStateWithLifecycle()
+    val isLocked by viewModel.isLocked.collectAsStateWithLifecycle()
     when (authState) {
         AuthState.Loading -> Surface(modifier = Modifier.fillMaxSize()) {}
         AuthState.SignedOut -> SignInRoute()
-        is AuthState.SignedIn -> MesgardNavHost(onSignOut = viewModel::onSignOutClicked)
+        is AuthState.SignedIn -> if (isLocked) {
+            LockScreenRoute()
+        } else {
+            MesgardNavHost(onSignOut = viewModel::onSignOutClicked)
+        }
     }
 }

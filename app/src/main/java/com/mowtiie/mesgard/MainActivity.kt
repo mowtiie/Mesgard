@@ -2,9 +2,9 @@ package com.mowtiie.mesgard
 
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -17,7 +17,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     @Inject
     internal lateinit var deviceSettings: DeviceSettingsRepository
 

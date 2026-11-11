@@ -43,4 +43,7 @@
     <string name="role_member">Member</string>
     <string name="start_conversation_error_network_unavailable">Unable to start the conversation. Check your connection.</string>
     <string name="start_conversation_error_unknown">Unable to start the conversation. Try again later.</string>
+    <string name="lock_title">Mesgard is locked</string>
+    <string name="lock_unlock_button">Unlock</string>
+    <string name="lock_prompt_title">Unlock Mesgard</string>
 </resources>

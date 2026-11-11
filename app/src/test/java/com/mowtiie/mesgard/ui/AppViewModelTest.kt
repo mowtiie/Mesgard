@@ -1,9 +1,12 @@
 package com.mowtiie.mesgard.ui
 
 import app.cash.turbine.test
+import com.mowtiie.mesgard.domain.lock.AppLock
 import com.mowtiie.mesgard.domain.model.AuthState
+import com.mowtiie.mesgard.domain.model.DeviceSettings
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.sync.RealtimeSync
+import com.mowtiie.mesgard.testing.FakeDeviceSettings
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -11,6 +14,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -25,17 +29,22 @@ class AppViewModelTest {
         every { authState } returns authStates
     }
     private val realtimeSync = mockk<RealtimeSync>(relaxed = true)
+    private val locked = MutableStateFlow(true)
+    private val appLock = mockk<AppLock>(relaxed = true) { every { isLocked } returns locked }
+    private val deviceSettings = FakeDeviceSettings(DeviceSettings(appLockEnabled = true))
+
+    private fun viewModel() = AppViewModel(authRepository, realtimeSync, appLock, deviceSettings)
 
     @Test
     fun `starts in the loading state until the session is known`() = runTest {
-        AppViewModel(authRepository, realtimeSync).authState.test {
+        viewModel().authState.test {
             assertEquals(AuthState.Loading, awaitItem())
         }
     }
 
     @Test
     fun `follows the authentication state of the repository`() = runTest {
-        AppViewModel(authRepository, realtimeSync).authState.test {
+        viewModel().authState.test {
             assertEquals(AuthState.Loading, awaitItem())
 
             authStates.emit(AuthState.SignedIn(USER_ID))
@@ -50,20 +59,50 @@ class AppViewModelTest {
     fun `signs out through the repository`() {
         coEvery { authRepository.signOut() } returns Unit
 
-        AppViewModel(authRepository, realtimeSync).onSignOutClicked()
+        viewModel().onSignOutClicked()
 
         coVerify(exactly = 1) { authRepository.signOut() }
     }
 
     @Test
     fun `starts realtime sync when the user is signed in and stops it when signed out`() = runTest {
-        AppViewModel(authRepository, realtimeSync)
+        viewModel()
 
         authStates.emit(AuthState.SignedIn(USER_ID))
         verify(exactly = 1) { realtimeSync.start(any()) }
 
         authStates.emit(AuthState.SignedOut)
         verify(atLeast = 1) { realtimeSync.stop() }
+    }
+
+    @Test
+    fun `reports locked while app lock is enabled and locked`() = runTest {
+        viewModel().isLocked.test { assertEquals(true, expectMostRecentItem()) }
+    }
+
+    @Test
+    fun `reports unlocked once the lock is cleared`() = runTest {
+        viewModel().isLocked.test {
+            assertEquals(true, expectMostRecentItem())
+            locked.value = false
+            assertEquals(false, awaitItem())
+        }
+    }
+
+    @Test
+    fun `does not report locked when app lock is turned off`() = runTest {
+        deviceSettings.setAppLockEnabled(false)
+
+        viewModel().isLocked.test { assertEquals(false, expectMostRecentItem()) }
+    }
+
+    @Test
+    fun `clears the lock when the user is signed out`() = runTest {
+        viewModel()
+
+        authStates.emit(AuthState.SignedOut)
+
+        verify(atLeast = 1) { appLock.unlock() }
     }
 
     private companion object {
