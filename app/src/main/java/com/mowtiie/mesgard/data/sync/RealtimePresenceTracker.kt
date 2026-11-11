@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.data.sync
 
 import android.util.Log
 import com.mowtiie.mesgard.data.remote.PresenceRemoteSource
+import com.mowtiie.mesgard.domain.lifecycle.AppVisibility
 import com.mowtiie.mesgard.domain.presence.PresenceTracker
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import javax.inject.Inject
@@ -31,8 +32,8 @@ private const val MAX_BACKOFF_EXPONENT = 5
 internal class RealtimePresenceTracker @Inject constructor(
     private val source: PresenceRemoteSource,
     private val authRepository: AuthRepository,
+    private val appVisibility: AppVisibility,
 ) : PresenceTracker {
-    private val isForeground = MutableStateFlow(false)
     private val mutableOnlineUserIds = MutableStateFlow(emptySet<String>())
     private var job: Job? = null
 
@@ -41,7 +42,7 @@ internal class RealtimePresenceTracker @Inject constructor(
     override fun start(scope: CoroutineScope) {
         if (job?.isActive == true) return
         job = scope.launch {
-            isForeground.collectLatest { visible ->
+            appVisibility.isForeground.collectLatest { visible ->
                 if (visible) trackPresence() else mutableOnlineUserIds.value = emptySet()
             }
         }
@@ -51,14 +52,6 @@ internal class RealtimePresenceTracker @Inject constructor(
         job?.cancel()
         job = null
         mutableOnlineUserIds.value = emptySet()
-    }
-
-    override fun onAppForegrounded() {
-        isForeground.value = true
-    }
-
-    override fun onAppBackgrounded() {
-        isForeground.value = false
     }
 
     private suspend fun trackPresence() {

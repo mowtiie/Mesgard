@@ -10,8 +10,4 @@ internal interface PresenceTracker {
     fun start(scope: CoroutineScope)
 
     fun stop()
-
-    fun onAppForegrounded()
-
-    fun onAppBackgrounded()
 }

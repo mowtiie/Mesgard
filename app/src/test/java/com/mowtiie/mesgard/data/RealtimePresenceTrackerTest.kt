@@ -1,5 +1,6 @@
 package com.mowtiie.mesgard.data
 
+import com.mowtiie.mesgard.data.lifecycle.InMemoryAppVisibility
 import com.mowtiie.mesgard.data.remote.PresenceRemoteSource
 import com.mowtiie.mesgard.data.sync.RealtimePresenceTracker
 import com.mowtiie.mesgard.domain.repository.AuthRepository
@@ -41,7 +42,8 @@ class RealtimePresenceTrackerTest {
                 .onCompletion { openSessions-- }
     }
     private val authRepository = mockk<AuthRepository> { every { currentUserId } returns "me" }
-    private val tracker = RealtimePresenceTracker(source, authRepository)
+    private val visibility = InMemoryAppVisibility()
+    private val tracker = RealtimePresenceTracker(source, authRepository, visibility)
 
     @Test
     fun `does not track while the app is in the background`() = runTest {
@@ -55,7 +57,7 @@ class RealtimePresenceTrackerTest {
     @Test
     fun `publishes the online users while the app is in the foreground`() = runTest {
         tracker.start(backgroundScope)
-        tracker.onAppForegrounded()
+        visibility.setForeground(true)
         runCurrent()
 
         onlineByOrganization.getValue("org-a").value = setOf("ana", "me")
@@ -68,7 +70,7 @@ class RealtimePresenceTrackerTest {
     fun `merges the online users of every organization`() = runTest {
         organizationIds = listOf("org-a", "org-b")
         tracker.start(backgroundScope)
-        tracker.onAppForegrounded()
+        visibility.setForeground(true)
         runCurrent()
 
         onlineByOrganization.getValue("org-a").value = setOf("ana")
@@ -81,12 +83,12 @@ class RealtimePresenceTrackerTest {
     @Test
     fun `leaves the channel and clears the users when the app goes to the background`() = runTest {
         tracker.start(backgroundScope)
-        tracker.onAppForegrounded()
+        visibility.setForeground(true)
         runCurrent()
         onlineByOrganization.getValue("org-a").value = setOf("ana")
         runCurrent()
 
-        tracker.onAppBackgrounded()
+        visibility.setForeground(false)
         runCurrent()
 
         assertEquals(0, openSessions)
@@ -96,9 +98,9 @@ class RealtimePresenceTrackerTest {
     @Test
     fun `tracks again when the app returns to the foreground`() = runTest {
         tracker.start(backgroundScope)
-        tracker.onAppForegrounded()
-        tracker.onAppBackgrounded()
-        tracker.onAppForegrounded()
+        visibility.setForeground(true)
+        visibility.setForeground(false)
+        visibility.setForeground(true)
         runCurrent()
 
         assertEquals(1, openSessions)
@@ -107,7 +109,7 @@ class RealtimePresenceTrackerTest {
     @Test
     fun `stopping leaves the channel and clears the users`() = runTest {
         tracker.start(backgroundScope)
-        tracker.onAppForegrounded()
+        visibility.setForeground(true)
         runCurrent()
         onlineByOrganization.getValue("org-a").value = setOf("ana")
         runCurrent()
@@ -123,7 +125,7 @@ class RealtimePresenceTrackerTest {
     fun `retries after a failure to load the organizations`() = runTest {
         failuresBeforeFetching = 1
         tracker.start(backgroundScope)
-        tracker.onAppForegrounded()
+        visibility.setForeground(true)
         runCurrent()
         assertEquals(0, openSessions)
 
@@ -137,7 +139,7 @@ class RealtimePresenceTrackerTest {
     fun `does nothing when nobody is signed in`() = runTest {
         every { authRepository.currentUserId } returns null
         tracker.start(backgroundScope)
-        tracker.onAppForegrounded()
+        visibility.setForeground(true)
         runCurrent()
 
         assertEquals(0, openSessions)
