@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Mesgard</string>
+    <string name="notification_channel_messages">Messages</string>
+    <string name="notification_new_message">New message</string>
     <string name="sign_in_title">Sign in</string>
     <string name="sign_in_email_label">Email</string>
     <string name="sign_in_password_label">Password</string>

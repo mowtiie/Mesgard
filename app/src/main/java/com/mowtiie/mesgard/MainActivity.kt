@@ -1,13 +1,18 @@
 package com.mowtiie.mesgard
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.mowtiie.mesgard.data.push.EXTRA_CONVERSATION_ID
 import com.mowtiie.mesgard.domain.lifecycle.AppVisibility
 import com.mowtiie.mesgard.domain.lock.AppLock
 import com.mowtiie.mesgard.domain.repository.DeviceSettingsRepository
@@ -28,13 +33,19 @@ class MainActivity : FragmentActivity() {
     @Inject
     internal lateinit var appVisibility: AppVisibility
 
+    private var conversationToOpen by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyScreenPrivacy(deviceSettings.settings.value.screenPrivacyEnabled)
+        conversationToOpen = intent.getStringExtra(EXTRA_CONVERSATION_ID)
         enableEdgeToEdge()
         setContent {
             MesgardTheme {
-                MesgardApp()
+                MesgardApp(
+                    conversationToOpen = conversationToOpen,
+                    onConversationOpened = { conversationToOpen = null },
+                )
             }
         }
         lifecycleScope.launch {
@@ -42,6 +53,11 @@ class MainActivity : FragmentActivity() {
                 deviceSettings.settings.collect { applyScreenPrivacy(it.screenPrivacyEnabled) }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        intent.getStringExtra(EXTRA_CONVERSATION_ID)?.let { conversationToOpen = it }
     }
 
     override fun onStart() {

@@ -13,7 +13,11 @@ import com.mowtiie.mesgard.ui.lock.LockScreenRoute
 import com.mowtiie.mesgard.ui.navigation.MesgardNavHost
 
 @Composable
-internal fun MesgardApp(viewModel: AppViewModel = hiltViewModel()) {
+internal fun MesgardApp(
+    conversationToOpen: String?,
+    onConversationOpened: () -> Unit,
+    viewModel: AppViewModel = hiltViewModel(),
+) {
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val isLocked by viewModel.isLocked.collectAsStateWithLifecycle()
     when (authState) {
@@ -22,7 +26,11 @@ internal fun MesgardApp(viewModel: AppViewModel = hiltViewModel()) {
         is AuthState.SignedIn -> if (isLocked) {
             LockScreenRoute()
         } else {
-            MesgardNavHost(onSignOut = viewModel::onSignOutClicked)
+            MesgardNavHost(
+                onSignOut = viewModel::onSignOutClicked,
+                conversationToOpen = conversationToOpen,
+                onConversationOpened = onConversationOpened,
+            )
         }
     }
 }

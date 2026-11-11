@@ -30,6 +30,7 @@ internal fun MainScreen(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
+    RequestNotificationPermissionOnce()
     val backStackEntry by navController.currentBackStackEntryAsState()
     var chatsScrollToTopRequests by rememberSaveable { mutableIntStateOf(0) }
     NavigationSuiteScaffold(
