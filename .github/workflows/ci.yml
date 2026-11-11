@@ -59,7 +59,7 @@ jobs:
       - name: Start a minimal local Supabase stack (applies migrations and seed)
         run: |
           for attempt in 1 2 3; do
-            supabase start -x imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor,storage-api,kong,postgrest && exit 0
+            supabase start -x imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor,kong,postgrest && exit 0
             echo "supabase start failed (attempt $attempt)"
             supabase stop --no-backup || true
           done
