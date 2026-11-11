@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.ui.chats
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,6 +26,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.RefreshError
+import com.mowtiie.mesgard.ui.common.ListSearchBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 
 @Composable
@@ -39,6 +41,7 @@ internal fun ConversationListRoute(
         uiState = uiState,
         scrollToTopRequests = scrollToTopRequests,
         onRefresh = viewModel::onRefresh,
+        onQueryChanged = viewModel::onQueryChanged,
         onRefreshErrorShown = viewModel::onRefreshErrorShown,
         onConversationClick = onConversationClick,
         modifier = modifier,
@@ -51,6 +54,7 @@ internal fun ConversationListScreen(
     uiState: ConversationListUiState,
     scrollToTopRequests: Int,
     onRefresh: () -> Unit,
+    onQueryChanged: (String) -> Unit,
     onRefreshErrorShown: () -> Unit,
     onConversationClick: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -74,12 +78,17 @@ internal fun ConversationListScreen(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        PullToRefreshBox(
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = onRefresh,
-            modifier = Modifier.padding(padding).fillMaxSize(),
-        ) {
-            ConversationList(uiState = uiState, listState = listState, onConversationClick = onConversationClick)
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            if (uiState.showSearch) {
+                ListSearchBar(uiState.query, onQueryChanged, stringResource(R.string.chats_search_placeholder))
+            }
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = onRefresh,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                ConversationList(uiState = uiState, listState = listState, onConversationClick = onConversationClick)
+            }
         }
     }
 }
@@ -97,6 +106,16 @@ private fun ConversationList(
                 Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         text = stringResource(R.string.conversation_list_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
+        }
+        if (uiState.showNoResults) {
+            item(key = "no-results") {
+                Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = stringResource(R.string.search_no_results),
                         style = MaterialTheme.typography.bodyLarge,
                     )
                 }

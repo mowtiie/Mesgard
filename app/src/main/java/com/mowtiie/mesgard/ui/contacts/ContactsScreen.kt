@@ -35,6 +35,7 @@ import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.Group
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.ListSearchBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 
 @Composable
@@ -93,7 +94,9 @@ internal fun ContactsScreen(
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (uiState.isStartingConversation) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             if (uiState.showSections) SectionSwitch(uiState.section, onSectionSelected)
-            if (uiState.showSearch) ContactsSearchBar(uiState.query, onQueryChanged)
+            if (uiState.showSearch) {
+                ListSearchBar(uiState.query, onQueryChanged, stringResource(R.string.contacts_search_placeholder))
+            }
             PullToRefreshBox(
                 isRefreshing = uiState.isRefreshing,
                 onRefresh = onRefresh,
@@ -146,7 +149,7 @@ private fun ContactList(
             item(key = "no-results") {
                 Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        text = stringResource(R.string.contacts_no_results),
+                        text = stringResource(R.string.search_no_results),
                         style = MaterialTheme.typography.bodyLarge,
                     )
                 }

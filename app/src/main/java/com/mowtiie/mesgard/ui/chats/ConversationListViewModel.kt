@@ -2,9 +2,11 @@ package com.mowtiie.mesgard.ui.chats
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mowtiie.mesgard.domain.model.ConversationSummary
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
+import com.mowtiie.mesgard.ui.common.matchesQuery
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,13 +23,17 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 internal class ConversationListViewModel @Inject constructor(private val repository: ConversationRepository) :
     ViewModel() {
     private val refreshState = MutableStateFlow(RefreshState())
+    private val query = MutableStateFlow("")
 
     val uiState: StateFlow<ConversationListUiState> = combine(
         repository.observeConversations(),
         refreshState,
-    ) { conversations, refresh ->
+        query,
+    ) { conversations, refresh, currentQuery ->
         ConversationListUiState(
-            conversations = conversations,
+            conversations = conversations.filter { it.matches(currentQuery) },
+            totalConversations = conversations.size,
+            query = currentQuery,
             isLoaded = true,
             isRefreshing = refresh.isRefreshing,
             refreshError = refresh.error,
@@ -51,9 +57,16 @@ internal class ConversationListViewModel @Inject constructor(private val reposit
         }
     }
 
+    fun onQueryChanged(newQuery: String) {
+        query.value = newQuery
+    }
+
     fun onRefreshErrorShown() {
         refreshState.update { it.copy(error = null) }
     }
 
     private data class RefreshState(val isRefreshing: Boolean = false, val error: RefreshError? = null)
 }
+
+private fun ConversationSummary.matches(query: String) =
+    query.isBlank() || matchesQuery(title.orEmpty(), query) || matchesQuery(lastMessagePreview.orEmpty(), query)

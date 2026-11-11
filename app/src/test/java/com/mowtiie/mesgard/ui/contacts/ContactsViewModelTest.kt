@@ -285,11 +285,4 @@ class ContactsViewModelTest {
     fun `hides the search field when there are no contacts and no query`() = runTest {
         viewModel().uiState.test { assertFalse(expectMostRecentItem().showSearch) }
     }
-
-    @Test
-    fun `matches a query inside a name and ignores surrounding spaces`() {
-        assertTrue(matchesQuery("Ana Reyes", " rey "))
-        assertTrue(matchesQuery("Ana Reyes", ""))
-        assertFalse(matchesQuery("Ana Reyes", "ben"))
-    }
 }

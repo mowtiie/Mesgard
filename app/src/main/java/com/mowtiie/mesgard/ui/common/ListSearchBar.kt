@@ -1,4 +1,4 @@
-package com.mowtiie.mesgard.ui.contacts
+package com.mowtiie.mesgard.ui.common
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +21,12 @@ import com.mowtiie.mesgard.R
 /** Filters the list below it as the user types, so the search bar stays collapsed and never opens a results view. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ContactsSearchBar(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
+internal fun ListSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+) {
     SearchBar(
         inputField = {
             SearchBarDefaults.InputField(
@@ -30,14 +35,14 @@ internal fun ContactsSearchBar(query: String, onQueryChange: (String) -> Unit, m
                 onSearch = {},
                 expanded = false,
                 onExpandedChange = {},
-                placeholder = { Text(stringResource(R.string.contacts_search_placeholder)) },
+                placeholder = { Text(placeholder) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = { onQueryChange("") }) {
                             Icon(
                                 Icons.Default.Close,
-                                contentDescription = stringResource(R.string.contacts_search_clear),
+                                contentDescription = stringResource(R.string.search_clear),
                             )
                         }
                     }

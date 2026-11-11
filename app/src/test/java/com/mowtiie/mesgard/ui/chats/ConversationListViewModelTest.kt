@@ -99,6 +99,63 @@ class ConversationListViewModelTest {
     }
 
     @Test
+    fun `filters the conversations by title ignoring case`() = runTest {
+        conversations.value = listOf(summary("a", title = "Grade 10 Section A"), summary("b", title = "Staff Room"))
+        val viewModel = ConversationListViewModel(repository)
+
+        viewModel.uiState.test {
+            viewModel.onQueryChanged("GRADE")
+            val state = expectMostRecentItem()
+            assertEquals(listOf("a"), state.conversations.map { it.id })
+            assertEquals(2, state.totalConversations)
+        }
+    }
+
+    @Test
+    fun `filters the conversations by the text of the last message`() = runTest {
+        conversations.value = listOf(
+            summary("a", preview = "Bring your proposals"),
+            summary("b", preview = "See you Monday"),
+        )
+        val viewModel = ConversationListViewModel(repository)
+
+        viewModel.uiState.test {
+            viewModel.onQueryChanged("proposal")
+            assertEquals(listOf("a"), expectMostRecentItem().conversations.map { it.id })
+        }
+    }
+
+    @Test
+    fun `a blank query shows every conversation`() = runTest {
+        conversations.value = listOf(summary("a"), summary("b"))
+        val viewModel = ConversationListViewModel(repository)
+
+        viewModel.uiState.test {
+            viewModel.onQueryChanged("   ")
+            assertEquals(2, expectMostRecentItem().conversations.size)
+        }
+    }
+
+    @Test
+    fun `shows no results when nothing matches and keeps the search field`() = runTest {
+        conversations.value = listOf(summary("a", title = "Staff Room"))
+        val viewModel = ConversationListViewModel(repository)
+
+        viewModel.uiState.test {
+            viewModel.onQueryChanged("zzz")
+            val state = expectMostRecentItem()
+            assertTrue(state.showNoResults)
+            assertTrue(state.showSearch)
+            assertFalse(state.showEmptyMessage)
+        }
+    }
+
+    @Test
+    fun `hides the search field when there are no conversations and no query`() = runTest {
+        ConversationListViewModel(repository).uiState.test { assertFalse(expectMostRecentItem().showSearch) }
+    }
+
+    @Test
     fun `ignores a refresh request while a refresh is in progress`() = runTest {
         val pending = CompletableDeferred<RefreshResult>()
         coEvery { repository.refresh() } coAnswers { pending.await() }
@@ -110,11 +167,11 @@ class ConversationListViewModelTest {
         coVerify(exactly = 1) { repository.refresh() }
     }
 
-    private fun summary(id: String) = ConversationSummary(
+    private fun summary(id: String, title: String = "Title", preview: String = "Hello") = ConversationSummary(
         id = id,
         type = ConversationType.DIRECT,
-        title = "Title",
-        lastMessagePreview = "Hello",
+        title = title,
+        lastMessagePreview = preview,
         lastActivityAtEpochMillis = 1_000L,
         unreadCount = 0,
         canPost = true,

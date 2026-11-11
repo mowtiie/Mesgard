@@ -10,6 +10,7 @@ import com.mowtiie.mesgard.domain.model.StartConversationResult
 import com.mowtiie.mesgard.domain.presence.PresenceTracker
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.GroupRepository
+import com.mowtiie.mesgard.ui.common.matchesQuery
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -117,9 +118,4 @@ private fun RefreshError.toRefreshError() = when (this) {
 private fun RefreshError.toStartError() = when (this) {
     RefreshError.NETWORK_UNAVAILABLE -> ContactsError.START_NETWORK_UNAVAILABLE
     RefreshError.UNKNOWN -> ContactsError.START_UNKNOWN
-}
-
-internal fun matchesQuery(name: String, query: String): Boolean {
-    val trimmed = query.trim()
-    return trimmed.isEmpty() || name.contains(trimmed, ignoreCase = true)
 }
