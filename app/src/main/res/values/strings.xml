@@ -2,7 +2,10 @@
     <string name="app_name">Mesgard</string>
     <string name="notification_channel_messages">Messages</string>
     <string name="notification_new_message">New message</string>
-    <string name="sign_in_title">Sign in</string>
+    <string name="sign_in_title">Sign in to continue</string>
+    <string name="sign_in_password_hint">Use the password your school gave you.</string>
+    <string name="sign_in_help">Need an account or forgot your password? Contact your school administrator.</string>
+    <string name="sign_in_server">Server: %1$s</string>
     <string name="sign_in_email_label">Email</string>
     <string name="sign_in_password_label">Password</string>
     <string name="sign_in_show_password">Show password</string>
@@ -47,6 +50,7 @@
     <string name="message_waiting_for_network">Waiting for network</string>
     <string name="message_waiting_for_server">Waiting for server</string>
     <string name="offline_banner">No network connection. Messages will send when you are back online.</string>
+    <string name="sign_in_offline_banner">No network connection. Connect to sign in.</string>
     <string name="server_unreachable_banner">Unable to reach the server. Retrying.</string>
     <string name="message_not_sent">Not sent</string>
     <string name="message_retry">Retry</string>

@@ -25,7 +25,11 @@ import com.mowtiie.mesgard.domain.network.ConnectionStatus
 internal val LocalConnectionStatus = compositionLocalOf { ConnectionStatus.ONLINE }
 
 @Composable
-internal fun ConnectionBanner(status: ConnectionStatus, modifier: Modifier = Modifier) {
+internal fun ConnectionBanner(
+    status: ConnectionStatus,
+    modifier: Modifier = Modifier,
+    @StringRes offlineMessage: Int = R.string.offline_banner,
+) {
     AnimatedVisibility(
         visible = status != ConnectionStatus.ONLINE,
         enter = expandVertically(),
@@ -34,7 +38,7 @@ internal fun ConnectionBanner(status: ConnectionStatus, modifier: Modifier = Mod
     ) {
         Surface(color = MaterialTheme.colorScheme.surfaceContainerHighest, modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = stringResource(bannerText(status)),
+                text = stringResource(bannerText(status, offlineMessage)),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -47,7 +51,7 @@ internal fun ConnectionBanner(status: ConnectionStatus, modifier: Modifier = Mod
 }
 
 @StringRes
-private fun bannerText(status: ConnectionStatus) = when (status) {
+private fun bannerText(status: ConnectionStatus, @StringRes offlineMessage: Int) = when (status) {
     ConnectionStatus.SERVER_UNREACHABLE -> R.string.server_unreachable_banner
-    else -> R.string.offline_banner
+    else -> offlineMessage
 }

@@ -7,6 +7,7 @@ internal data class SignInUiState(
     val password: String = "",
     val isSubmitting: Boolean = false,
     val error: SignInError? = null,
+    val serverHost: String = "",
 ) {
     val canSubmit: Boolean
         get() = email.isNotBlank() && password.isNotEmpty() && !isSubmitting

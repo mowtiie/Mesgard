@@ -109,6 +109,37 @@ class SignInViewModelTest {
         pending.complete(SignInResult.Success)
     }
 
+    @Test
+    fun `clears the password after the credentials are rejected but keeps the email`() {
+        coEvery { authRepository.signIn(any(), any()) } returns SignInResult.Failure(SignInError.INVALID_CREDENTIALS)
+        viewModel.onEmailChanged(EMAIL)
+        viewModel.onPasswordChanged(PASSWORD)
+
+        viewModel.onSignInClicked()
+
+        assertEquals("", viewModel.uiState.value.password)
+        assertEquals(EMAIL, viewModel.uiState.value.email)
+    }
+
+    @Test
+    fun `keeps the password after a failure that is not about the credentials`() {
+        coEvery { authRepository.signIn(any(), any()) } returns SignInResult.Failure(SignInError.NETWORK_UNAVAILABLE)
+        viewModel.onEmailChanged(EMAIL)
+        viewModel.onPasswordChanged(PASSWORD)
+
+        viewModel.onSignInClicked()
+
+        assertEquals(PASSWORD, viewModel.uiState.value.password)
+    }
+
+    @Test
+    fun `shows the host of the server`() {
+        assertFalse(viewModel.uiState.value.serverHost.isBlank())
+        assertEquals("school.example", serverHostOf("https://school.example/path"))
+        assertEquals("10.0.2.2", serverHostOf("http://10.0.2.2:54321"))
+        assertEquals("not a url", serverHostOf("not a url"))
+    }
+
     private companion object {
         const val EMAIL = "student1@rnhs.test"
         const val PASSWORD = "password123"
