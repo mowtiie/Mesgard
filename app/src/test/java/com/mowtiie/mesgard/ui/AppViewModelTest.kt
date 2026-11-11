@@ -68,7 +68,7 @@ class AppViewModelTest {
         viewModel().onSignOutClicked()
 
         coVerifyOrder {
-            pushRegistration.unregister()
+            pushRegistration.stop()
             authRepository.signOut()
         }
     }
@@ -80,7 +80,7 @@ class AppViewModelTest {
         authStates.emit(AuthState.SignedIn(USER_ID))
         verify(exactly = 1) { realtimeSync.start(any()) }
         verify(exactly = 1) { presenceTracker.start(any()) }
-        coVerify(exactly = 1) { pushRegistration.register() }
+        coVerify(exactly = 1) { pushRegistration.start() }
 
         authStates.emit(AuthState.SignedOut)
         verify(atLeast = 1) { realtimeSync.stop() }

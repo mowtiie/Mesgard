@@ -22,4 +22,18 @@ class IncomingPushTest {
         assertNull(IncomingPush.fromData(mapOf("conversation_id" to "c1", "title" to " ", "body" to "New message")))
         assertNull(IncomingPush.fromData(mapOf("conversation_id" to "c1", "title" to "Ana", "body" to "")))
     }
+
+    @Test
+    fun `reads the JSON content of a decrypted push message`() {
+        val content = """{"conversation_id":"c1","title":"Ana","body":"New message"}""".toByteArray()
+
+        assertEquals(IncomingPush("c1", "Ana", "New message"), IncomingPush.fromContent(content))
+    }
+
+    @Test
+    fun `ignores content that is not a JSON object of strings`() {
+        assertNull(IncomingPush.fromContent("hello".toByteArray()))
+        assertNull(IncomingPush.fromContent("[1,2]".toByteArray()))
+        assertNull(IncomingPush.fromContent("""{"title":1}""".toByteArray()))
+    }
 }

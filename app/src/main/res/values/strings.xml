@@ -64,6 +64,11 @@
     <string name="lock_timeout_one_minute">After 1 minute</string>
     <string name="lock_timeout_five_minutes">After 5 minutes</string>
     <string name="settings_notifications">Notification content</string>
+    <string name="settings_delivery">Delivery</string>
+    <string name="settings_push">Push notifications</string>
+    <string name="settings_push_not_set_up">Not set up. Choose a push distributor app to receive notifications while Mesgard is closed.</string>
+    <string name="settings_push_using">Using %1$s. Select to change.</string>
+    <string name="settings_error_push_distributor_unavailable">No push distributor app is installed. Install one, such as ntfy, then try again.</string>
     <string name="preview_sender_and_text">Sender and message</string>
     <string name="preview_sender_and_text_summary">Show who sent the message and its text.</string>
     <string name="preview_sender_only">Sender only</string>

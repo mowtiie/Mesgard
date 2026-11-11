@@ -6,6 +6,7 @@ import com.mowtiie.mesgard.domain.model.LockTimeout
 import com.mowtiie.mesgard.domain.model.NotificationPreview
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
+import com.mowtiie.mesgard.domain.push.PushRegistration
 import com.mowtiie.mesgard.domain.repository.DeviceSettingsRepository
 import com.mowtiie.mesgard.domain.repository.NotificationSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,15 +24,23 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 internal class SettingsViewModel @Inject constructor(
     private val deviceSettings: DeviceSettingsRepository,
     private val notificationSettings: NotificationSettingsRepository,
+    private val pushRegistration: PushRegistration,
 ) : ViewModel() {
     private val error = MutableStateFlow<SettingsError?>(null)
 
-    val uiState: StateFlow<SettingsUiState> = combine(deviceSettings.settings, error) { settings, currentError ->
-        SettingsUiState(settings = settings, error = currentError)
+    val uiState: StateFlow<SettingsUiState> = combine(
+        deviceSettings.settings,
+        pushRegistration.distributorName,
+        error,
+    ) { settings, distributorName, currentError ->
+        SettingsUiState(settings = settings, pushDistributorName = distributorName, error = currentError)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
-        initialValue = SettingsUiState(settings = deviceSettings.settings.value),
+        initialValue = SettingsUiState(
+            settings = deviceSettings.settings.value,
+            pushDistributorName = pushRegistration.distributorName.value,
+        ),
     )
 
     init {
@@ -41,6 +50,10 @@ internal class SettingsViewModel @Inject constructor(
     fun onScreenPrivacyChanged(enabled: Boolean) = deviceSettings.setScreenPrivacyEnabled(enabled)
 
     fun onAppLockChanged(enabled: Boolean) = deviceSettings.setAppLockEnabled(enabled)
+
+    fun onPushDistributorUnavailable() {
+        error.value = SettingsError.PUSH_DISTRIBUTOR_UNAVAILABLE
+    }
 
     fun onAppLockUnavailable() {
         error.value = SettingsError.DEVICE_LOCK_REQUIRED
@@ -54,6 +67,8 @@ internal class SettingsViewModel @Inject constructor(
             if (result is RefreshResult.Failure) error.value = result.error.toPreviewError()
         }
     }
+
+    fun onPushDistributorChosen() = pushRegistration.onDistributorChosen()
 
     fun onErrorShown() {
         error.value = null

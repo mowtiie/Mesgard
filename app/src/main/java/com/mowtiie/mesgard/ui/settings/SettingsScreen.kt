@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.ui.settings
 
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -38,6 +39,7 @@ import com.mowtiie.mesgard.ui.lock.AuthAvailability
 import com.mowtiie.mesgard.ui.lock.AuthOutcome
 import com.mowtiie.mesgard.ui.lock.BiometricAuthenticator
 import kotlinx.coroutines.launch
+import org.unifiedpush.android.connector.UnifiedPush
 
 private val SectionHeaderPadding = 16.dp
 
@@ -70,6 +72,15 @@ internal fun SettingsScreenRoute(modifier: Modifier = Modifier, viewModel: Setti
         onAppLockChanged = ::onAppLockToggled,
         onLockTimeoutSelected = viewModel::onLockTimeoutSelected,
         onNotificationPreviewSelected = viewModel::onNotificationPreviewSelected,
+        onPushSetupClicked = {
+            if (UnifiedPush.getDistributors(context).isEmpty()) {
+                viewModel.onPushDistributorUnavailable()
+            } else {
+                activity?.let {
+                    UnifiedPush.tryPickDistributor(it) { chosen -> if (chosen) viewModel.onPushDistributorChosen() }
+                }
+            }
+        },
         onErrorShown = viewModel::onErrorShown,
         modifier = modifier,
     )
@@ -82,6 +93,7 @@ internal fun SettingsScreen(
     onAppLockChanged: (Boolean) -> Unit,
     onLockTimeoutSelected: (LockTimeout) -> Unit,
     onNotificationPreviewSelected: (NotificationPreview) -> Unit,
+    onPushSetupClicked: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -121,6 +133,8 @@ internal fun SettingsScreen(
                     onSelected = onLockTimeoutSelected,
                 )
             }
+            SectionHeader(R.string.settings_delivery)
+            PushSetupRow(uiState.pushDistributorName, onPushSetupClicked)
             SectionHeader(R.string.settings_notifications)
             RadioGroup(
                 options = NotificationPreview.entries.map {
@@ -206,6 +220,24 @@ private fun NotificationPreview.summaryResource(): Int = when (this) {
 @StringRes
 private fun SettingsError.messageResource(): Int = when (this) {
     SettingsError.DEVICE_LOCK_REQUIRED -> R.string.settings_error_device_lock_required
+    SettingsError.PUSH_DISTRIBUTOR_UNAVAILABLE -> R.string.settings_error_push_distributor_unavailable
     SettingsError.PREVIEW_NETWORK_UNAVAILABLE -> R.string.settings_error_preview_network_unavailable
     SettingsError.PREVIEW_UNKNOWN -> R.string.settings_error_preview_unknown
+}
+
+@Composable
+private fun PushSetupRow(distributorName: String?, onClick: () -> Unit) {
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        headlineContent = { Text(stringResource(R.string.settings_push)) },
+        supportingContent = {
+            Text(
+                if (distributorName == null) {
+                    stringResource(R.string.settings_push_not_set_up)
+                } else {
+                    stringResource(R.string.settings_push_using, distributorName)
+                },
+            )
+        },
+    )
 }

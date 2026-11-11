@@ -57,7 +57,7 @@ internal class AppViewModel @Inject constructor(
     private fun startRealtime() {
         realtimeSync.start(viewModelScope)
         presenceTracker.start(viewModelScope)
-        viewModelScope.launch { pushRegistration.register() }
+        viewModelScope.launch { pushRegistration.start() }
     }
 
     private fun stopWhenSignedOut() {
@@ -68,7 +68,7 @@ internal class AppViewModel @Inject constructor(
 
     fun onSignOutClicked() {
         viewModelScope.launch {
-            pushRegistration.unregister()
+            pushRegistration.stop()
             authRepository.signOut()
         }
     }

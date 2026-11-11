@@ -2,7 +2,6 @@ package com.mowtiie.mesgard.di
 
 import com.mowtiie.mesgard.data.remote.ContactRemoteSource
 import com.mowtiie.mesgard.data.remote.ConversationRemoteSource
-import com.mowtiie.mesgard.data.remote.DeviceTokenRemoteSource
 import com.mowtiie.mesgard.data.remote.GroupRemoteSource
 import com.mowtiie.mesgard.data.remote.MessageRealtimeSource
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
@@ -11,7 +10,6 @@ import com.mowtiie.mesgard.data.remote.ProfileRemoteSource
 import com.mowtiie.mesgard.data.remote.SettingsRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseContactRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseConversationRemoteSource
-import com.mowtiie.mesgard.data.remote.SupabaseDeviceTokenRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseGroupRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseMessageRealtimeSource
 import com.mowtiie.mesgard.data.remote.SupabaseMessageRemoteSource
@@ -54,7 +52,4 @@ internal abstract class RemoteSourceModule {
 
     @Binds
     abstract fun bindPresenceRemoteSource(source: SupabasePresenceRemoteSource): PresenceRemoteSource
-
-    @Binds
-    abstract fun bindDeviceTokenRemoteSource(source: SupabaseDeviceTokenRemoteSource): DeviceTokenRemoteSource
 }

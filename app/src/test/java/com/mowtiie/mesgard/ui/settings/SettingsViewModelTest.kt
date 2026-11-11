@@ -5,12 +5,16 @@ import com.mowtiie.mesgard.domain.model.LockTimeout
 import com.mowtiie.mesgard.domain.model.NotificationPreview
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
+import com.mowtiie.mesgard.domain.push.PushRegistration
 import com.mowtiie.mesgard.domain.repository.NotificationSettingsRepository
 import com.mowtiie.mesgard.testing.FakeDeviceSettings
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -29,7 +33,12 @@ class SettingsViewModelTest {
         coEvery { setPreview(any()) } returns RefreshResult.Success
     }
 
-    private fun viewModel() = SettingsViewModel(deviceSettings, notificationSettings)
+    private val distributorName = MutableStateFlow<String?>(null)
+    private val pushRegistration = mockk<PushRegistration>(relaxed = true) {
+        every { this@mockk.distributorName } returns this@SettingsViewModelTest.distributorName
+    }
+
+    private fun viewModel() = SettingsViewModel(deviceSettings, notificationSettings, pushRegistration)
 
     @Test
     fun `refreshes the notification preview when it is created`() = runTest {
@@ -95,6 +104,36 @@ class SettingsViewModelTest {
 
         viewModel.uiState.test {
             assertEquals(SettingsError.PREVIEW_NETWORK_UNAVAILABLE, expectMostRecentItem().error)
+        }
+    }
+
+    @Test
+    fun `shows the push distributor the user chose`() = runTest {
+        distributorName.value = "ntfy"
+
+        viewModel().uiState.test { assertEquals("ntfy", expectMostRecentItem().pushDistributorName) }
+    }
+
+    @Test
+    fun `shows that push is not set up when no distributor is chosen`() = runTest {
+        viewModel().uiState.test { assertNull(expectMostRecentItem().pushDistributorName) }
+    }
+
+    @Test
+    fun `registers with the distributor once the user has chosen one`() = runTest {
+        viewModel().onPushDistributorChosen()
+
+        verify(exactly = 1) { pushRegistration.onDistributorChosen() }
+    }
+
+    @Test
+    fun `reports that no push distributor is installed`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.onPushDistributorUnavailable()
+
+        viewModel.uiState.test {
+            assertEquals(SettingsError.PUSH_DISTRIBUTOR_UNAVAILABLE, expectMostRecentItem().error)
         }
     }
 }
