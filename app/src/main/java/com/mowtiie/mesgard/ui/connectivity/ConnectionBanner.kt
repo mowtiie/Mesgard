@@ -1,5 +1,6 @@
 package com.mowtiie.mesgard.ui.connectivity
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -18,21 +19,22 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.domain.network.ConnectionStatus
 
-/** Whether the device has been offline for a moment. Provided once at the root so every screen can react to it. */
-internal val LocalIsOffline = compositionLocalOf { false }
+/** How the app reaches its server. Provided once at the root so every screen can react to it. */
+internal val LocalConnectionStatus = compositionLocalOf { ConnectionStatus.ONLINE }
 
 @Composable
-internal fun OfflineBanner(offline: Boolean, modifier: Modifier = Modifier) {
+internal fun ConnectionBanner(status: ConnectionStatus, modifier: Modifier = Modifier) {
     AnimatedVisibility(
-        visible = offline,
+        visible = status != ConnectionStatus.ONLINE,
         enter = expandVertically(),
         exit = shrinkVertically(),
         modifier = modifier,
     ) {
         Surface(color = MaterialTheme.colorScheme.surfaceContainerHighest, modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = stringResource(R.string.offline_banner),
+                text = stringResource(bannerText(status)),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -42,4 +44,10 @@ internal fun OfflineBanner(offline: Boolean, modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+@StringRes
+private fun bannerText(status: ConnectionStatus) = when (status) {
+    ConnectionStatus.SERVER_UNREACHABLE -> R.string.server_unreachable_banner
+    else -> R.string.offline_banner
 }

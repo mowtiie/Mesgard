@@ -22,8 +22,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 
@@ -46,10 +49,12 @@ internal class RealtimeMessageSync @Inject constructor(
     private val profileDao = database.profileDao()
     private val attachmentDao = database.attachmentDao()
     private val mutableReconnections = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val mutableConnected = MutableStateFlow(true)
     private var job: Job? = null
     private var hasConnected = false
 
     override val reconnections: SharedFlow<Unit> = mutableReconnections.asSharedFlow()
+    override val isConnected: StateFlow<Boolean> = mutableConnected.asStateFlow()
 
     override fun start(scope: CoroutineScope) {
         if (job?.isActive == true) return
@@ -58,6 +63,7 @@ internal class RealtimeMessageSync @Inject constructor(
             source.events()
                 .retryWhen { cause, attempt ->
                     Log.w(TAG, "The realtime subscription failed, retrying", cause)
+                    mutableConnected.value = false
                     delay(min(RETRY_BASE_DELAY_MS shl min(attempt.toInt(), MAX_BACKOFF_EXPONENT), RETRY_MAX_DELAY_MS))
                     true
                 }
@@ -67,6 +73,7 @@ internal class RealtimeMessageSync @Inject constructor(
 
     override fun stop() {
         job?.cancel()
+        mutableConnected.value = true
         job = null
     }
 
@@ -74,9 +81,11 @@ internal class RealtimeMessageSync @Inject constructor(
         is RealtimeEvent.MessageInserted -> storeMessage(event.message, isNew = true)
         is RealtimeEvent.MessageUpdated -> storeMessage(event.message, isNew = false)
         RealtimeEvent.Connected -> onConnected()
+        RealtimeEvent.Disconnected -> mutableConnected.value = false
     }
 
     private suspend fun onConnected() {
+        mutableConnected.value = true
         val isReconnection = hasConnected
         hasConnected = true
         if (!isReconnection) return

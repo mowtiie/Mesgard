@@ -43,7 +43,9 @@
     <string name="send_message">Send</string>
     <string name="message_sending">Sending</string>
     <string name="message_waiting_for_network">Waiting for network</string>
+    <string name="message_waiting_for_server">Waiting for server</string>
     <string name="offline_banner">No network connection. Messages will send when you are back online.</string>
+    <string name="server_unreachable_banner">Unable to reach the server. Retrying.</string>
     <string name="message_not_sent">Not sent</string>
     <string name="message_retry">Retry</string>
     <string name="message_edited">Edited</string>

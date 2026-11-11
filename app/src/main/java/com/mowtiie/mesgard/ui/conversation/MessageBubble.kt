@@ -21,7 +21,8 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Attachment
 import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.domain.model.MessageStatus
-import com.mowtiie.mesgard.ui.connectivity.LocalIsOffline
+import com.mowtiie.mesgard.domain.network.ConnectionStatus
+import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val BubbleMaxWidth = 320.dp
@@ -153,8 +154,8 @@ private fun previewMessage(isOwn: Boolean, body: String, status: MessageStatus =
 )
 
 @Composable
-private fun pendingLabel(): String = if (LocalIsOffline.current) {
-    stringResource(R.string.message_waiting_for_network)
-} else {
-    stringResource(R.string.message_sending)
+private fun pendingLabel(): String = when (LocalConnectionStatus.current) {
+    ConnectionStatus.OFFLINE -> stringResource(R.string.message_waiting_for_network)
+    ConnectionStatus.SERVER_UNREACHABLE -> stringResource(R.string.message_waiting_for_server)
+    ConnectionStatus.ONLINE -> stringResource(R.string.message_sending)
 }

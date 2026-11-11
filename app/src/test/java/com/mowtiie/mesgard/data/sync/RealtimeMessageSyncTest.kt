@@ -164,6 +164,28 @@ class RealtimeMessageSyncTest {
     }
 
     @Test
+    fun `is connected until the connection is reported down`() = runTest {
+        assertEquals(true, sync.isConnected.value)
+        startSync()
+
+        source.emit(RealtimeEvent.Disconnected)
+        awaitValue(sync.isConnected) { !it }
+        source.emit(RealtimeEvent.Connected)
+        awaitValue(sync.isConnected) { it }
+    }
+
+    @Test
+    fun `is connected again once it is stopped`() = runTest {
+        startSync()
+        source.emit(RealtimeEvent.Disconnected)
+        awaitValue(sync.isConnected) { !it }
+
+        sync.stop()
+
+        assertEquals(true, sync.isConnected.value)
+    }
+
+    @Test
     fun `does not treat the first connection as a reconnection`() = runTest {
         startSync()
 

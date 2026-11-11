@@ -11,7 +11,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.domain.model.AuthState
 import com.mowtiie.mesgard.ui.auth.SignInRoute
 import com.mowtiie.mesgard.ui.connectivity.ConnectivityViewModel
-import com.mowtiie.mesgard.ui.connectivity.LocalIsOffline
+import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.lock.LockScreenRoute
 import com.mowtiie.mesgard.ui.navigation.MesgardNavHost
 
@@ -24,8 +24,8 @@ internal fun MesgardApp(
 ) {
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val isLocked by viewModel.isLocked.collectAsStateWithLifecycle()
-    val isOffline by connectivityViewModel.isOffline.collectAsStateWithLifecycle()
-    CompositionLocalProvider(LocalIsOffline provides isOffline) {
+    val connectionStatus by connectivityViewModel.status.collectAsStateWithLifecycle()
+    CompositionLocalProvider(LocalConnectionStatus provides connectionStatus) {
         when (authState) {
             AuthState.Loading -> Surface(modifier = Modifier.fillMaxSize()) {}
             AuthState.SignedOut -> SignInRoute()

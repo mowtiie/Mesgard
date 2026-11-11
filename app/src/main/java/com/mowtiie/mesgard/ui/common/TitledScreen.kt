@@ -10,8 +10,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import com.mowtiie.mesgard.ui.connectivity.LocalIsOffline
-import com.mowtiie.mesgard.ui.connectivity.OfflineBanner
+import com.mowtiie.mesgard.ui.connectivity.ConnectionBanner
+import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +28,7 @@ internal fun TitledScreen(
         topBar = {
             Column {
                 TopAppBar(title = { Text(title) }, navigationIcon = navigationIcon, scrollBehavior = scrollBehavior)
-                OfflineBanner(offline = LocalIsOffline.current)
+                ConnectionBanner(status = LocalConnectionStatus.current)
             }
         },
         snackbarHost = snackbarHost,
