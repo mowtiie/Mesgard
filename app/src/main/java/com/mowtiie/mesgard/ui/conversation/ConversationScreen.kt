@@ -28,12 +28,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.domain.model.Attachment
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
 import java.time.ZoneId
@@ -45,18 +47,27 @@ internal fun ConversationScreenRoute(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConversationViewModel = hiltViewModel(),
+    downloadsViewModel: AttachmentDownloadsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
     LifecycleResumeEffect(viewModel) {
         viewModel.onVisibilityChanged(true)
         onPauseOrDispose { viewModel.onVisibilityChanged(false) }
     }
     ConversationScreen(
         uiState = uiState,
+        downloads = downloads,
         onBack = onBack,
         onDraftChanged = viewModel::onDraftChanged,
         onSendClicked = viewModel::onSendClicked,
         onRetryClicked = viewModel::onRetryClicked,
+        onAttachmentsPicked = viewModel::onAttachmentsPicked,
+        onAttachmentRemoved = viewModel::onAttachmentRemoved,
+        onAttachmentClicked = downloadsViewModel::onAttachmentClicked,
+        onImageShown = downloadsViewModel::onImageShown,
+        onAttachmentOpened = downloadsViewModel::onAttachmentOpened,
+        onDownloadErrorShown = downloadsViewModel::onErrorShown,
         onLoadOlder = viewModel::onLoadOlder,
         onErrorShown = viewModel::onErrorShown,
         modifier = modifier,
@@ -66,10 +77,17 @@ internal fun ConversationScreenRoute(
 @Composable
 internal fun ConversationScreen(
     uiState: ConversationUiState,
+    downloads: AttachmentDownloadsUiState,
     onBack: () -> Unit,
     onDraftChanged: (String) -> Unit,
     onSendClicked: () -> Unit,
     onRetryClicked: (String) -> Unit,
+    onAttachmentsPicked: (List<PickedAttachment>) -> Unit,
+    onAttachmentRemoved: (String) -> Unit,
+    onAttachmentClicked: (Attachment) -> Unit,
+    onImageShown: (Attachment) -> Unit,
+    onAttachmentOpened: () -> Unit,
+    onDownloadErrorShown: () -> Unit,
     onLoadOlder: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
@@ -81,6 +99,21 @@ internal fun ConversationScreen(
             snackbarHostState.showSnackbar(errorMessage)
             onErrorShown()
         }
+    }
+    val downloadErrorMessage = downloads.error?.let { stringResource(it.messageResource()) }
+    LaunchedEffect(downloadErrorMessage) {
+        if (downloadErrorMessage != null) {
+            snackbarHostState.showSnackbar(downloadErrorMessage)
+            onDownloadErrorShown()
+        }
+    }
+    val context = LocalContext.current
+    val openFailedMessage = stringResource(R.string.conversation_error_open_attachment)
+    LaunchedEffect(downloads.attachmentToOpen) {
+        val attachment = downloads.attachmentToOpen ?: return@LaunchedEffect
+        val opened = openAttachment(context, attachment)
+        onAttachmentOpened()
+        if (!opened) snackbarHostState.showSnackbar(openFailedMessage)
     }
 
     val title = uiState.title ?: uiState.type?.let { stringResource(it.fallbackTitleResource()) }.orEmpty()
@@ -100,7 +133,10 @@ internal fun ConversationScreen(
         Column(modifier = Modifier.padding(padding).consumeWindowInsets(padding).imePadding().fillMaxSize()) {
             MessageList(
                 uiState = uiState,
+                downloadingIds = downloads.downloadingIds,
                 onRetryClicked = onRetryClicked,
+                onAttachmentClick = onAttachmentClicked,
+                onImageShown = onImageShown,
                 onLoadOlder = onLoadOlder,
                 modifier = Modifier.weight(1f),
             )
@@ -108,9 +144,12 @@ internal fun ConversationScreen(
             if (uiState.canPost) {
                 MessageComposer(
                     draft = uiState.draft,
+                    attachments = uiState.attachments,
                     canSend = uiState.canSend,
                     onDraftChanged = onDraftChanged,
                     onSendClicked = onSendClicked,
+                    onAttachmentsPicked = onAttachmentsPicked,
+                    onAttachmentRemoved = onAttachmentRemoved,
                 )
             } else {
                 ReadOnlyNotice()
@@ -122,7 +161,10 @@ internal fun ConversationScreen(
 @Composable
 private fun MessageList(
     uiState: ConversationUiState,
+    downloadingIds: Set<String>,
     onRetryClicked: (String) -> Unit,
+    onAttachmentClick: (Attachment) -> Unit,
+    onImageShown: (Attachment) -> Unit,
     onLoadOlder: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -146,6 +188,9 @@ private fun MessageList(
                         message = item.message,
                         showSenderName = uiState.showSenderNames,
                         onRetry = { onRetryClicked(item.message.id) },
+                        downloadingIds = downloadingIds,
+                        onAttachmentClick = onAttachmentClick,
+                        onImageShown = onImageShown,
                     )
                     is TimelineItem.DateHeader -> DateHeader(item.date)
                 }

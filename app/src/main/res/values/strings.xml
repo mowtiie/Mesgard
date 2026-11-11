@@ -56,6 +56,12 @@
     <string name="conversation_error_attachment_too_large">An attachment can be at most 20 MB.</string>
     <string name="conversation_error_attachment_type">This type of file cannot be attached.</string>
     <string name="conversation_error_attachment_unreadable">Unable to read the file. Try again.</string>
+    <string name="conversation_error_open_attachment">No app on this device can open this file.</string>
+    <string name="attach">Attach</string>
+    <string name="attach_photo">Photo</string>
+    <string name="attach_file">File</string>
+    <string name="remove_attachment">Remove %1$s</string>
+    <string name="attachment_photo">Photo %1$s</string>
     <string name="contacts_empty">No contacts yet.</string>
     <string name="contacts_section_people">People</string>
     <string name="contacts_section_groups">Groups</string>

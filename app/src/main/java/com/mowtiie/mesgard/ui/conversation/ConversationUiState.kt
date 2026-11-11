@@ -22,13 +22,14 @@ internal data class ConversationUiState(
     val canPost: Boolean = true,
     val messages: List<Message> = emptyList(),
     val draft: String = "",
+    val attachments: List<PickedAttachment> = emptyList(),
     val typingNames: List<String> = emptyList(),
     val isLoaded: Boolean = false,
     val isLoadingOlder: Boolean = false,
     val error: ConversationError? = null,
 ) {
     val canSend: Boolean
-        get() = draft.isNotBlank() && draft.trim().length <= MAX_MESSAGE_LENGTH
+        get() = (draft.isNotBlank() || attachments.isNotEmpty()) && draft.trim().length <= MAX_MESSAGE_LENGTH
 
     val showSenderNames: Boolean
         get() = type != null && type != ConversationType.DIRECT
@@ -36,3 +37,6 @@ internal data class ConversationUiState(
     val showEmptyMessage: Boolean
         get() = isLoaded && messages.isEmpty()
 }
+
+/** A file the user chose for the message being written, before it is sent. */
+internal data class PickedAttachment(val uri: String, val name: String)

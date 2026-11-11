@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.mowtiie.mesgard.domain.attachment.MAX_ATTACHMENTS_PER_MESSAGE
 import com.mowtiie.mesgard.domain.model.MessageStatus
 import com.mowtiie.mesgard.domain.model.PageResult
 import com.mowtiie.mesgard.domain.model.RefreshError
@@ -64,6 +65,7 @@ internal class ConversationViewModel @Inject constructor(
             canPost = conversation?.canPost ?: true,
             messages = messages,
             draft = local.draft,
+            attachments = local.attachments,
             typingNames = typingNames,
             isLoaded = true,
             isLoadingOlder = local.isLoadingOlder,
@@ -89,14 +91,27 @@ internal class ConversationViewModel @Inject constructor(
     }
 
     fun onSendClicked() {
-        val draft = localState.value.draft
-        if (draft.isBlank()) return
+        val state = localState.value
+        if (state.draft.isBlank() && state.attachments.isEmpty()) return
         viewModelScope.launch {
-            when (val result = messageRepository.send(conversationId, draft)) {
-                SendResult.Queued -> localState.update { it.copy(draft = "") }
+            when (val result = messageRepository.send(conversationId, state.draft, state.attachments.map { it.uri })) {
+                SendResult.Queued -> localState.update { it.copy(draft = "", attachments = emptyList()) }
                 is SendResult.Rejected -> localState.update { it.copy(error = result.reason.toError()) }
             }
         }
+    }
+
+    fun onAttachmentsPicked(picked: List<PickedAttachment>) {
+        val combined = (localState.value.attachments + picked).distinctBy { it.uri }
+        if (combined.size > MAX_ATTACHMENTS_PER_MESSAGE) {
+            localState.update { it.copy(error = ConversationError.TOO_MANY_ATTACHMENTS) }
+        } else {
+            localState.update { it.copy(attachments = combined) }
+        }
+    }
+
+    fun onAttachmentRemoved(uri: String) = localState.update { state ->
+        state.copy(attachments = state.attachments.filterNot { it.uri == uri })
     }
 
     fun onRetryClicked(messageId: String) {
@@ -141,13 +156,14 @@ internal class ConversationViewModel @Inject constructor(
 
     private data class LocalState(
         val draft: String = "",
+        val attachments: List<PickedAttachment> = emptyList(),
         val isLoadingOlder: Boolean = false,
         val isHistoryComplete: Boolean = false,
         val error: ConversationError? = null,
     )
 }
 
-private fun RefreshError.toError() = when (this) {
+internal fun RefreshError.toError() = when (this) {
     RefreshError.NETWORK_UNAVAILABLE -> ConversationError.NETWORK_UNAVAILABLE
     RefreshError.UNKNOWN -> ConversationError.UNKNOWN
 }

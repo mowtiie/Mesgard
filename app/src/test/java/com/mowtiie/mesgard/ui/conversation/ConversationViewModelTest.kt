@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.ui.conversation
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import com.mowtiie.mesgard.domain.attachment.MAX_ATTACHMENTS_PER_MESSAGE
 import com.mowtiie.mesgard.domain.model.ConversationSummary
 import com.mowtiie.mesgard.domain.model.ConversationType
 import com.mowtiie.mesgard.domain.model.Message
@@ -173,6 +174,55 @@ class ConversationViewModelTest {
         viewModel.onSendClicked()
 
         coVerify(exactly = 0) { messageRepository.send(any(), any()) }
+    }
+
+    @Test
+    fun `sends the picked attachments with the draft and clears them once queued`() = runTest {
+        coEvery { messageRepository.send(CONVERSATION_ID, "Hello", listOf("content://a")) } returns SendResult.Queued
+        val viewModel = viewModel()
+        viewModel.onDraftChanged("Hello")
+        viewModel.onAttachmentsPicked(listOf(PickedAttachment("content://a", "a.pdf")))
+
+        viewModel.onSendClicked()
+
+        coVerify(exactly = 1) { messageRepository.send(CONVERSATION_ID, "Hello", listOf("content://a")) }
+        viewModel.uiState.test {
+            val state = expectMostRecentItem()
+            assertEquals("", state.draft)
+            assertEquals(emptyList<PickedAttachment>(), state.attachments)
+        }
+    }
+
+    @Test
+    fun `can send attachments without any text`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onAttachmentsPicked(listOf(PickedAttachment("content://a", "a.pdf")))
+
+        viewModel.uiState.test { assertTrue(expectMostRecentItem().canSend) }
+    }
+
+    @Test
+    fun `removes a picked attachment`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onAttachmentsPicked(listOf(PickedAttachment("content://a", "a.pdf"), PickedAttachment("b", "b.pdf")))
+
+        viewModel.onAttachmentRemoved("content://a")
+
+        viewModel.uiState.test { assertEquals(listOf("b"), expectMostRecentItem().attachments.map { it.uri }) }
+    }
+
+    @Test
+    fun `refuses more attachments than a message can carry and keeps the ones already picked`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onAttachmentsPicked(listOf(PickedAttachment("first", "first")))
+
+        viewModel.onAttachmentsPicked(List(MAX_ATTACHMENTS_PER_MESSAGE) { PickedAttachment("more$it", "more$it") })
+
+        viewModel.uiState.test {
+            val state = expectMostRecentItem()
+            assertEquals(listOf("first"), state.attachments.map { it.uri })
+            assertEquals(ConversationError.TOO_MANY_ATTACHMENTS, state.error)
+        }
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.data
 import android.content.Context
 import com.mowtiie.mesgard.data.attachment.attachmentDirectory
 import com.mowtiie.mesgard.data.local.AttachmentDao
+import com.mowtiie.mesgard.data.local.AttachmentEntity
 import com.mowtiie.mesgard.data.remote.AttachmentRemoteSource
 import com.mowtiie.mesgard.data.remote.RemoteOutcome
 import com.mowtiie.mesgard.data.remote.attemptRemote
@@ -25,16 +26,22 @@ internal class OfflineFirstAttachmentRepository @Inject constructor(
 ) : AttachmentRepository {
     override suspend fun download(attachmentId: String): DownloadResult {
         val attachment = attachmentDao.findByIds(listOf(attachmentId)).singleOrNull()
-            ?: return DownloadResult.Failure(RefreshError.UNKNOWN)
-        val stored = attachment.localPath?.takeIf { File(it).isFile }
-        if (stored != null) return DownloadResult.Downloaded(stored)
+        val stored = attachment?.localPath?.takeIf { File(it).isFile }
+        return when {
+            attachment == null -> DownloadResult.Failure(RefreshError.UNKNOWN)
+            stored != null -> DownloadResult.Downloaded(stored)
+            else -> fetch(attachment)
+        }
+    }
+
+    private suspend fun fetch(attachment: AttachmentEntity): DownloadResult {
         val outcome = attemptRemote(TAG) {
             val bytes = remoteSource.download(attachment.storagePath)
-            withContext(Dispatchers.IO) { store(attachmentId, bytes) }
+            withContext(Dispatchers.IO) { store(attachment.id, bytes) }
         }
         return when (outcome) {
             is RemoteOutcome.Success -> {
-                attachmentDao.updateLocalPath(attachmentId, outcome.value)
+                attachmentDao.updateLocalPath(attachment.id, outcome.value)
                 DownloadResult.Downloaded(outcome.value)
             }
             is RemoteOutcome.Failure -> DownloadResult.Failure(outcome.error)

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.domain.model.Attachment
 import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.domain.model.MessageStatus
 import com.mowtiie.mesgard.ui.connectivity.LocalIsOffline
@@ -34,6 +35,9 @@ internal fun MessageBubble(
     message: Message,
     showSenderName: Boolean,
     onRetry: () -> Unit,
+    downloadingIds: Set<String>,
+    onAttachmentClick: (Attachment) -> Unit,
+    onImageShown: (Attachment) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -56,6 +60,7 @@ internal fun MessageBubble(
             Column(modifier = Modifier.widthIn(max = BubbleMaxWidth).padding(BubblePadding)) {
                 SenderName(message, showSenderName)
                 MessageBody(message)
+                AttachmentList(message.attachments, downloadingIds, onAttachmentClick, onImageShown)
                 Text(
                     text = metadata(message),
                     style = MaterialTheme.typography.labelSmall,
@@ -82,7 +87,7 @@ private fun MessageBody(message: Message) {
             style = MaterialTheme.typography.bodyLarge,
             fontStyle = FontStyle.Italic,
         )
-    } else {
+    } else if (message.body.isNotEmpty()) {
         Text(text = message.body, style = MaterialTheme.typography.bodyLarge)
     }
 }
@@ -118,11 +123,17 @@ private fun MessageBubblePreview() {
                 message = previewMessage(isOwn = false, body = "Reminder: bring your project proposals tomorrow."),
                 showSenderName = true,
                 onRetry = {},
+                downloadingIds = emptySet(),
+                onAttachmentClick = {},
+                onImageShown = {},
             )
             MessageBubble(
                 message = previewMessage(isOwn = true, body = "Noted, thank you.", status = MessageStatus.FAILED),
                 showSenderName = true,
                 onRetry = {},
+                downloadingIds = emptySet(),
+                onAttachmentClick = {},
+                onImageShown = {},
             )
         }
     }
