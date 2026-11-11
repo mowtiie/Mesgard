@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mowtiie.mesgard.domain.lock.AppLock
 import com.mowtiie.mesgard.domain.model.AuthState
+import com.mowtiie.mesgard.domain.presence.PresenceTracker
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.DeviceSettingsRepository
 import com.mowtiie.mesgard.domain.sync.RealtimeSync
@@ -21,6 +22,7 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 internal class AppViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val realtimeSync: RealtimeSync,
+    private val presenceTracker: PresenceTracker,
     private val appLock: AppLock,
     deviceSettings: DeviceSettingsRepository,
 ) : ViewModel() {
@@ -42,7 +44,7 @@ internal class AppViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.authState.collect { state ->
                 when (state) {
-                    is AuthState.SignedIn -> realtimeSync.start(viewModelScope)
+                    is AuthState.SignedIn -> startRealtime()
                     AuthState.SignedOut -> stopWhenSignedOut()
                     AuthState.Loading -> Unit
                 }
@@ -50,8 +52,14 @@ internal class AppViewModel @Inject constructor(
         }
     }
 
+    private fun startRealtime() {
+        realtimeSync.start(viewModelScope)
+        presenceTracker.start(viewModelScope)
+    }
+
     private fun stopWhenSignedOut() {
         realtimeSync.stop()
+        presenceTracker.stop()
         appLock.unlock()
     }
 

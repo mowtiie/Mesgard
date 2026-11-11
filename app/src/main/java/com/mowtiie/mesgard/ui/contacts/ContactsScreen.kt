@@ -148,6 +148,11 @@ private fun ContactList(
                     leadingContent = { InitialAvatar(contact.displayName) },
                     headlineContent = { Text(contact.displayName) },
                     supportingContent = { Text(stringResource(contact.role.labelResource())) },
+                    trailingContent = if (contact.userId in uiState.onlineUserIds) {
+                        { OnlineLabel() }
+                    } else {
+                        null
+                    },
                 )
             }
         } else {
@@ -182,4 +187,13 @@ private fun ContactsError.messageResource(): Int = when (this) {
     ContactsError.REFRESH_UNKNOWN -> R.string.refresh_error_unknown
     ContactsError.START_NETWORK_UNAVAILABLE -> R.string.start_conversation_error_network_unavailable
     ContactsError.START_UNKNOWN -> R.string.start_conversation_error_unknown
+}
+
+@Composable
+private fun OnlineLabel() {
+    Text(
+        text = stringResource(R.string.contact_online),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.primary,
+    )
 }

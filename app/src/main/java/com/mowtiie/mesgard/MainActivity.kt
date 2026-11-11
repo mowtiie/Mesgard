@@ -9,6 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.mowtiie.mesgard.domain.lock.AppLock
+import com.mowtiie.mesgard.domain.presence.PresenceTracker
 import com.mowtiie.mesgard.domain.repository.DeviceSettingsRepository
 import com.mowtiie.mesgard.ui.MesgardApp
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
@@ -23,6 +24,9 @@ class MainActivity : FragmentActivity() {
 
     @Inject
     internal lateinit var appLock: AppLock
+
+    @Inject
+    internal lateinit var presenceTracker: PresenceTracker
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,11 +47,14 @@ class MainActivity : FragmentActivity() {
     override fun onStart() {
         super.onStart()
         appLock.onAppForegrounded()
+        presenceTracker.onAppForegrounded()
     }
 
     override fun onStop() {
         super.onStop()
-        if (!isChangingConfigurations) appLock.onAppBackgrounded()
+        if (isChangingConfigurations) return
+        appLock.onAppBackgrounded()
+        presenceTracker.onAppBackgrounded()
     }
 
     private fun applyScreenPrivacy(enabled: Boolean) {

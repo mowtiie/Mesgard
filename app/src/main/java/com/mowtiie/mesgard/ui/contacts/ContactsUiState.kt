@@ -18,6 +18,7 @@ internal enum class ContactsSection {
 internal data class ContactsUiState(
     val contacts: List<Contact> = emptyList(),
     val groups: List<Group> = emptyList(),
+    val onlineUserIds: Set<String> = emptySet(),
     val selectedSection: ContactsSection = ContactsSection.PEOPLE,
     val isLoaded: Boolean = false,
     val isRefreshing: Boolean = false,

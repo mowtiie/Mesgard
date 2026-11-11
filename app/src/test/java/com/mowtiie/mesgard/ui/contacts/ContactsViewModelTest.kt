@@ -7,6 +7,7 @@ import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.StartConversationResult
+import com.mowtiie.mesgard.domain.presence.PresenceTracker
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.GroupRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
@@ -40,10 +41,19 @@ class ContactsViewModelTest {
     }
     private val ana = Contact("org", "ana", "Ana", OrgRole.STAFF)
     private val sectionA = Group("section-a", "org", "Section A", canStartConversation = true)
+    private val onlineUserIds = MutableStateFlow(emptySet<String>())
+    private val presenceTracker = mockk<PresenceTracker> {
+        every { this@mockk.onlineUserIds } returns
+            this@ContactsViewModelTest.onlineUserIds
+    }
+
+    private fun viewModel() = ContactsViewModel(repository, groupRepository, presenceTracker)
 
     @Test
     fun `refreshes the roster when it is created`() = runTest {
-        ContactsViewModel(repository, groupRepository).uiState.test { cancelAndIgnoreRemainingEvents() }
+        viewModel().uiState.test {
+            cancelAndIgnoreRemainingEvents()
+        }
 
         coVerify(exactly = 1) { repository.refresh() }
     }
@@ -52,7 +62,7 @@ class ContactsViewModelTest {
     fun `exposes the stored contacts`() = runTest {
         contacts.value = listOf(ana)
 
-        ContactsViewModel(repository, groupRepository).uiState.test {
+        viewModel().uiState.test {
             val state = expectMostRecentItem()
             assertEquals(listOf("Ana"), state.contacts.map { it.displayName })
             assertFalse(state.showEmptyMessage)
@@ -61,7 +71,7 @@ class ContactsViewModelTest {
 
     @Test
     fun `shows the empty message once loaded without contacts`() = runTest {
-        ContactsViewModel(repository, groupRepository).uiState.test {
+        viewModel().uiState.test {
             assertTrue(expectMostRecentItem().showEmptyMessage)
         }
     }
@@ -69,7 +79,7 @@ class ContactsViewModelTest {
     @Test
     fun `reports a refresh failure and clears it once shown`() = runTest {
         coEvery { repository.refresh() } returns RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
-        val viewModel = ContactsViewModel(repository, groupRepository)
+        val viewModel = viewModel()
 
         viewModel.uiState.test {
             assertEquals(ContactsError.REFRESH_NETWORK_UNAVAILABLE, expectMostRecentItem().error)
@@ -81,7 +91,7 @@ class ContactsViewModelTest {
     @Test
     fun `starting a conversation exposes its identifier until it is opened`() = runTest {
         coEvery { repository.startDirectConversation(ana) } returns StartConversationResult.Started("conversation-1")
-        val viewModel = ContactsViewModel(repository, groupRepository)
+        val viewModel = viewModel()
 
         viewModel.onContactClicked(ana)
 
@@ -96,7 +106,7 @@ class ContactsViewModelTest {
     fun `reports a failure to start a conversation`() = runTest {
         coEvery { repository.startDirectConversation(ana) } returns
             StartConversationResult.Failure(RefreshError.UNKNOWN)
-        val viewModel = ContactsViewModel(repository, groupRepository)
+        val viewModel = viewModel()
 
         viewModel.onContactClicked(ana)
 
@@ -111,7 +121,7 @@ class ContactsViewModelTest {
     fun `ignores a second tap while a conversation is being started`() = runTest {
         val pending = CompletableDeferred<StartConversationResult>()
         coEvery { repository.startDirectConversation(any()) } coAnswers { pending.await() }
-        val viewModel = ContactsViewModel(repository, groupRepository)
+        val viewModel = viewModel()
 
         viewModel.uiState.test {
             expectMostRecentItem()
@@ -127,7 +137,9 @@ class ContactsViewModelTest {
 
     @Test
     fun `refreshes the groups together with the roster`() = runTest {
-        ContactsViewModel(repository, groupRepository).uiState.test { cancelAndIgnoreRemainingEvents() }
+        viewModel().uiState.test {
+            cancelAndIgnoreRemainingEvents()
+        }
 
         coVerify(exactly = 1) { groupRepository.refresh() }
     }
@@ -136,7 +148,7 @@ class ContactsViewModelTest {
     fun `reports a group refresh failure`() = runTest {
         coEvery { groupRepository.refresh() } returns RefreshResult.Failure(RefreshError.UNKNOWN)
 
-        ContactsViewModel(repository, groupRepository).uiState.test {
+        viewModel().uiState.test {
             assertEquals(ContactsError.REFRESH_UNKNOWN, expectMostRecentItem().error)
         }
     }
@@ -145,7 +157,7 @@ class ContactsViewModelTest {
     fun `hides the sections when the user cannot start any group conversation`() = runTest {
         groups.value = listOf(sectionA.copy(canStartConversation = false))
 
-        ContactsViewModel(repository, groupRepository).uiState.test {
+        viewModel().uiState.test {
             val state = expectMostRecentItem()
             assertFalse(state.showSections)
             assertEquals(ContactsSection.PEOPLE, state.section)
@@ -155,7 +167,7 @@ class ContactsViewModelTest {
     @Test
     fun `shows the selected section when the user can start group conversations`() = runTest {
         groups.value = listOf(sectionA)
-        val viewModel = ContactsViewModel(repository, groupRepository)
+        val viewModel = viewModel()
 
         viewModel.uiState.test {
             val initial = expectMostRecentItem()
@@ -170,7 +182,7 @@ class ContactsViewModelTest {
     fun `starting a group conversation exposes its identifier`() = runTest {
         coEvery { groupRepository.startGroupConversation(sectionA) } returns
             StartConversationResult.Started("conversation-2")
-        val viewModel = ContactsViewModel(repository, groupRepository)
+        val viewModel = viewModel()
 
         viewModel.onGroupClicked(sectionA)
 
@@ -181,7 +193,7 @@ class ContactsViewModelTest {
     fun `reports a failure to start a group conversation`() = runTest {
         coEvery { groupRepository.startGroupConversation(sectionA) } returns
             StartConversationResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
-        val viewModel = ContactsViewModel(repository, groupRepository)
+        val viewModel = viewModel()
 
         viewModel.onGroupClicked(sectionA)
 
@@ -193,9 +205,21 @@ class ContactsViewModelTest {
     @Test
     fun `does not show the empty roster message on the groups section`() = runTest {
         groups.value = listOf(sectionA)
-        val viewModel = ContactsViewModel(repository, groupRepository)
+        val viewModel = viewModel()
         viewModel.onSectionSelected(ContactsSection.GROUPS)
 
         viewModel.uiState.test { assertFalse(expectMostRecentItem().showEmptyMessage) }
+    }
+
+    @Test
+    fun `exposes which users are online`() = runTest {
+        onlineUserIds.value = setOf("ana")
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            assertEquals(setOf("ana"), expectMostRecentItem().onlineUserIds)
+            onlineUserIds.value = setOf("ana", "ben")
+            assertEquals(setOf("ana", "ben"), awaitItem().onlineUserIds)
+        }
     }
 }

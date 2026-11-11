@@ -7,6 +7,7 @@ import com.mowtiie.mesgard.domain.model.Group
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.StartConversationResult
+import com.mowtiie.mesgard.domain.presence.PresenceTracker
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.GroupRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,17 +26,20 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 internal class ContactsViewModel @Inject constructor(
     private val contactRepository: ContactRepository,
     private val groupRepository: GroupRepository,
+    presenceTracker: PresenceTracker,
 ) : ViewModel() {
     private val localState = MutableStateFlow(LocalState())
 
     val uiState: StateFlow<ContactsUiState> = combine(
         contactRepository.observeContacts(),
         groupRepository.observeGroups(),
+        presenceTracker.onlineUserIds,
         localState,
-    ) { contacts, groups, local ->
+    ) { contacts, groups, onlineUserIds, local ->
         ContactsUiState(
             contacts = contacts,
             groups = groups.filter { it.canStartConversation },
+            onlineUserIds = onlineUserIds,
             selectedSection = local.selectedSection,
             isLoaded = true,
             isRefreshing = local.isRefreshing,

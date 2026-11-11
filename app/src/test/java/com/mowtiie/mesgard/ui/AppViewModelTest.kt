@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.mowtiie.mesgard.domain.lock.AppLock
 import com.mowtiie.mesgard.domain.model.AuthState
 import com.mowtiie.mesgard.domain.model.DeviceSettings
+import com.mowtiie.mesgard.domain.presence.PresenceTracker
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.sync.RealtimeSync
 import com.mowtiie.mesgard.testing.FakeDeviceSettings
@@ -29,11 +30,12 @@ class AppViewModelTest {
         every { authState } returns authStates
     }
     private val realtimeSync = mockk<RealtimeSync>(relaxed = true)
+    private val presenceTracker = mockk<PresenceTracker>(relaxed = true)
     private val locked = MutableStateFlow(true)
     private val appLock = mockk<AppLock>(relaxed = true) { every { isLocked } returns locked }
     private val deviceSettings = FakeDeviceSettings(DeviceSettings(appLockEnabled = true))
 
-    private fun viewModel() = AppViewModel(authRepository, realtimeSync, appLock, deviceSettings)
+    private fun viewModel() = AppViewModel(authRepository, realtimeSync, presenceTracker, appLock, deviceSettings)
 
     @Test
     fun `starts in the loading state until the session is known`() = runTest {
@@ -70,9 +72,11 @@ class AppViewModelTest {
 
         authStates.emit(AuthState.SignedIn(USER_ID))
         verify(exactly = 1) { realtimeSync.start(any()) }
+        verify(exactly = 1) { presenceTracker.start(any()) }
 
         authStates.emit(AuthState.SignedOut)
         verify(atLeast = 1) { realtimeSync.stop() }
+        verify(atLeast = 1) { presenceTracker.stop() }
     }
 
     @Test
