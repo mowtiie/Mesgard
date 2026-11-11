@@ -16,6 +16,8 @@
     <string name="sign_out_dialog_message">Messages that have not been sent will be deleted from this device.</string>
     <string name="cancel">Cancel</string>
     <string name="profile_organization">Organization</string>
+    <string name="profile_organizations">Organizations</string>
+    <string name="profile_account">Account</string>
     <string name="profile_email">Email</string>
     <string name="tab_chats">Chats</string>
     <string name="tab_contacts">Contacts</string>
