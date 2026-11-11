@@ -10,6 +10,10 @@ internal enum class ConversationError {
     MESSAGE_TOO_LONG,
     NOT_SIGNED_IN,
     CONVERSATION_UNAVAILABLE,
+    TOO_MANY_ATTACHMENTS,
+    ATTACHMENT_TOO_LARGE,
+    ATTACHMENT_TYPE_NOT_ALLOWED,
+    ATTACHMENT_UNREADABLE,
 }
 
 internal data class ConversationUiState(

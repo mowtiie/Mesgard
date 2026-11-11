@@ -1,6 +1,8 @@
 package com.mowtiie.mesgard.data
 
 import androidx.room.withTransaction
+import com.mowtiie.mesgard.data.attachment.AttachmentIntake
+import com.mowtiie.mesgard.data.attachment.IntakeResult
 import com.mowtiie.mesgard.data.local.AttachmentEntity
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.MessageEntity
@@ -16,6 +18,7 @@ import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.remote.toRefreshResult
 import com.mowtiie.mesgard.data.remote.toSenderProfile
 import com.mowtiie.mesgard.data.work.MessageSendScheduler
+import com.mowtiie.mesgard.domain.attachment.MAX_ATTACHMENTS_PER_MESSAGE
 import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.domain.model.MessageStatus
 import com.mowtiie.mesgard.domain.model.PageResult
@@ -38,6 +41,7 @@ internal class OfflineFirstMessageRepository @Inject constructor(
     private val database: MesgardDatabase,
     private val remoteSource: MessageRemoteSource,
     private val sendScheduler: MessageSendScheduler,
+    private val attachmentIntake: AttachmentIntake,
     private val authRepository: AuthRepository,
     private val clock: Clock,
 ) : MessageRepository {
@@ -78,22 +82,34 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         }
     }
 
-    override suspend fun send(conversationId: String, body: String): SendResult {
+    override suspend fun send(conversationId: String, body: String, attachmentUris: List<String>): SendResult {
         val text = body.trim()
         val senderId = authRepository.currentUserId
-        val rejection = rejectionFor(text, senderId, conversationId)
-        if (rejection != null || senderId == null) {
-            return SendResult.Rejected(rejection ?: SendRejection.NOT_SIGNED_IN)
+        val rejection = rejectionFor(text, attachmentUris.size, senderId, conversationId)
+        return if (rejection != null || senderId == null) {
+            SendResult.Rejected(rejection ?: SendRejection.NOT_SIGNED_IN)
+        } else {
+            queue(NewMessage(UUID.randomUUID().toString(), conversationId, senderId, text), attachmentUris)
+        }
+    }
+
+    private suspend fun queue(draft: NewMessage, attachmentUris: List<String>): SendResult {
+        val attachments = when (val intake = attachmentIntake.prepare(draft.conversationId, draft.id, attachmentUris)) {
+            is IntakeResult.Rejected -> return SendResult.Rejected(intake.reason)
+            is IntakeResult.Ready -> intake.attachments
         }
         val message = MessageEntity(
-            id = UUID.randomUUID().toString(),
-            conversationId = conversationId,
-            senderId = senderId,
-            body = text,
+            id = draft.id,
+            conversationId = draft.conversationId,
+            senderId = draft.senderId,
+            body = draft.body,
             createdAtEpochMillis = clock.millis(),
             status = MessageStatus.PENDING,
         )
-        messageDao.upsert(message)
+        database.withTransaction {
+            messageDao.upsert(message)
+            attachmentDao.upsertAll(attachments)
+        }
         sendScheduler.schedule(message.id)
         return SendResult.Queued
     }
@@ -113,9 +129,15 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         }.toRefreshResult()
     }
 
-    private suspend fun rejectionFor(text: String, senderId: String?, conversationId: String): SendRejection? = when {
-        text.isEmpty() -> SendRejection.EMPTY_MESSAGE
+    private suspend fun rejectionFor(
+        text: String,
+        attachmentCount: Int,
+        senderId: String?,
+        conversationId: String,
+    ): SendRejection? = when {
+        text.isEmpty() && attachmentCount == 0 -> SendRejection.EMPTY_MESSAGE
         text.length > MAX_MESSAGE_LENGTH -> SendRejection.MESSAGE_TOO_LONG
+        attachmentCount > MAX_ATTACHMENTS_PER_MESSAGE -> SendRejection.TOO_MANY_ATTACHMENTS
         senderId == null -> SendRejection.NOT_SIGNED_IN
         conversationDao.findOrgId(conversationId) == null -> SendRejection.CONVERSATION_UNAVAILABLE
         else -> null
@@ -141,18 +163,20 @@ internal class OfflineFirstMessageRepository @Inject constructor(
             )
         }
     }
-
-    private fun toMessage(item: TimelineMessage, currentUserId: String?, attachments: List<AttachmentEntity>) = Message(
-        id = item.id,
-        conversationId = item.conversationId,
-        senderId = item.senderId,
-        senderName = item.senderName,
-        body = item.body,
-        createdAtEpochMillis = item.createdAtEpochMillis,
-        isEdited = item.editedAtEpochMillis != null,
-        isDeleted = item.deletedAtEpochMillis != null,
-        status = item.status,
-        isOwn = item.senderId == currentUserId,
-        attachments = attachments.map { it.toDomain() },
-    )
 }
+
+private fun toMessage(item: TimelineMessage, currentUserId: String?, attachments: List<AttachmentEntity>) = Message(
+    id = item.id,
+    conversationId = item.conversationId,
+    senderId = item.senderId,
+    senderName = item.senderName,
+    body = item.body,
+    createdAtEpochMillis = item.createdAtEpochMillis,
+    isEdited = item.editedAtEpochMillis != null,
+    isDeleted = item.deletedAtEpochMillis != null,
+    status = item.status,
+    isOwn = item.senderId == currentUserId,
+    attachments = attachments.map { it.toDomain() },
+)
+
+private data class NewMessage(val id: String, val conversationId: String, val senderId: String, val body: String)

@@ -1,9 +1,14 @@
 package com.mowtiie.mesgard.data
 
 import app.cash.turbine.test
+import com.mowtiie.mesgard.data.attachment.AttachmentIntake
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.work.MessageSendScheduler
+import com.mowtiie.mesgard.domain.attachment.AttachmentImporter
+import com.mowtiie.mesgard.domain.attachment.AttachmentRejection
+import com.mowtiie.mesgard.domain.attachment.ImportResult
+import com.mowtiie.mesgard.domain.attachment.MAX_ATTACHMENTS_PER_MESSAGE
 import com.mowtiie.mesgard.domain.model.MessageStatus
 import com.mowtiie.mesgard.domain.model.PageResult
 import com.mowtiie.mesgard.domain.model.RefreshError
@@ -44,10 +49,18 @@ class OfflineFirstMessageRepositoryTest {
 
     private val remoteSource = mockk<MessageRemoteSource>()
     private val sendScheduler = mockk<MessageSendScheduler>(relaxed = true)
+    private val attachmentImporter = mockk<AttachmentImporter>(relaxed = true)
     private val authRepository = mockk<AuthRepository> { every { currentUserId } returns CURRENT_USER_ID }
     private val clock = Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC)
     private val repository by lazy {
-        OfflineFirstMessageRepository(databaseRule.database, remoteSource, sendScheduler, authRepository, clock)
+        OfflineFirstMessageRepository(
+            databaseRule.database,
+            remoteSource,
+            sendScheduler,
+            AttachmentIntake(attachmentImporter),
+            authRepository,
+            clock,
+        )
     }
 
     @Before
@@ -65,6 +78,47 @@ class OfflineFirstMessageRepositoryTest {
         assertEquals(CURRENT_USER_ID, stored.senderId)
         assertEquals(NOW, stored.createdAtEpochMillis)
         verify(exactly = 1) { sendScheduler.schedule(stored.id) }
+    }
+
+    @Test
+    fun `send stores a pending message with its attachments and schedules it`() = runTest {
+        coEvery { attachmentImporter.import("content://photo", any()) } returns
+            ImportResult.Imported("photo.jpg", "image/jpeg", 1_024L, "/files/photo")
+
+        val result = repository.send(CONVERSATION_ID, "", listOf("content://photo"))
+
+        assertEquals(SendResult.Queued, result)
+        val message = pendingMessages().single()
+        val attachment = databaseRule.database.attachmentDao().findByMessage(message.id).single()
+        assertEquals("photo.jpg", attachment.fileName)
+        assertEquals("/files/photo", attachment.localPath)
+        assertEquals("$CONVERSATION_ID/${message.id}/${attachment.id}", attachment.storagePath)
+        verify(exactly = 1) { sendScheduler.schedule(message.id) }
+    }
+
+    @Test
+    fun `send rejects more attachments than a message can carry`() = runTest {
+        val uris = List(MAX_ATTACHMENTS_PER_MESSAGE + 1) { "content://file$it" }
+
+        assertEquals(
+            SendResult.Rejected(SendRejection.TOO_MANY_ATTACHMENTS),
+            repository.send(CONVERSATION_ID, "Hello", uris),
+        )
+    }
+
+    @Test
+    fun `send stores nothing and removes imported files when an attachment is rejected`() = runTest {
+        coEvery { attachmentImporter.import("content://first", any()) } returns
+            ImportResult.Imported("first.pdf", "application/pdf", 10L, "/files/first")
+        coEvery { attachmentImporter.import("content://second", any()) } returns
+            ImportResult.Rejected(AttachmentRejection.TOO_LARGE)
+
+        val result = repository.send(CONVERSATION_ID, "Hello", listOf("content://first", "content://second"))
+
+        assertEquals(SendResult.Rejected(SendRejection.ATTACHMENT_TOO_LARGE), result)
+        assertTrue(pendingMessages().isEmpty())
+        verify { attachmentImporter.delete("/files/first") }
+        verify(exactly = 0) { sendScheduler.schedule(any()) }
     }
 
     @Test

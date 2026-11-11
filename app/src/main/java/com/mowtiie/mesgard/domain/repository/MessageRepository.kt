@@ -16,7 +16,7 @@ internal interface MessageRepository {
 
     suspend fun loadOlder(conversationId: String): PageResult
 
-    suspend fun send(conversationId: String, body: String): SendResult
+    suspend fun send(conversationId: String, body: String, attachmentUris: List<String> = emptyList()): SendResult
 
     suspend fun retry(messageId: String)
 

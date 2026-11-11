@@ -7,6 +7,8 @@ import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.workDataOf
+import com.mowtiie.mesgard.data.local.AttachmentEntity
+import com.mowtiie.mesgard.data.remote.AttachmentRemoteSource
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.NewMessageDto
 import com.mowtiie.mesgard.domain.model.MessageStatus
@@ -20,6 +22,7 @@ import io.github.jan.supabase.exceptions.RestException
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import java.io.File
 import java.io.IOException
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
@@ -27,6 +30,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
@@ -35,8 +39,12 @@ class SendMessageWorkerTest {
     @get:Rule
     val databaseRule = InMemoryDatabaseRule()
 
+    @get:Rule
+    val temporaryFolder = TemporaryFolder()
+
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val remoteSource = mockk<MessageRemoteSource>()
+    private val attachmentSource = mockk<AttachmentRemoteSource>()
 
     @Before
     fun storeConversation() = runTest {
@@ -114,6 +122,44 @@ class SendMessageWorkerTest {
     }
 
     @Test
+    fun `uploads the attachments and then sends the message with them`() = runTest {
+        storePending()
+        val file = temporaryFolder.newFile("photo").apply { writeText("data") }
+        storeAttachment(localPath = file.absolutePath)
+        coEvery { attachmentSource.upload(any(), any(), any()) } returns Unit
+        coEvery { attachmentSource.sendWithAttachments(any(), any()) } returns SERVER_TIME
+
+        val result = worker().doWork()
+
+        assertEquals(Result.success(), result)
+        coVerify { attachmentSource.upload("chat/message/attachment", file, "image/png") }
+        val stored = databaseRule.database.messageDao().findById(MESSAGE_ID)
+        assertEquals(MessageStatus.SENT, stored?.status)
+        assertEquals(Instant.parse(SERVER_TIME).toEpochMilli(), stored?.createdAtEpochMillis)
+        coVerify(exactly = 0) { remoteSource.send(any()) }
+    }
+
+    @Test
+    fun `retries when an attachment cannot be uploaded because the server is unreachable`() = runTest {
+        storePending()
+        val file = temporaryFolder.newFile("photo")
+        storeAttachment(localPath = file.absolutePath)
+        coEvery { attachmentSource.upload(any(), any(), any()) } throws IOException("offline")
+
+        assertEquals(Result.retry(), worker(runAttemptCount = 0).doWork())
+        coVerify(exactly = 0) { attachmentSource.sendWithAttachments(any(), any()) }
+    }
+
+    @Test
+    fun `marks the message as failed when the file of an attachment is gone`() = runTest {
+        storePending()
+        storeAttachment(localPath = File(temporaryFolder.root, "missing").absolutePath)
+
+        assertEquals(Result.failure(), worker().doWork())
+        assertEquals(MessageStatus.FAILED, databaseRule.database.messageDao().findById(MESSAGE_ID)?.status)
+    }
+
+    @Test
     fun `fails when the message does not exist`() = runTest {
         assertEquals(Result.failure(), worker(messageId = "missing").doWork())
     }
@@ -121,6 +167,22 @@ class SendMessageWorkerTest {
     private suspend fun storePending() {
         databaseRule.database.messageDao()
             .upsert(messageEntity(MESSAGE_ID, CONVERSATION_ID, 1_000L, status = MessageStatus.PENDING))
+    }
+
+    private suspend fun storeAttachment(localPath: String) {
+        databaseRule.database.attachmentDao().upsertAll(
+            listOf(
+                AttachmentEntity(
+                    id = "attachment",
+                    messageId = MESSAGE_ID,
+                    storagePath = "chat/message/attachment",
+                    mimeType = "image/png",
+                    sizeBytes = 4L,
+                    fileName = "photo.png",
+                    localPath = localPath,
+                ),
+            ),
+        )
     }
 
     private fun worker(messageId: String = MESSAGE_ID, runAttemptCount: Int = 0): SendMessageWorker {
@@ -138,8 +200,12 @@ class SendMessageWorkerTest {
                         appContext,
                         workerParameters,
                         database.messageDao(),
-                        database.conversationDao(),
-                        remoteSource,
+                        MessageDeliverer(
+                            database.conversationDao(),
+                            database.attachmentDao(),
+                            remoteSource,
+                            attachmentSource,
+                        ),
                     )
                 },
             )

@@ -52,6 +52,10 @@
     <string name="conversation_error_message_too_long">The message is too long.</string>
     <string name="conversation_error_not_signed_in">Sign in again to send messages.</string>
     <string name="conversation_error_unavailable">This conversation is no longer available.</string>
+    <string name="conversation_error_too_many_attachments">A message can have at most 10 attachments.</string>
+    <string name="conversation_error_attachment_too_large">An attachment can be at most 20 MB.</string>
+    <string name="conversation_error_attachment_type">This type of file cannot be attached.</string>
+    <string name="conversation_error_attachment_unreadable">Unable to read the file. Try again.</string>
     <string name="contacts_empty">No contacts yet.</string>
     <string name="contacts_section_people">People</string>
     <string name="contacts_section_groups">Groups</string>

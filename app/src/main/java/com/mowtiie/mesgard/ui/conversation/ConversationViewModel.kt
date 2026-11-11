@@ -157,4 +157,8 @@ private fun SendRejection.toError() = when (this) {
     SendRejection.MESSAGE_TOO_LONG -> ConversationError.MESSAGE_TOO_LONG
     SendRejection.NOT_SIGNED_IN -> ConversationError.NOT_SIGNED_IN
     SendRejection.CONVERSATION_UNAVAILABLE -> ConversationError.CONVERSATION_UNAVAILABLE
+    SendRejection.TOO_MANY_ATTACHMENTS -> ConversationError.TOO_MANY_ATTACHMENTS
+    SendRejection.ATTACHMENT_TOO_LARGE -> ConversationError.ATTACHMENT_TOO_LARGE
+    SendRejection.ATTACHMENT_TYPE_NOT_ALLOWED -> ConversationError.ATTACHMENT_TYPE_NOT_ALLOWED
+    SendRejection.ATTACHMENT_UNREADABLE -> ConversationError.ATTACHMENT_UNREADABLE
 }

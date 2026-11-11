@@ -183,4 +183,8 @@ private fun ConversationError.messageResource(): Int = when (this) {
     ConversationError.MESSAGE_TOO_LONG -> R.string.conversation_error_message_too_long
     ConversationError.NOT_SIGNED_IN -> R.string.conversation_error_not_signed_in
     ConversationError.CONVERSATION_UNAVAILABLE -> R.string.conversation_error_unavailable
+    ConversationError.TOO_MANY_ATTACHMENTS -> R.string.conversation_error_too_many_attachments
+    ConversationError.ATTACHMENT_TOO_LARGE -> R.string.conversation_error_attachment_too_large
+    ConversationError.ATTACHMENT_TYPE_NOT_ALLOWED -> R.string.conversation_error_attachment_type
+    ConversationError.ATTACHMENT_UNREADABLE -> R.string.conversation_error_attachment_unreadable
 }
