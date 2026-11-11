@@ -33,9 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
-import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
+import java.time.ZoneId
 
 private const val LOAD_OLDER_THRESHOLD = 5
 
@@ -122,7 +122,7 @@ private fun MessageList(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val nowEpochMillis = System.currentTimeMillis()
+    val timeline = remember(uiState.messages) { uiState.messages.withDateHeaders(ZoneId.systemDefault()) }
     val isNearOldestLoaded by remember { derivedStateOf { listState.isNearEnd() } }
     val newestMessage = uiState.messages.firstOrNull()
 
@@ -135,8 +135,15 @@ private fun MessageList(
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(state = listState, reverseLayout = true, modifier = Modifier.fillMaxSize()) {
-            items(uiState.messages, key = { it.id }) { message ->
-                MessageItem(message, uiState.showSenderNames, nowEpochMillis, onRetryClicked)
+            items(timeline, key = { it.key }) { item ->
+                when (item) {
+                    is TimelineItem.Bubble -> MessageBubble(
+                        message = item.message,
+                        showSenderName = uiState.showSenderNames,
+                        onRetry = { onRetryClicked(item.message.id) },
+                    )
+                    is TimelineItem.DateHeader -> DateHeader(item.date)
+                }
             }
             if (uiState.isLoadingOlder) {
                 item(key = "loading-older") { LoadingOlderIndicator() }
@@ -150,21 +157,6 @@ private fun MessageList(
             )
         }
     }
-}
-
-@Composable
-private fun MessageItem(
-    message: Message,
-    showSenderNames: Boolean,
-    nowEpochMillis: Long,
-    onRetryClicked: (String) -> Unit,
-) {
-    MessageBubble(
-        message = message,
-        showSenderName = showSenderNames,
-        nowEpochMillis = nowEpochMillis,
-        onRetry = { onRetryClicked(message.id) },
-    )
 }
 
 @Composable

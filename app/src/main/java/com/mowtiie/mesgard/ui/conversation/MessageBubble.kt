@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.domain.model.MessageStatus
-import com.mowtiie.mesgard.ui.chats.formatActivityTime
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val BubbleMaxWidth = 320.dp
@@ -33,7 +32,6 @@ private const val METADATA_SEPARATOR = " · "
 internal fun MessageBubble(
     message: Message,
     showSenderName: Boolean,
-    nowEpochMillis: Long,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -58,7 +56,7 @@ internal fun MessageBubble(
                 SenderName(message, showSenderName)
                 MessageBody(message)
                 Text(
-                    text = metadata(message, nowEpochMillis),
+                    text = metadata(message),
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
@@ -89,9 +87,9 @@ private fun MessageBody(message: Message) {
 }
 
 @Composable
-private fun metadata(message: Message, nowEpochMillis: Long): String {
+private fun metadata(message: Message): String {
     val parts = listOfNotNull(
-        formatActivityTime(message.createdAtEpochMillis, nowEpochMillis),
+        formatMessageTime(message.createdAtEpochMillis),
         if (message.isEdited && !message.isDeleted) stringResource(R.string.message_edited) else null,
         if (message.status == MessageStatus.PENDING) stringResource(R.string.message_sending) else null,
     )
@@ -118,13 +116,11 @@ private fun MessageBubblePreview() {
             MessageBubble(
                 message = previewMessage(isOwn = false, body = "Reminder: bring your project proposals tomorrow."),
                 showSenderName = true,
-                nowEpochMillis = System.currentTimeMillis(),
                 onRetry = {},
             )
             MessageBubble(
                 message = previewMessage(isOwn = true, body = "Noted, thank you.", status = MessageStatus.FAILED),
                 showSenderName = true,
-                nowEpochMillis = System.currentTimeMillis(),
                 onRetry = {},
             )
         }
