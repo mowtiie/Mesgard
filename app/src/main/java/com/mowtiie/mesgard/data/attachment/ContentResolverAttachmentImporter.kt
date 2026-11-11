@@ -20,8 +20,6 @@ private const val DEFAULT_FILE_NAME = "attachment"
 private const val MAX_FILE_NAME_LENGTH = 255
 private val RE_ENCODED_IMAGE_TYPES = setOf("image/jpeg", "image/png", "image/webp")
 
-internal const val ATTACHMENT_DIRECTORY = "attachments"
-
 /** Animated GIFs and documents are copied unchanged. Photos go through [ImageReencoder]. */
 internal class ContentResolverAttachmentImporter @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -89,5 +87,5 @@ internal class ContentResolverAttachmentImporter @Inject constructor(
             if (index >= 0 && it.moveToFirst()) read(it, index) else null
         }
 
-    private fun directory() = File(context.noBackupFilesDir, ATTACHMENT_DIRECTORY).also { it.mkdirs() }
+    private fun directory() = context.attachmentDirectory()
 }

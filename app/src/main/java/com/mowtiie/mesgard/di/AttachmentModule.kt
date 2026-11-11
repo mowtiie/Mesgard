@@ -1,9 +1,11 @@
 package com.mowtiie.mesgard.di
 
+import com.mowtiie.mesgard.data.OfflineFirstAttachmentRepository
 import com.mowtiie.mesgard.data.attachment.ContentResolverAttachmentImporter
 import com.mowtiie.mesgard.data.remote.AttachmentRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseAttachmentRemoteSource
 import com.mowtiie.mesgard.domain.attachment.AttachmentImporter
+import com.mowtiie.mesgard.domain.repository.AttachmentRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -17,4 +19,7 @@ internal abstract class AttachmentModule {
 
     @Binds
     abstract fun bindAttachmentRemoteSource(source: SupabaseAttachmentRemoteSource): AttachmentRemoteSource
+
+    @Binds
+    abstract fun bindAttachmentRepository(repository: OfflineFirstAttachmentRepository): AttachmentRepository
 }
