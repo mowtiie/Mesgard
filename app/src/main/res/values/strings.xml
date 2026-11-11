@@ -5,6 +5,8 @@
     <string name="sign_in_title">Sign in</string>
     <string name="sign_in_email_label">Email</string>
     <string name="sign_in_password_label">Password</string>
+    <string name="sign_in_show_password">Show password</string>
+    <string name="sign_in_hide_password">Hide password</string>
     <string name="sign_in_button">Sign in</string>
     <string name="sign_in_error_invalid_credentials">Incorrect email or password.</string>
     <string name="sign_in_error_network_unavailable">Unable to reach the server. Check your connection.</string>
