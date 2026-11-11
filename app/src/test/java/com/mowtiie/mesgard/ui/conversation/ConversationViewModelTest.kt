@@ -257,8 +257,8 @@ class ConversationViewModelTest {
     }
 
     @Test
-    fun `marks the conversation as read when a new incoming message arrives`() = runTest {
-        viewModel()
+    fun `marks the conversation as read when a new incoming message arrives while visible`() = runTest {
+        viewModel().onVisibilityChanged(true)
 
         messages.value = listOf(message("incoming"))
 
@@ -267,7 +267,7 @@ class ConversationViewModelTest {
 
     @Test
     fun `marks the conversation as read once for the same incoming message`() = runTest {
-        viewModel()
+        viewModel().onVisibilityChanged(true)
 
         messages.value = listOf(message("incoming"))
         messages.value = listOf(message("mine", isOwn = true), message("incoming"))
@@ -276,8 +276,54 @@ class ConversationViewModelTest {
     }
 
     @Test
-    fun `does not mark the conversation as read for own or unsent messages`() = runTest {
+    fun `does not mark the conversation as read while the screen is hidden`() = runTest {
         viewModel()
+
+        messages.value = listOf(message("incoming"))
+
+        coVerify(exactly = 0) { messageRepository.markConversationRead(any()) }
+    }
+
+    @Test
+    fun `marks messages that arrived while hidden once the screen becomes visible`() = runTest {
+        val viewModel = viewModel()
+        messages.value = listOf(message("incoming"))
+        coVerify(exactly = 0) { messageRepository.markConversationRead(any()) }
+
+        viewModel.onVisibilityChanged(true)
+
+        coVerify(exactly = 1) { messageRepository.markConversationRead(CONVERSATION_ID) }
+    }
+
+    @Test
+    fun `does not mark the conversation as read again when the screen returns without new messages`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onVisibilityChanged(true)
+        messages.value = listOf(message("incoming"))
+
+        viewModel.onVisibilityChanged(false)
+        viewModel.onVisibilityChanged(true)
+
+        coVerify(exactly = 1) { messageRepository.markConversationRead(CONVERSATION_ID) }
+    }
+
+    @Test
+    fun `marks the conversation as read for a message that arrives after the screen was hidden and shown`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onVisibilityChanged(true)
+        messages.value = listOf(message("first"))
+        viewModel.onVisibilityChanged(false)
+        messages.value = listOf(message("second"), message("first"))
+
+        coVerify(exactly = 1) { messageRepository.markConversationRead(CONVERSATION_ID) }
+        viewModel.onVisibilityChanged(true)
+
+        coVerify(exactly = 2) { messageRepository.markConversationRead(CONVERSATION_ID) }
+    }
+
+    @Test
+    fun `does not mark the conversation as read for own or unsent messages`() = runTest {
+        viewModel().onVisibilityChanged(true)
 
         messages.value = listOf(
             message("mine", isOwn = true),

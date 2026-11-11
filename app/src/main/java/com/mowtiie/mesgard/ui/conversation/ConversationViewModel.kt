@@ -47,6 +47,7 @@ internal class ConversationViewModel @Inject constructor(
     private val conversationId = savedStateHandle.toRoute<ConversationRoute>().conversationId
     private val visibleLimit = MutableStateFlow(MESSAGE_PAGE_SIZE)
     private val localState = MutableStateFlow(LocalState())
+    private val isVisible = MutableStateFlow(false)
     private val ownTyping =
         MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -76,7 +77,7 @@ internal class ConversationViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { reportFailure(messageRepository.refresh(conversationId)) }
-        viewModelScope.launch { markReadWhenNewMessagesArrive() }
+        viewModelScope.launch { markReadWhileVisible() }
         viewModelScope.launch {
             realtimeSync.reconnections.collect { reportFailure(messageRepository.refresh(conversationId)) }
         }
@@ -120,9 +121,15 @@ internal class ConversationViewModel @Inject constructor(
 
     fun onErrorShown() = localState.update { it.copy(error = null) }
 
-    private suspend fun markReadWhenNewMessagesArrive() {
-        messageRepository.observeMessages(conversationId, MESSAGE_PAGE_SIZE)
+    /** The screen is visible only while it is resumed, so not in the background and not behind the app lock. */
+    fun onVisibilityChanged(visible: Boolean) {
+        isVisible.value = visible
+    }
+
+    private suspend fun markReadWhileVisible() {
+        val newestIncomingId = messageRepository.observeMessages(conversationId, MESSAGE_PAGE_SIZE)
             .map { messages -> messages.firstOrNull { !it.isOwn && it.status == MessageStatus.SENT }?.id }
+        combine(isVisible, newestIncomingId) { visible, id -> id.takeIf { visible } }
             .filterNotNull()
             .distinctUntilChanged()
             .collect { messageRepository.markConversationRead(conversationId) }
