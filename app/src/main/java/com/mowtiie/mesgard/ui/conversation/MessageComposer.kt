@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -31,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
@@ -38,6 +40,7 @@ import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val ComposerPadding = 8.dp
 private val ChipSpacing = 8.dp
+private val ChipMaxWidth = 200.dp
 private val RemoveIconSize = 18.dp
 private const val COMPOSER_MAX_LINES = 5
 
@@ -107,9 +110,10 @@ private fun PickedAttachments(attachments: List<PickedAttachment>, onRemoved: (S
     ) {
         items(attachments, key = { it.uri }) { attachment ->
             InputChip(
+                modifier = Modifier.widthIn(max = ChipMaxWidth),
                 selected = false,
                 onClick = { onRemoved(attachment.uri) },
-                label = { Text(attachment.name, maxLines = 1) },
+                label = { Text(attachment.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Close,
