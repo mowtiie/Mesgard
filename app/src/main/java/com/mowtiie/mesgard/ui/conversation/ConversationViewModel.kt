@@ -13,6 +13,7 @@ import com.mowtiie.mesgard.domain.model.SendResult
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.domain.repository.MessageRepository
+import com.mowtiie.mesgard.domain.sync.RealtimeSync
 import com.mowtiie.mesgard.ui.navigation.ConversationRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -36,6 +37,7 @@ internal class ConversationViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     conversationRepository: ConversationRepository,
     private val messageRepository: MessageRepository,
+    realtimeSync: RealtimeSync,
 ) : ViewModel() {
     private val conversationId = savedStateHandle.toRoute<ConversationRoute>().conversationId
     private val visibleLimit = MutableStateFlow(MESSAGE_PAGE_SIZE)
@@ -66,6 +68,9 @@ internal class ConversationViewModel @Inject constructor(
     init {
         viewModelScope.launch { reportFailure(messageRepository.refresh(conversationId)) }
         viewModelScope.launch { markReadWhenNewMessagesArrive() }
+        viewModelScope.launch {
+            realtimeSync.reconnections.collect { reportFailure(messageRepository.refresh(conversationId)) }
+        }
     }
 
     fun onDraftChanged(draft: String) = localState.update { it.copy(draft = draft) }

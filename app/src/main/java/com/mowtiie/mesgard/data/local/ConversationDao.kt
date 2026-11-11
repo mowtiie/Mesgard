@@ -43,6 +43,9 @@ internal interface ConversationDao {
     @Query("SELECT org_id FROM conversations WHERE id = :conversationId")
     suspend fun findOrgId(conversationId: String): String?
 
+    @Query("UPDATE conversations SET unread_count = unread_count + 1 WHERE id = :conversationId")
+    suspend fun incrementUnreadCount(conversationId: String)
+
     @Query("UPDATE conversations SET unread_count = 0 WHERE id = :conversationId")
     suspend fun clearUnreadCount(conversationId: String)
 

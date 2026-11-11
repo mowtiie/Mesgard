@@ -14,6 +14,7 @@ import com.mowtiie.mesgard.domain.model.SendResult
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.domain.repository.MessageRepository
+import com.mowtiie.mesgard.domain.sync.RealtimeSync
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -21,6 +22,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -41,6 +43,11 @@ class ConversationViewModelTest {
     private val messages = MutableStateFlow(emptyList<Message>())
     private val conversationRepository = mockk<ConversationRepository> {
         every { observeConversation(CONVERSATION_ID) } returns conversation
+    }
+    private val reconnections = MutableSharedFlow<Unit>()
+    private val realtimeSync = mockk<RealtimeSync> {
+        every { this@mockk.reconnections } returns
+            this@ConversationViewModelTest.reconnections
     }
     private val messageRepository = mockk<MessageRepository> {
         every { observeMessages(CONVERSATION_ID, any()) } returns messages
@@ -231,6 +238,15 @@ class ConversationViewModelTest {
     }
 
     @Test
+    fun `refreshes the messages again when the realtime connection is restored`() = runTest {
+        viewModel()
+
+        reconnections.emit(Unit)
+
+        coVerify(exactly = 2) { messageRepository.refresh(CONVERSATION_ID) }
+    }
+
+    @Test
     fun `marks the conversation as read when a new incoming message arrives`() = runTest {
         viewModel()
 
@@ -265,6 +281,7 @@ class ConversationViewModelTest {
         savedStateHandle = SavedStateHandle(mapOf("conversationId" to CONVERSATION_ID)),
         conversationRepository = conversationRepository,
         messageRepository = messageRepository,
+        realtimeSync = realtimeSync,
     )
 
     private fun summary(type: ConversationType = ConversationType.GROUP, canPost: Boolean = true) = ConversationSummary(
