@@ -72,6 +72,19 @@ docker run --rm -v "$PWD/supabase/functions:/functions" -w /functions/send-push 
 
 The encryption is checked against the worked example of RFC 8291.
 
+### Trying it with ntfy on the emulator
+
+1. Run a push server: `docker run -d -p 8085:80 binwiederhier/ntfy serve --base-url http://<host LAN IP>:8085`.
+2. Set `PUSH_ALLOWED_ENDPOINT_HOSTS=<host LAN IP>` in `supabase/functions/.env` and restart `supabase functions serve`.
+3. Install the F-Droid build of the ntfy app and set its Default server to `http://<host LAN IP>:8085`.
+4. In Mesgard, open Settings, Delivery. Insert a message from another user while the app is in the background.
+
+Use the LAN IP of the computer, not `10.0.2.2`: the emulator and the Edge Function container must both reach the push
+server at the same address, because the endpoint host is the one stored in the subscription.
+
+Verified this way: registration, delivery for all three preview modes (text withheld unless `sender_and_text`) and
+opening the conversation by tapping the notification.
+
 ## Known limits
 
 - The user has to install a distributor app and choose it. Without one, the app shows messages only while it is open.
