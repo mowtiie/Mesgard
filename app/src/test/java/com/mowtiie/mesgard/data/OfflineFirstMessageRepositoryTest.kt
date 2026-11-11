@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.data
 
 import app.cash.turbine.test
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
+import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.work.MessageSendScheduler
 import com.mowtiie.mesgard.domain.model.MessageStatus
 import com.mowtiie.mesgard.domain.model.PageResult
@@ -13,6 +14,7 @@ import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.MAX_MESSAGE_LENGTH
 import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
+import com.mowtiie.mesgard.testing.attachmentDto
 import com.mowtiie.mesgard.testing.conversationEntity
 import com.mowtiie.mesgard.testing.messageDto
 import com.mowtiie.mesgard.testing.messageEntity
@@ -102,6 +104,33 @@ class OfflineFirstMessageRepositoryTest {
 
         assertEquals(MessageStatus.PENDING, dao.findById("failed")?.status)
         verify(exactly = 1) { sendScheduler.schedule("failed") }
+    }
+
+    @Test
+    fun `refresh stores the attachments of a message and shows them in the timeline`() = runTest {
+        coEvery { remoteSource.fetchLatest(CONVERSATION_ID) } returns
+            listOf(messageDto("m1", CONVERSATION_ID, attachments = listOf(attachmentDto("a1", "photo.png"))))
+
+        repository.refresh(CONVERSATION_ID)
+
+        val message = repository.observeMessages(CONVERSATION_ID, MESSAGE_PAGE_SIZE).first().single()
+        assertEquals(listOf("photo.png"), message.attachments.map { it.fileName })
+        assertTrue(message.attachments.single().isImage)
+    }
+
+    @Test
+    fun `refresh keeps the local file of an attachment that was already stored`() = runTest {
+        databaseRule.database.messageDao().upsert(messageEntity("m1", CONVERSATION_ID, 1_000L))
+        databaseRule.database.attachmentDao().upsertAll(
+            listOf(attachmentDto("a1").toEntity("m1", localPath = "/files/a1")),
+        )
+        coEvery { remoteSource.fetchLatest(CONVERSATION_ID) } returns
+            listOf(messageDto("m1", CONVERSATION_ID, attachments = listOf(attachmentDto("a1"))))
+
+        repository.refresh(CONVERSATION_ID)
+
+        val message = repository.observeMessages(CONVERSATION_ID, MESSAGE_PAGE_SIZE).first().single()
+        assertEquals("/files/a1", message.attachments.single().localPath)
     }
 
     @Test

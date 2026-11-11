@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.data.sync
 
 import com.mowtiie.mesgard.data.local.ProfileEntity
 import com.mowtiie.mesgard.data.remote.MessageRealtimeSource
+import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.ProfileRemoteSource
 import com.mowtiie.mesgard.data.remote.RealtimeEvent
 import com.mowtiie.mesgard.data.remote.SenderDto
@@ -9,6 +10,7 @@ import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
+import com.mowtiie.mesgard.testing.attachmentDto
 import com.mowtiie.mesgard.testing.conversationEntity
 import com.mowtiie.mesgard.testing.messageDto
 import com.mowtiie.mesgard.testing.messageEntity
@@ -45,6 +47,9 @@ class RealtimeMessageSyncTest {
 
     private val source = FakeRealtimeSource()
     private val profileSource = mockk<ProfileRemoteSource> { coEvery { fetch(any()) } returns null }
+    private val messageSource = mockk<MessageRemoteSource> {
+        coEvery { fetchAttachments(any()) } returns emptyList()
+    }
     private val refreshed = CompletableDeferred<Unit>()
     private val conversationRepository = mockk<ConversationRepository> {
         coEvery { refresh() } coAnswers {
@@ -54,7 +59,14 @@ class RealtimeMessageSyncTest {
     }
     private val authRepository = mockk<AuthRepository> { every { currentUserId } returns CURRENT_USER_ID }
     private val sync by lazy {
-        RealtimeMessageSync(source, profileSource, databaseRule.database, conversationRepository, authRepository)
+        RealtimeMessageSync(
+            source,
+            messageSource,
+            profileSource,
+            databaseRule.database,
+            conversationRepository,
+            authRepository,
+        )
     }
 
     @Before
@@ -106,6 +118,28 @@ class RealtimeMessageSyncTest {
             it.singleOrNull()?.deletedAtEpochMillis != null
         }
         awaitValue(databaseRule.database.conversationDao().observeById(CONVERSATION_ID)) { it?.unreadCount == 0 }
+    }
+
+    @Test
+    fun `fetches the attachments of an incoming message that has them`() = runTest {
+        coEvery { messageSource.fetchAttachments("m1") } returns listOf(attachmentDto("a1"))
+        startSync()
+
+        source.emit(RealtimeEvent.MessageInserted(incoming("m1", hasAttachments = true)))
+
+        awaitValue(databaseRule.database.attachmentDao().observeForConversation(CONVERSATION_ID)) {
+            it.singleOrNull()?.id == "a1"
+        }
+    }
+
+    @Test
+    fun `does not fetch attachments for a text message`() = runTest {
+        startSync()
+
+        source.emit(RealtimeEvent.MessageInserted(incoming("m1")))
+
+        awaitValue(databaseRule.database.conversationDao().observeById(CONVERSATION_ID)) { it?.unreadCount == 1 }
+        coVerify(exactly = 0) { messageSource.fetchAttachments(any()) }
     }
 
     @Test
@@ -189,7 +223,15 @@ class RealtimeMessageSyncTest {
         conversationId: String = CONVERSATION_ID,
         senderName: String? = "Ana",
         deletedAt: String? = null,
-    ) = messageDto(id, conversationId, senderId = senderId, senderName = senderName, deletedAt = deletedAt)
+        hasAttachments: Boolean = false,
+    ) = messageDto(
+        id,
+        conversationId,
+        senderId = senderId,
+        senderName = senderName,
+        deletedAt = deletedAt,
+        hasAttachments = hasAttachments,
+    )
 
     private class FakeRealtimeSource : MessageRealtimeSource {
         private val events = MutableSharedFlow<RealtimeEvent>(extraBufferCapacity = EVENT_BUFFER)

@@ -12,8 +12,12 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 private const val MESSAGES_TABLE = "messages"
+private const val ATTACHMENTS_TABLE = "attachments"
 private const val MARK_READ_FUNCTION = "mark_conversation_read"
-private val MESSAGE_COLUMNS = Columns.raw("*, sender:profiles!messages_sender_id_fkey(id, display_name)")
+private val MESSAGE_COLUMNS = Columns.raw(
+    "*, sender:profiles!messages_sender_id_fkey(id, display_name), " +
+        "attachments(id, storage_path, mime_type, size_bytes, file_name)",
+)
 
 internal interface MessageRemoteSource {
     suspend fun fetchLatest(conversationId: String): List<MessageDto>
@@ -21,6 +25,8 @@ internal interface MessageRemoteSource {
     suspend fun fetchOlder(conversationId: String, beforeEpochMillis: Long): List<MessageDto>
 
     suspend fun send(message: NewMessageDto): MessageDto
+
+    suspend fun fetchAttachments(messageId: String): List<AttachmentDto>
 
     suspend fun markConversationRead(conversationId: String, upToMessageId: String)
 }
@@ -53,6 +59,11 @@ internal class SupabaseMessageRemoteSource @Inject constructor(private val clien
             filter { eq("id", message.id) }
         }.decodeSingle<MessageDto>()
     }
+
+    override suspend fun fetchAttachments(messageId: String): List<AttachmentDto> =
+        client.from(ATTACHMENTS_TABLE).select {
+            filter { eq("message_id", messageId) }
+        }.decodeList<AttachmentDto>()
 
     override suspend fun markConversationRead(conversationId: String, upToMessageId: String) {
         client.postgrest.rpc(

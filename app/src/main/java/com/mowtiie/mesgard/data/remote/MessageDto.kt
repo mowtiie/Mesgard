@@ -13,6 +13,8 @@ internal data class MessageDto(
     @SerialName("created_at") val createdAt: String,
     @SerialName("edited_at") val editedAt: String? = null,
     @SerialName("deleted_at") val deletedAt: String? = null,
+    @SerialName("has_attachments") val hasAttachments: Boolean = false,
+    val attachments: List<AttachmentDto> = emptyList(),
     val sender: SenderDto? = null,
 )
 

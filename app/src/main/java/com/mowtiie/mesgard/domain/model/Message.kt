@@ -11,4 +11,5 @@ internal data class Message(
     val isDeleted: Boolean,
     val status: MessageStatus,
     val isOwn: Boolean,
+    val attachments: List<Attachment> = emptyList(),
 )

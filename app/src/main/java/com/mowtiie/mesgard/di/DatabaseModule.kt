@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.di
 
 import android.content.Context
 import androidx.room.Room
+import com.mowtiie.mesgard.data.local.AttachmentDao
 import com.mowtiie.mesgard.data.local.ContactDao
 import com.mowtiie.mesgard.data.local.ConversationDao
 import com.mowtiie.mesgard.data.local.GroupDao
@@ -60,4 +61,7 @@ internal object DatabaseModule {
 
     @Provides
     fun provideMessageDao(database: MesgardDatabase): MessageDao = database.messageDao()
+
+    @Provides
+    fun provideAttachmentDao(database: MesgardDatabase): AttachmentDao = database.attachmentDao()
 }

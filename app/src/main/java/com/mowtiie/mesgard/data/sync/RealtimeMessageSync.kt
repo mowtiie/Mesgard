@@ -3,8 +3,10 @@ package com.mowtiie.mesgard.data.sync
 import android.util.Log
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.ProfileEntity
+import com.mowtiie.mesgard.data.local.upsertKeepingLocalPaths
 import com.mowtiie.mesgard.data.remote.MessageDto
 import com.mowtiie.mesgard.data.remote.MessageRealtimeSource
+import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.ProfileRemoteSource
 import com.mowtiie.mesgard.data.remote.RealtimeEvent
 import com.mowtiie.mesgard.data.remote.RemoteOutcome
@@ -33,6 +35,7 @@ private const val MAX_BACKOFF_EXPONENT = 5
 @Singleton
 internal class RealtimeMessageSync @Inject constructor(
     private val source: MessageRealtimeSource,
+    private val messageSource: MessageRemoteSource,
     private val profileSource: ProfileRemoteSource,
     database: MesgardDatabase,
     private val conversationRepository: ConversationRepository,
@@ -41,6 +44,7 @@ internal class RealtimeMessageSync @Inject constructor(
     private val messageDao = database.messageDao()
     private val conversationDao = database.conversationDao()
     private val profileDao = database.profileDao()
+    private val attachmentDao = database.attachmentDao()
     private val mutableReconnections = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private var job: Job? = null
     private var hasConnected = false
@@ -88,6 +92,14 @@ internal class RealtimeMessageSync @Inject constructor(
             messageDao.findById(message.id) == null
         if (isUnseenIncoming) conversationDao.incrementUnreadCount(message.conversationId)
         messageDao.upsert(message.toEntity())
+        if (message.hasAttachments) storeAttachments(message.id)
+    }
+
+    private suspend fun storeAttachments(messageId: String) {
+        val outcome = attemptRemote(TAG) { messageSource.fetchAttachments(messageId) }
+        if (outcome is RemoteOutcome.Success) {
+            attachmentDao.upsertKeepingLocalPaths(outcome.value.map { it.toEntity(messageId) })
+        }
     }
 
     private suspend fun ensureSenderProfile(senderId: String) {

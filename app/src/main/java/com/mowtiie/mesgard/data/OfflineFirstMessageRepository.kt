@@ -1,14 +1,17 @@
 package com.mowtiie.mesgard.data
 
 import androidx.room.withTransaction
+import com.mowtiie.mesgard.data.local.AttachmentEntity
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.MessageEntity
 import com.mowtiie.mesgard.data.local.TimelineMessage
+import com.mowtiie.mesgard.data.local.upsertKeepingLocalPaths
 import com.mowtiie.mesgard.data.remote.MessageDto
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.RemoteOutcome
 import com.mowtiie.mesgard.data.remote.attemptRemote
 import com.mowtiie.mesgard.data.remote.parseEpochMillis
+import com.mowtiie.mesgard.data.remote.toDomain
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.remote.toRefreshResult
 import com.mowtiie.mesgard.data.remote.toSenderProfile
@@ -27,7 +30,7 @@ import java.time.Clock
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 
 private const val TAG = "MessageRepository"
 
@@ -41,12 +44,16 @@ internal class OfflineFirstMessageRepository @Inject constructor(
     private val messageDao = database.messageDao()
     private val conversationDao = database.conversationDao()
     private val profileDao = database.profileDao()
+    private val attachmentDao = database.attachmentDao()
 
-    override fun observeMessages(conversationId: String, limit: Int): Flow<List<Message>> =
-        messageDao.observeTimeline(conversationId, limit).map { items ->
-            val currentUserId = authRepository.currentUserId
-            items.map { toMessage(it, currentUserId) }
-        }
+    override fun observeMessages(conversationId: String, limit: Int): Flow<List<Message>> = combine(
+        messageDao.observeTimeline(conversationId, limit),
+        attachmentDao.observeForConversation(conversationId),
+    ) { items, attachments ->
+        val currentUserId = authRepository.currentUserId
+        val attachmentsByMessage = attachments.groupBy { it.messageId }
+        items.map { toMessage(it, currentUserId, attachmentsByMessage[it.id].orEmpty()) }
+    }
 
     override suspend fun refresh(conversationId: String): RefreshResult = attemptRemote(TAG) {
         storeLatestPage(conversationId, remoteSource.fetchLatest(conversationId))
@@ -127,10 +134,15 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         database.withTransaction {
             profileDao.upsertAll(messages.mapNotNull { it.toSenderProfile() }.distinctBy { it.id })
             messageDao.upsertAll(messages.map { it.toEntity() })
+            attachmentDao.upsertKeepingLocalPaths(
+                messages.flatMap { dto ->
+                    dto.attachments.map { it.toEntity(dto.id) }
+                },
+            )
         }
     }
 
-    private fun toMessage(item: TimelineMessage, currentUserId: String?) = Message(
+    private fun toMessage(item: TimelineMessage, currentUserId: String?, attachments: List<AttachmentEntity>) = Message(
         id = item.id,
         conversationId = item.conversationId,
         senderId = item.senderId,
@@ -141,5 +153,6 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         isDeleted = item.deletedAtEpochMillis != null,
         status = item.status,
         isOwn = item.senderId == currentUserId,
+        attachments = attachments.map { it.toDomain() },
     )
 }

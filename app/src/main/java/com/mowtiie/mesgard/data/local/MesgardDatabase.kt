@@ -13,8 +13,9 @@ import androidx.room.RoomDatabase
         GroupEntity::class,
         AccountEntity::class,
         AccountMembershipEntity::class,
+        AttachmentEntity::class,
     ],
-    version = 7,
+    version = 8,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -22,6 +23,7 @@ import androidx.room.RoomDatabase
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 6, to = 7),
+        AutoMigration(from = 7, to = 8),
     ],
 )
 internal abstract class MesgardDatabase : RoomDatabase() {
@@ -36,6 +38,8 @@ internal abstract class MesgardDatabase : RoomDatabase() {
     abstract fun groupDao(): GroupDao
 
     abstract fun accountDao(): AccountDao
+
+    abstract fun attachmentDao(): AttachmentDao
 
     companion object {
         const val NAME = "mesgard.db"

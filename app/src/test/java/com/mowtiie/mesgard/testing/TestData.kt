@@ -4,6 +4,7 @@ import com.mowtiie.mesgard.data.local.ContactEntity
 import com.mowtiie.mesgard.data.local.ConversationEntity
 import com.mowtiie.mesgard.data.local.GroupEntity
 import com.mowtiie.mesgard.data.local.MessageEntity
+import com.mowtiie.mesgard.data.remote.AttachmentDto
 import com.mowtiie.mesgard.data.remote.ContactDto
 import com.mowtiie.mesgard.data.remote.ConversationSummaryDto
 import com.mowtiie.mesgard.data.remote.GroupDto
@@ -70,6 +71,8 @@ internal fun messageDto(
     createdAt: String = "2026-11-10T08:00:00+00:00",
     senderName: String? = "Ana",
     deletedAt: String? = null,
+    attachments: List<AttachmentDto> = emptyList(),
+    hasAttachments: Boolean = attachments.isNotEmpty(),
 ) = MessageDto(
     id = id,
     orgId = TEST_ORG_ID,
@@ -78,6 +81,8 @@ internal fun messageDto(
     body = if (deletedAt == null) "Body of $id" else "",
     createdAt = createdAt,
     deletedAt = deletedAt,
+    hasAttachments = hasAttachments,
+    attachments = attachments,
     sender = senderName?.let { SenderDto(id = senderId, displayName = it) },
 )
 
@@ -102,4 +107,12 @@ internal fun groupEntity(id: String, name: String = "Name $id", canStartConversa
     orgId = TEST_ORG_ID,
     name = name,
     canStartConversation = canStartConversation,
+)
+
+internal fun attachmentDto(id: String, fileName: String = "$id.png", mimeType: String = "image/png") = AttachmentDto(
+    id = id,
+    storagePath = "conversation/message/$id",
+    mimeType = mimeType,
+    sizeBytes = 2_048L,
+    fileName = fileName,
 )
