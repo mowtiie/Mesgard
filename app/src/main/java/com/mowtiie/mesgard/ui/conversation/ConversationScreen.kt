@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -130,6 +131,8 @@ internal fun ConversationScreen(
     }
 
     val copyMessage = rememberCopyMessage(snackbarHostState)
+    var viewedImageId by rememberSaveable { mutableStateOf<String?>(null) }
+    val viewedImage = uiState.messages.flatMap { it.attachments }.firstOrNull { it.id == viewedImageId }
 
     val title = uiState.title ?: uiState.type?.let { stringResource(it.fallbackTitleResource()) }.orEmpty()
     TitledScreen(
@@ -150,7 +153,7 @@ internal fun ConversationScreen(
             MessageList(
                 uiState = uiState,
                 downloads = downloads,
-                actions = actions.copy(onCopy = copyMessage),
+                actions = actions.copy(onCopy = copyMessage, onImageClick = { viewedImageId = it.id }),
                 onLoadOlder = onLoadOlder,
                 modifier = Modifier.weight(1f),
             )
@@ -168,6 +171,13 @@ internal fun ConversationScreen(
                 ReadOnlyNotice()
             }
         }
+    }
+    viewedImage?.let {
+        ImageViewer(
+            attachment = it,
+            onDismiss = { viewedImageId = null },
+            onOpenWithAnotherApp = { actions.onAttachmentClick(it) },
+        )
     }
 }
 

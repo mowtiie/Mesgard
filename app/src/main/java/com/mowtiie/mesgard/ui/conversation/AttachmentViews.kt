@@ -9,10 +9,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +40,9 @@ import com.mowtiie.mesgard.domain.model.Attachment
 import java.io.File
 
 private val ImageWidth = 220.dp
-private val ImageHeight = 160.dp
+private const val DEFAULT_IMAGE_RATIO = 220f / 160f
+private const val MIN_IMAGE_RATIO = 0.6f
+private const val MAX_IMAGE_RATIO = 2f
 private val FileIconSize = 32.dp
 private val ItemSpacing = 4.dp
 private val FileRowSpacing = 12.dp
@@ -48,7 +53,8 @@ private val MinTouchTarget = 48.dp
 internal fun AttachmentList(
     attachments: List<Attachment>,
     downloads: AttachmentDownloadsUiState,
-    onClick: (Attachment) -> Unit,
+    onFileClick: (Attachment) -> Unit,
+    onImageClick: (Attachment) -> Unit,
     onImageShown: (Attachment) -> Unit,
     onRetryDownload: (Attachment) -> Unit,
     modifier: Modifier = Modifier,
@@ -59,12 +65,12 @@ internal fun AttachmentList(
                 ImageAttachment(
                     attachment,
                     attachment.id in downloads.failedIds,
-                    onClick,
+                    onImageClick,
                     onImageShown,
                     onRetryDownload,
                 )
             } else {
-                FileAttachment(attachment, attachment.id in downloads.downloadingIds, onClick)
+                FileAttachment(attachment, attachment.id in downloads.downloadingIds, onFileClick)
             }
         }
     }
@@ -86,7 +92,8 @@ private fun ImageAttachment(
     )
     val clickLabel = stringResource(if (isFailed) R.string.attachment_retry else R.string.attachment_open)
     Box(
-        modifier = Modifier.size(ImageWidth, ImageHeight)
+        modifier = Modifier.width(ImageWidth)
+            .aspectRatio((attachment.aspectRatio ?: DEFAULT_IMAGE_RATIO).coerceIn(MIN_IMAGE_RATIO, MAX_IMAGE_RATIO))
             .clip(MaterialTheme.shapes.medium)
             .clickable(enabled = isFailed || localPath != null, onClickLabel = clickLabel) {
                 if (isFailed) onRetryDownload(attachment) else onClick(attachment)
@@ -101,7 +108,7 @@ private fun ImageAttachment(
                 model = File(localPath),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(ImageWidth, ImageHeight),
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }

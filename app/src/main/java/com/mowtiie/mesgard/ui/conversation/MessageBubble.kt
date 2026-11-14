@@ -52,6 +52,7 @@ internal data class MessageActions(
     val onDiscard: (String) -> Unit = {},
     val onCopy: (String) -> Unit = {},
     val onAttachmentClick: (Attachment) -> Unit = {},
+    val onImageClick: (Attachment) -> Unit = {},
     val onImageShown: (Attachment) -> Unit = {},
     val onRetryDownload: (Attachment) -> Unit = {},
 )
@@ -96,6 +97,7 @@ internal fun MessageBubble(
                         message.attachments,
                         downloads,
                         actions.onAttachmentClick,
+                        actions.onImageClick,
                         actions.onImageShown,
                         actions.onRetryDownload,
                     )

@@ -18,6 +18,7 @@
     <string name="sign_out_dialog_title">Sign out?</string>
     <string name="sign_out_dialog_message">Messages that have not been sent will be deleted from this device.</string>
     <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
     <string name="profile_organization">Organization</string>
     <string name="profile_organizations">Organizations</string>
     <string name="profile_account">Account</string>
@@ -85,6 +86,7 @@
     <string name="attachment_photo_failed">Photo %1$s could not be loaded</string>
     <string name="attachment_failed_hint">Could not load. Tap to retry.</string>
     <string name="attachment_open">Open</string>
+    <string name="attachment_open_with">Open with</string>
     <string name="attachment_retry">Retry</string>
     <string name="contacts_empty">No contacts yet.</string>
     <string name="contacts_section_people">People</string>
