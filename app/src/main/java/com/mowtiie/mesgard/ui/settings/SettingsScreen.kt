@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -170,7 +171,11 @@ private fun SettingsError.messageResource(): Int = when (this) {
 @Composable
 private fun PushSetupRow(distributorName: String?, onClick: () -> Unit) {
     ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier.clickable(
+            onClickLabel = stringResource(R.string.settings_push_choose),
+            role = Role.Button,
+            onClick = onClick,
+        ),
         headlineContent = { Text(stringResource(R.string.settings_push)) },
         supportingContent = {
             Text(

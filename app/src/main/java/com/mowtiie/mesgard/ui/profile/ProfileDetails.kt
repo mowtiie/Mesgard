@@ -21,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
@@ -56,6 +58,7 @@ internal fun ProfileHeader(account: Account) {
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 textAlign = TextAlign.Center,
+                modifier = Modifier.semantics { heading() },
             )
         }
     }
@@ -115,6 +118,7 @@ private fun SectionHeader(@StringRes title: Int) {
         text = stringResource(title),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.semantics { heading() },
     )
 }
 

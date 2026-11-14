@@ -33,12 +33,12 @@ internal fun ConversationRow(
     val title = conversation.title ?: stringResource(conversation.type.fallbackTitleResource())
     val hasUnread = conversation.unreadCount > 0
     ListItem(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier.clickable(onClickLabel = stringResource(R.string.conversation_open), onClick = onClick),
         leadingContent = { InitialAvatar(title) },
         headlineContent = {
             Text(
                 text = title,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = if (hasUnread) FontWeight.Bold else FontWeight.Normal,
             )

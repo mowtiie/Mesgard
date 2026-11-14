@@ -171,9 +171,10 @@ internal fun ContactList(
         if (section == ContactsSection.PEOPLE) {
             items(uiState.contacts, key = { "contact:${it.orgId}:${it.userId}" }) { contact ->
                 ListItem(
-                    modifier = Modifier.clickable(enabled = !uiState.isStartingConversation) {
-                        onContactClicked(contact)
-                    },
+                    modifier = Modifier.clickable(
+                        enabled = !uiState.isStartingConversation,
+                        onClickLabel = stringResource(R.string.conversation_start),
+                    ) { onContactClicked(contact) },
                     leadingContent = { InitialAvatar(contact.displayName) },
                     headlineContent = { Text(contact.displayName) },
                     supportingContent = { Text(stringResource(contact.role.labelResource())) },
@@ -187,7 +188,10 @@ internal fun ContactList(
         } else {
             items(uiState.groups, key = { "group:${it.id}" }) { group ->
                 ListItem(
-                    modifier = Modifier.clickable(enabled = !uiState.isStartingConversation) { onGroupClicked(group) },
+                    modifier = Modifier.clickable(
+                        enabled = !uiState.isStartingConversation,
+                        onClickLabel = stringResource(R.string.conversation_open),
+                    ) { onGroupClicked(group) },
                     leadingContent = { InitialAvatar(group.name) },
                     headlineContent = { Text(group.name) },
                 )

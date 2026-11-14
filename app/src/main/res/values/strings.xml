@@ -18,6 +18,9 @@
     <string name="sign_out_dialog_title">Sign out?</string>
     <string name="sign_out_dialog_message">Messages that have not been sent will be deleted from this device.</string>
     <string name="cancel">Cancel</string>
+    <string name="conversation_open">Open conversation</string>
+    <string name="conversation_start">Start conversation</string>
+    <string name="settings_push_choose">Choose a distributor app</string>
     <string name="close">Close</string>
     <string name="profile_organization">Organization</string>
     <string name="profile_organizations">Organizations</string>

@@ -190,7 +190,7 @@ private fun SignInHelp(serverHost: String) {
             Text(
                 text = stringResource(R.string.sign_in_server, serverHost),
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
         }

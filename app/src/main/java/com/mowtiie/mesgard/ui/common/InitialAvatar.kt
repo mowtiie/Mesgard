@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -22,7 +23,11 @@ internal fun avatarColorIndex(name: String): Int = Math.floorMod(name.trim().low
 @Composable
 internal fun InitialAvatar(name: String, modifier: Modifier = Modifier, size: Dp = AvatarSize) {
     val (container, content) = avatarColors(avatarColorIndex(name))
-    Surface(shape = CircleShape, color = container, modifier = modifier.size(size)) {
+    Surface(
+        shape = CircleShape,
+        color = container,
+        modifier = modifier.size(size).clearAndSetSemantics {},
+    ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
                 text = name.firstOrNull()?.uppercase().orEmpty(),

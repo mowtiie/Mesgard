@@ -15,6 +15,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 private val SectionHeaderPadding = 16.dp
@@ -31,7 +33,7 @@ internal fun SectionHeader(@StringRes title: Int) {
             start = SectionHeaderPadding,
             end = SectionHeaderPadding,
             top = SectionHeaderPadding,
-        ),
+        ).semantics { heading() },
     )
 }
 
