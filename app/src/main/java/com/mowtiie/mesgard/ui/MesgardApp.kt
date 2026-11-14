@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.domain.model.AuthState
+import com.mowtiie.mesgard.ui.auth.PasswordChangeRoute
 import com.mowtiie.mesgard.ui.auth.SignInRoute
 import com.mowtiie.mesgard.ui.connectivity.ConnectivityViewModel
 import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
@@ -27,13 +28,13 @@ internal fun MesgardApp(
     val isLocked by viewModel.isLocked.collectAsStateWithLifecycle()
     val connectionStatus by connectivityViewModel.status.collectAsStateWithLifecycle()
     CompositionLocalProvider(LocalConnectionStatus provides connectionStatus) {
-        when (authState) {
+        when (val state = authState) {
             AuthState.Loading -> Surface(modifier = Modifier.fillMaxSize()) {}
             AuthState.SignedOut -> SignInRoute(onChangeServer = onChangeServer)
-            is AuthState.SignedIn -> if (isLocked) {
-                LockScreenRoute()
-            } else {
-                MesgardNavHost(
+            is AuthState.SignedIn -> when {
+                isLocked -> LockScreenRoute()
+                state.mustChangePassword -> PasswordChangeRoute()
+                else -> MesgardNavHost(
                     onSignOut = viewModel::onSignOutClicked,
                     conversationToOpen = conversationToOpen,
                     onConversationOpened = onConversationOpened,

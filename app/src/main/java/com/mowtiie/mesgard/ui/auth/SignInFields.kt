@@ -99,7 +99,7 @@ private fun ErrorIcon() {
 }
 
 @Composable
-private fun PasswordVisibilityToggle(visible: Boolean, onClick: () -> Unit) {
+internal fun PasswordVisibilityToggle(visible: Boolean, onClick: () -> Unit) {
     IconButton(onClick = onClick) {
         Icon(
             painter = painterResource(if (visible) R.drawable.ic_visibility_off else R.drawable.ic_visibility),

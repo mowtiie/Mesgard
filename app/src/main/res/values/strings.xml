@@ -28,6 +28,16 @@
     <string name="sign_in_password_label">Password</string>
     <string name="sign_in_show_password">Show password</string>
     <string name="sign_in_hide_password">Hide password</string>
+    <string name="password_change_title">Choose a new password</string>
+    <string name="password_change_help">You signed in with a temporary password. Choose your own to continue. Use at least %1$d characters.</string>
+    <string name="password_change_new_label">New password</string>
+    <string name="password_change_confirm_label">Confirm new password</string>
+    <string name="password_change_save">Save password</string>
+    <string name="password_change_error_too_short">Use at least 8 characters.</string>
+    <string name="password_change_error_mismatch">The passwords do not match.</string>
+    <string name="password_change_error_weak">This password is too easy to guess. Choose another.</string>
+    <string name="password_change_error_same">Choose a password different from the temporary one.</string>
+    <string name="password_change_error_unknown">Unable to save the password. Try again later.</string>
     <string name="sign_in_button">Sign in</string>
     <string name="sign_in_error_invalid_credentials">Incorrect email or password.</string>
     <string name="sign_in_error_network_unavailable">Unable to reach the server. Check your connection.</string>
