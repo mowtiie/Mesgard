@@ -29,8 +29,8 @@ holds such a key has full access to the database.
 
 ## What the app checks
 
-- The address must start with `https`. Plain `http` is only accepted by debug builds (for the local development
-  stack).
+- The address must start with `https`. Plain `http` is only accepted by debug builds, for the local development
+  stack: `http://10.0.2.2:54321` in the emulator, or `http://<PC address>:54321` from a phone on the same Wi-Fi.
 - It asks the server for its public Auth settings with the key. This tells apart an address that cannot be reached, a
   key the server rejects, and an address that is not a Supabase server.
 - The settings are stored on the device. When the server changes, the app restarts to use it.
