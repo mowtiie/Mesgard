@@ -82,12 +82,15 @@ jobs:
         run: supabase stop --no-backup
 
   edge-functions:
-    name: Edge Functions (format, types, tests)
+    name: Edge Function ${{ matrix.function }} (format, types, tests)
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      matrix:
+        function: [send-push, admin-users]
     defaults:
       run:
-        working-directory: supabase/functions/send-push
+        working-directory: supabase/functions/${{ matrix.function }}
     steps:
       - uses: actions/checkout@v4
 

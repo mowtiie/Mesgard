@@ -1,0 +1,167 @@
+import { generateTemporaryPassword } from "./passwords.ts";
+import { type AdminRequest, parseRequest, type Role, validateNewUser } from "./validation.ts";
+
+/** Everything the handler needs from the outside world, so the rules can be tested without a server. */
+export interface AdminApi {
+  /** The user a token belongs to, or null when the token is not valid. */
+  getUserId(token: string): Promise<string | null>;
+  /** The role of a member of the organization, read with the caller's own token, or null for a non member. */
+  getMemberRole(token: string, orgId: string, userId: string): Promise<Role | null>;
+  countAdmins(token: string, orgId: string): Promise<number>;
+  createAuthUser(input: { email: string; password: string; displayName: string }): Promise<string | "email_taken">;
+  deleteAuthUser(userId: string): Promise<void>;
+  /** Writes with the caller's token, so Row Level Security and the audit triggers see the admin. */
+  addMember(token: string, orgId: string, userId: string, role: Role): Promise<boolean>;
+  removeMember(token: string, orgId: string, userId: string): Promise<boolean>;
+  countMemberships(userId: string): Promise<number>;
+  setTemporaryPassword(userId: string, password: string): Promise<void>;
+  disableLogin(userId: string): Promise<void>;
+  recordAudit(token: string, orgId: string, action: string, targetUserId: string): Promise<void>;
+}
+
+export interface HandlerDependencies {
+  api: AdminApi;
+  generatePassword?: () => string;
+}
+
+type UserResult =
+  | { email: string; status: "created"; user_id: string; temporary_password: string }
+  | { email: string; status: "email_taken" | "duplicate" | "failed" }
+  | { email: string; status: "invalid"; reason: string };
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
+}
+
+function bearerToken(request: Request): string | null {
+  const match = /^Bearer (.+)$/i.exec(request.headers.get("Authorization") ?? "");
+  return match ? match[1] : null;
+}
+
+export async function handleAdminRequest(request: Request, dependencies: HandlerDependencies): Promise<Response> {
+  if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+  const token = bearerToken(request);
+  if (!token) return json({ error: "unauthorized" }, 401);
+
+  const body = await request.json().catch(() => null);
+  const parsed = parseRequest(body);
+  if ("error" in parsed) return json({ error: "invalid_request", message: parsed.error }, 400);
+
+  const { api } = dependencies;
+  const callerId = await api.getUserId(token);
+  if (!callerId) return json({ error: "unauthorized" }, 401);
+  if (await api.getMemberRole(token, parsed.request.orgId, callerId) !== "org_admin") {
+    return json({ error: "forbidden" }, 403);
+  }
+  return await dispatch(parsed.request, token, callerId, dependencies);
+}
+
+function dispatch(
+  request: AdminRequest,
+  token: string,
+  callerId: string,
+  dependencies: HandlerDependencies,
+): Promise<Response> {
+  const generatePassword = dependencies.generatePassword ?? generateTemporaryPassword;
+  switch (request.action) {
+    case "create_users":
+      return createUsers(request, token, dependencies.api, generatePassword);
+    case "reset_password":
+      return resetPassword(request, token, callerId, dependencies.api, generatePassword);
+    case "remove_member":
+      return removeMember(request, token, callerId, dependencies.api);
+  }
+}
+
+async function createUsers(
+  request: Extract<AdminRequest, { action: "create_users" }>,
+  token: string,
+  api: AdminApi,
+  generatePassword: () => string,
+): Promise<Response> {
+  const seen = new Set<string>();
+  const results: UserResult[] = [];
+  for (const input of request.users) {
+    const check = validateNewUser(input);
+    if ("reason" in check) {
+      results.push({ email: emailOf(input), status: "invalid", reason: check.reason });
+      continue;
+    }
+    const { user } = check;
+    if (seen.has(user.email)) {
+      results.push({ email: user.email, status: "duplicate" });
+      continue;
+    }
+    seen.add(user.email);
+    results.push(await createUser(user, request.orgId, token, api, generatePassword()));
+  }
+  return json({ results });
+}
+
+function emailOf(input: unknown): string {
+  const email = (input as { email?: unknown } | null)?.email;
+  return typeof email === "string" ? email : "";
+}
+
+async function createUser(
+  user: { email: string; displayName: string; role: Role },
+  orgId: string,
+  token: string,
+  api: AdminApi,
+  password: string,
+): Promise<UserResult> {
+  try {
+    const created = await api.createAuthUser({ email: user.email, password, displayName: user.displayName });
+    if (created === "email_taken") return { email: user.email, status: "email_taken" };
+    if (await api.addMember(token, orgId, created, user.role)) {
+      return { email: user.email, status: "created", user_id: created, temporary_password: password };
+    }
+    await api.deleteAuthUser(created);
+  } catch (error) {
+    console.error("Creating a user failed", error instanceof Error ? error.message : "unknown error");
+  }
+  return { email: user.email, status: "failed" };
+}
+
+async function resetPassword(
+  request: Extract<AdminRequest, { action: "reset_password" }>,
+  token: string,
+  callerId: string,
+  api: AdminApi,
+  generatePassword: () => string,
+): Promise<Response> {
+  if (request.userId === callerId) return json({ error: "cannot_reset_own_password" }, 400);
+  if (await api.getMemberRole(token, request.orgId, request.userId) === null) {
+    return json({ error: "not_a_member" }, 404);
+  }
+  const password = generatePassword();
+  await api.setTemporaryPassword(request.userId, password);
+  await api.recordAudit(token, request.orgId, "member.password_reset", request.userId);
+  return json({ temporary_password: password });
+}
+
+async function removeMember(
+  request: Extract<AdminRequest, { action: "remove_member" }>,
+  token: string,
+  callerId: string,
+  api: AdminApi,
+): Promise<Response> {
+  if (request.userId === callerId) return json({ error: "cannot_remove_self" }, 400);
+  const role = await api.getMemberRole(token, request.orgId, request.userId);
+  if (role === null) return json({ error: "not_a_member" }, 404);
+  if (role === "org_admin" && await api.countAdmins(token, request.orgId) <= 1) {
+    return json({ error: "last_admin" }, 409);
+  }
+  if (!await api.removeMember(token, request.orgId, request.userId)) return json({ error: "failed" }, 500);
+
+  // A login that belongs to another organization as well stays active.
+  const loginDisabled = await api.countMemberships(request.userId) === 0;
+  if (loginDisabled) {
+    await api.disableLogin(request.userId);
+    await api.recordAudit(token, request.orgId, "member.login_disabled", request.userId);
+  }
+  return json({ removed: true, login_disabled: loginDisabled });
+}

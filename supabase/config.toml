@@ -33,3 +33,7 @@ jwt_expiry = 3600
 
 [functions.send-push]
 verify_jwt = false
+
+# The function checks the caller itself with the user token, so it works with any kind of API key.
+[functions.admin-users]
+verify_jwt = false
