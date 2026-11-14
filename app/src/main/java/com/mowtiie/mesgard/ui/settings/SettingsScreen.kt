@@ -38,6 +38,7 @@ import org.unifiedpush.android.connector.UnifiedPush
 internal fun SettingsScreenRoute(
     onOpenMembers: () -> Unit,
     onOpenGroups: () -> Unit,
+    onOpenConversation: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -70,6 +71,7 @@ internal fun SettingsScreenRoute(
         onNotificationPreviewSelected = viewModel::onNotificationPreviewSelected,
         onOpenMembers = onOpenMembers,
         onOpenGroups = onOpenGroups,
+        onOpenConversation = onOpenConversation,
         onPushSetupClicked = {
             if (UnifiedPush.getDistributors(context).isEmpty()) {
                 viewModel.onPushDistributorUnavailable()
@@ -93,6 +95,7 @@ internal fun SettingsScreen(
     onNotificationPreviewSelected: (NotificationPreview) -> Unit,
     onOpenMembers: () -> Unit,
     onOpenGroups: () -> Unit,
+    onOpenConversation: (String) -> Unit,
     onPushSetupClicked: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
@@ -114,6 +117,7 @@ internal fun SettingsScreen(
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
             AppearanceSection()
             AdministrationSection(onOpenMembers, onOpenGroups)
+            AnnouncementsSection(snackbarHostState, onOpenConversation)
             SectionHeader(R.string.settings_security)
             SwitchRow(
                 title = R.string.settings_screen_privacy,
