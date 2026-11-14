@@ -6,6 +6,7 @@ import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -190,7 +191,10 @@ private fun MessageList(
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val timeline = remember(uiState.messages) { uiState.messages.withDateHeaders(ZoneId.systemDefault()) }
+    val timeline = remember(uiState.messages, uiState.unreadMarker) {
+        uiState.messages.withDateHeaders(ZoneId.systemDefault(), uiState.unreadMarker)
+    }
+    val hasUnreadDivider = uiState.unreadMarker != null
     val isNearOldestLoaded by remember { derivedStateOf { listState.isNearEnd() } }
     val isAtBottom by remember { derivedStateOf { listState.isAtNewest() } }
     val isScrolledUp by remember { derivedStateOf { listState.firstVisibleItemIndex >= SCROLLED_UP_ITEM_COUNT } }
@@ -207,6 +211,10 @@ private fun MessageList(
     LaunchedEffect(newestMessage?.id) {
         if (newestMessage?.isOwn == true || !isScrolledUp) listState.animateScrollToItem(0)
     }
+    LaunchedEffect(hasUnreadDivider) {
+        val index = timeline.indexOfFirst { it is TimelineItem.UnreadDivider }
+        if (index >= 0) listState.showAtTop(index)
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(state = listState, reverseLayout = true, modifier = Modifier.fillMaxSize()) {
@@ -221,6 +229,7 @@ private fun MessageList(
                         endsGroup = item.endsGroup,
                     )
                     is TimelineItem.DateHeader -> DateHeader(item.date)
+                    is TimelineItem.UnreadDivider -> UnreadDivider(item.count)
                 }
             }
             if (uiState.isLoadingOlder) {
@@ -246,6 +255,14 @@ private fun MessageList(
             )
         }
     }
+}
+
+/** Scrolls so the item at [index] is at the top of the list, which shows everything newer below it. */
+private suspend fun LazyListState.showAtTop(index: Int) {
+    scrollToItem(index)
+    val item = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index } ?: return
+    val viewport = layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset
+    scrollBy(-(viewport - item.size - item.offset).toFloat().coerceAtLeast(0f))
 }
 
 private fun LazyListState.isAtNewest(): Boolean = firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0

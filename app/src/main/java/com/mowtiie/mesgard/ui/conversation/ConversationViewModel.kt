@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -40,7 +41,7 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 @HiltViewModel
 internal class ConversationViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    conversationRepository: ConversationRepository,
+    private val conversationRepository: ConversationRepository,
     private val messageRepository: MessageRepository,
     typingRepository: TypingRepository,
     realtimeSync: RealtimeSync,
@@ -69,6 +70,7 @@ internal class ConversationViewModel @Inject constructor(
             typingNames = typingNames,
             isLoaded = true,
             isLoadingOlder = local.isLoadingOlder,
+            unreadMarker = local.unreadMarker,
             error = local.error,
         )
     }.stateIn(
@@ -78,7 +80,7 @@ internal class ConversationViewModel @Inject constructor(
     )
 
     init {
-        viewModelScope.launch { reportFailure(messageRepository.refresh(conversationId)) }
+        viewModelScope.launch { refreshAndMarkUnread() }
         viewModelScope.launch { markReadWhileVisible() }
         viewModelScope.launch {
             realtimeSync.reconnections.collect { reportFailure(messageRepository.refresh(conversationId)) }
@@ -137,6 +139,17 @@ internal class ConversationViewModel @Inject constructor(
         isVisible.value = visible
     }
 
+    /** The unread count is read before anything marks the conversation as read, so the divider shows what was new. */
+    private suspend fun refreshAndMarkUnread() {
+        val unreadCount = conversationRepository.observeConversation(conversationId).first()?.unreadCount ?: 0
+        reportFailure(messageRepository.refresh(conversationId))
+        if (unreadCount <= 0) return
+        val messages = messageRepository.observeMessages(conversationId, MESSAGE_PAGE_SIZE).first()
+        firstUnreadMessageId(messages, unreadCount)?.let { id ->
+            localState.update { it.copy(unreadMarker = UnreadMarker(id, unreadCount)) }
+        }
+    }
+
     private suspend fun markReadWhileVisible() {
         val newestIncomingId = messageRepository.observeMessages(conversationId, MESSAGE_PAGE_SIZE)
             .map { messages -> messages.firstOrNull { !it.isOwn && it.status == MessageStatus.SENT }?.id }
@@ -155,6 +168,7 @@ internal class ConversationViewModel @Inject constructor(
         val attachments: List<PickedAttachment> = emptyList(),
         val isLoadingOlder: Boolean = false,
         val isHistoryComplete: Boolean = false,
+        val unreadMarker: UnreadMarker? = null,
         val error: ConversationError? = null,
     )
 }

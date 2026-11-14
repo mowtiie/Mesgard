@@ -121,6 +121,34 @@ class ConversationViewModelTest {
     }
 
     @Test
+    fun `marks the oldest unread message when the conversation is opened`() = runTest {
+        conversation.value = summary(unreadCount = 2)
+        messages.value = listOf(message("m4"), message("m3", isOwn = true), message("m2"), message("m1"))
+
+        viewModel().uiState.test {
+            assertEquals(UnreadMarker("m2", 2), expectMostRecentItem().unreadMarker)
+        }
+    }
+
+    @Test
+    fun `keeps the unread marker after the conversation is marked as read`() = runTest {
+        conversation.value = summary(unreadCount = 1)
+        messages.value = listOf(message("m2"), message("m1"))
+        val viewModel = viewModel()
+
+        conversation.value = summary(unreadCount = 0)
+
+        viewModel.uiState.test { assertEquals(UnreadMarker("m2", 1), expectMostRecentItem().unreadMarker) }
+    }
+
+    @Test
+    fun `shows no unread marker when nothing is unread`() = runTest {
+        messages.value = listOf(message("m1"))
+
+        viewModel().uiState.test { assertEquals(null, expectMostRecentItem().unreadMarker) }
+    }
+
+    @Test
     fun `cannot send a blank draft`() = runTest {
         val viewModel = viewModel()
 
@@ -417,13 +445,17 @@ class ConversationViewModelTest {
         realtimeSync = realtimeSync,
     )
 
-    private fun summary(type: ConversationType = ConversationType.GROUP, canPost: Boolean = true) = ConversationSummary(
+    private fun summary(
+        type: ConversationType = ConversationType.GROUP,
+        canPost: Boolean = true,
+        unreadCount: Int = 0,
+    ) = ConversationSummary(
         id = CONVERSATION_ID,
         type = type,
         title = "Study group",
         lastMessagePreview = null,
         lastActivityAtEpochMillis = 0L,
-        unreadCount = 0,
+        unreadCount = unreadCount,
         canPost = canPost,
     )
 

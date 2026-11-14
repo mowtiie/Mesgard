@@ -33,6 +33,7 @@ class TimelineItemsTest {
         when (it) {
             is TimelineItem.Bubble -> it.message.id
             is TimelineItem.DateHeader -> "header ${it.date}"
+            is TimelineItem.UnreadDivider -> "divider ${it.count}"
         }
     }
 
@@ -129,6 +130,15 @@ class TimelineItemsTest {
             mapOf("b" to (true to true), "a" to (true to true)),
             bubbles(newestFirst.withDateHeaders(zone)),
         )
+    }
+
+    @Test
+    fun `the unread divider sits above the first unread message and below its date header`() {
+        val newestFirst = listOf(message("c", 2026, 11, 10, hour = 18), message("b", 2026, 11, 10, hour = 12))
+
+        val items = newestFirst.withDateHeaders(zone, UnreadMarker("b", count = 2))
+
+        assertEquals(listOf("c", "b", "divider 2", "header 2026-11-10"), items.describe())
     }
 
     @Test

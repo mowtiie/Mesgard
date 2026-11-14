@@ -11,6 +11,7 @@ import java.util.Locale
 
 private const val SAME_YEAR_SKELETON = "EEEMMMd"
 private const val OTHER_YEAR_SKELETON = "yMMMd"
+internal const val UNREAD_DIVIDER_KEY = "unread-divider"
 private const val GROUP_WINDOW_MILLIS = 5 * 60 * 1000L
 
 internal sealed interface TimelineItem {
@@ -24,6 +25,10 @@ internal sealed interface TimelineItem {
 
     data class DateHeader(val date: LocalDate) : TimelineItem {
         override val key = "date:$date"
+    }
+
+    data class UnreadDivider(val count: Int) : TimelineItem {
+        override val key = UNREAD_DIVIDER_KEY
     }
 }
 
@@ -41,9 +46,11 @@ internal fun relativeDay(date: LocalDate, today: LocalDate): RelativeDay = when 
 
 /**
  * Takes messages newest first, as the conversation list shows them, and puts a date header after the oldest message
- * of each day. The list is reversed, so the header appears above that message on screen.
+ * of each day. The list is reversed, so the header appears above that message on screen. The unread divider goes
+ * above the first unread message, between it and the date header.
+
  */
-internal fun List<Message>.withDateHeaders(zone: ZoneId): List<TimelineItem> {
+internal fun List<Message>.withDateHeaders(zone: ZoneId, unread: UnreadMarker? = null): List<TimelineItem> {
     val items = ArrayList<TimelineItem>(size + 1)
     forEachIndexed { index, message ->
         val older = getOrNull(index + 1)
@@ -53,6 +60,7 @@ internal fun List<Message>.withDateHeaders(zone: ZoneId): List<TimelineItem> {
             startsGroup = !message.followsInGroup(older, zone),
             endsGroup = newer == null || !newer.followsInGroup(message, zone),
         )
+        if (message.id == unread?.firstUnreadMessageId) items += TimelineItem.UnreadDivider(unread.count)
         val day = message.dayIn(zone)
         val olderDay = older?.dayIn(zone)
         if (day != olderDay) items += TimelineItem.DateHeader(day)
