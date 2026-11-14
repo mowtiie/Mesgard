@@ -72,6 +72,55 @@
     <string name="members_remove_title">Remove member?</string>
     <string name="members_remove_message">%1$s leaves this organization and cannot sign in anymore unless they belong to another organization. Their messages stay.</string>
     <string name="members_remove_confirm">Remove</string>
+    <string name="members_import">Import from CSV</string>
+    <string name="import_title">Import members</string>
+    <string name="import_help">Add many people at once from a CSV file, such as an export from a spreadsheet. Each person gets a temporary password.</string>
+    <string name="import_help_columns">The file needs a header row with an email column. A name column and a role column (student, staff or admin) are optional. A missing role means student.</string>
+    <string name="import_choose_file">Choose file</string>
+    <string name="import_save_template">Save template</string>
+    <string name="import_choose_another">Choose another file</string>
+    <string name="import_no_email">No email</string>
+    <string name="import_line_problem">Line %1$d: %2$s</string>
+    <string name="import_progress">Creating logins, %1$d of %2$d</string>
+    <string name="import_passwords_warning">The temporary passwords are shown only once. Save them before you leave this screen.</string>
+    <string name="import_save_file">Save passwords as CSV</string>
+    <string name="import_copy_all">Copy all</string>
+    <string name="import_saved">Saved.</string>
+    <string name="import_save_failed">Unable to save the file.</string>
+    <string name="import_leave_title">Leave without saving?</string>
+    <string name="import_leave_message">The temporary passwords are not saved and cannot be shown again. You would have to reset each password.</string>
+    <string name="import_leave_confirm">Leave</string>
+    <string name="import_file_empty">The file has no rows to import.</string>
+    <string name="import_file_no_email_column">The file needs a column named email.</string>
+    <string name="import_file_too_many_rows">The file has more than 2,000 rows. Split it into smaller files.</string>
+    <string name="import_file_unreadable">Unable to read the file. Choose a CSV text file smaller than 1 MB.</string>
+    <string name="import_problem_invalid_email">Not a valid email address</string>
+    <string name="import_problem_duplicate">Appears more than once in the file</string>
+    <string name="import_problem_unknown_role">Unknown role</string>
+    <string name="import_problem_name_too_long">The name is too long</string>
+    <string name="import_problem_failed">Could not be created</string>
+    <string name="import_interrupted_network">The import stopped because the connection was lost. People created so far are listed below. Import the rest again.</string>
+    <string name="import_interrupted_unknown">The import stopped because of an error. People created so far are listed below.</string>
+    <plurals name="import_ready_count">
+        <item quantity="one">%d person is ready to import</item>
+        <item quantity="other">%d people are ready to import</item>
+    </plurals>
+    <plurals name="import_problem_count">
+        <item quantity="one">%d row has a problem and is skipped</item>
+        <item quantity="other">%d rows have problems and are skipped</item>
+    </plurals>
+    <plurals name="import_button">
+        <item quantity="one">Import %d person</item>
+        <item quantity="other">Import %d people</item>
+    </plurals>
+    <plurals name="import_created_count">
+        <item quantity="one">%d login created</item>
+        <item quantity="other">%d logins created</item>
+    </plurals>
+    <plurals name="import_skipped_count">
+        <item quantity="one">%d person skipped</item>
+        <item quantity="other">%d people skipped</item>
+    </plurals>
     <string name="members_password_title">Temporary password for %1$s</string>
     <string name="members_password_message">Give this password to the person. It is shown only once and must be changed at the first sign in.</string>
     <string name="members_password_copy">Copy</string>

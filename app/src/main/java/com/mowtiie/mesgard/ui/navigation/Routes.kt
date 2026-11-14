@@ -25,3 +25,6 @@ internal data object MembersRoute
 
 @Serializable
 internal data object AddMemberRoute
+
+@Serializable
+internal data object ImportMembersRoute

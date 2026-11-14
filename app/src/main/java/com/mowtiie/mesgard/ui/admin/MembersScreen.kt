@@ -52,6 +52,7 @@ import com.mowtiie.mesgard.ui.common.labelResource
 internal fun MembersScreenRoute(
     onBack: () -> Unit,
     onAddMember: () -> Unit,
+    onImportMembers: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MembersViewModel = hiltViewModel(),
 ) {
@@ -60,6 +61,7 @@ internal fun MembersScreenRoute(
         uiState = uiState,
         onBack = onBack,
         onAddMember = onAddMember,
+        onImportMembers = onImportMembers,
         onRefresh = viewModel::onRefresh,
         onQueryChanged = viewModel::onQueryChanged,
         onMemberAction = viewModel::onMemberAction,
@@ -77,6 +79,7 @@ internal fun MembersScreen(
     uiState: MembersUiState,
     onBack: () -> Unit,
     onAddMember: () -> Unit,
+    onImportMembers: () -> Unit,
     onRefresh: () -> Unit,
     onQueryChanged: (String) -> Unit,
     onMemberAction: (Contact, MemberAction) -> Unit,
@@ -107,6 +110,13 @@ internal fun MembersScreen(
         actions = {
             SearchAction { isSearching = true }
             OverflowMenu { dismiss ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.members_import)) },
+                    onClick = {
+                        dismiss()
+                        onImportMembers()
+                    },
+                )
                 RefreshMenuItem(enabled = !uiState.isRefreshing) {
                     dismiss()
                     onRefresh()

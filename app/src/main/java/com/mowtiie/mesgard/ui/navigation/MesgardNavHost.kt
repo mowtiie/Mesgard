@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mowtiie.mesgard.ui.admin.AddMemberScreenRoute
+import com.mowtiie.mesgard.ui.admin.ImportMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.MembersScreenRoute
 import com.mowtiie.mesgard.ui.conversation.ConversationScreenRoute
 
@@ -35,9 +36,14 @@ internal fun MesgardNavHost(
             )
         }
         composable<MembersRoute> {
-            MembersScreenRoute(onBack = {
-                navController.popBackStack()
-            }, onAddMember = { navController.navigate(AddMemberRoute) })
+            MembersScreenRoute(
+                onBack = { navController.popBackStack() },
+                onAddMember = { navController.navigate(AddMemberRoute) },
+                onImportMembers = { navController.navigate(ImportMembersRoute) },
+            )
+        }
+        composable<ImportMembersRoute> {
+            ImportMembersScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<AddMemberRoute> {
             AddMemberScreenRoute(onBack = { navController.popBackStack() })

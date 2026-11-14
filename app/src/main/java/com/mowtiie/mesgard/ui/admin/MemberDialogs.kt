@@ -1,7 +1,5 @@
 package com.mowtiie.mesgard.ui.admin
 
-import android.content.ClipData
-import android.os.PersistableBundle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -13,7 +11,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -25,7 +22,6 @@ import com.mowtiie.mesgard.ui.settings.RadioGroup
 import com.mowtiie.mesgard.ui.settings.RadioLabel
 import kotlinx.coroutines.launch
 
-private const val SENSITIVE_CONTENT_EXTRA = "android.content.extra.IS_SENSITIVE"
 internal val AssignableRoles = listOf(OrgRole.STUDENT, OrgRole.STAFF, OrgRole.ORG_ADMIN)
 
 @Composable
@@ -132,12 +128,7 @@ internal fun TemporaryPasswordDialog(memberName: String, password: String, onDis
         dismissButton = {
             TextButton(
                 onClick = {
-                    scope.launch {
-                        val clip = ClipData.newPlainText(null, password).apply {
-                            description.extras = PersistableBundle().apply { putBoolean(SENSITIVE_CONTENT_EXTRA, true) }
-                        }
-                        clipboard.setClipEntry(ClipEntry(clip))
-                    }
+                    scope.launch { clipboard.setClipEntry(sensitiveClip(password)) }
                 },
             ) { Text(stringResource(R.string.members_password_copy)) }
         },

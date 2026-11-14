@@ -1,8 +1,10 @@
 package com.mowtiie.mesgard.di
 
 import com.mowtiie.mesgard.data.RemoteAdminRepository
+import com.mowtiie.mesgard.data.admin.ContentResolverDocumentStore
 import com.mowtiie.mesgard.data.remote.AdminRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseAdminRemoteSource
+import com.mowtiie.mesgard.domain.admin.DocumentStore
 import com.mowtiie.mesgard.domain.repository.AdminRepository
 import dagger.Binds
 import dagger.Module
@@ -20,4 +22,8 @@ internal interface AdminModule {
     @Binds
     @Singleton
     fun bindAdminRepository(repository: RemoteAdminRepository): AdminRepository
+
+    @Binds
+    @Singleton
+    fun bindDocumentStore(store: ContentResolverDocumentStore): DocumentStore
 }
