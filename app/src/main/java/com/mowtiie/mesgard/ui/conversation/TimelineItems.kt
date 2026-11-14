@@ -11,11 +11,14 @@ import java.util.Locale
 
 private const val SAME_YEAR_SKELETON = "EEEMMMd"
 private const val OTHER_YEAR_SKELETON = "yMMMd"
+private const val GROUP_WINDOW_MILLIS = 5 * 60 * 1000L
 
 internal sealed interface TimelineItem {
     val key: String
 
-    data class Bubble(val message: Message) : TimelineItem {
+    /** [startsGroup] and [endsGroup] mark the first and last message of a run from one sender. */
+    data class Bubble(val message: Message, val startsGroup: Boolean = true, val endsGroup: Boolean = true) :
+        TimelineItem {
         override val key = "message:${message.id}"
     }
 
@@ -43,13 +46,25 @@ internal fun relativeDay(date: LocalDate, today: LocalDate): RelativeDay = when 
 internal fun List<Message>.withDateHeaders(zone: ZoneId): List<TimelineItem> {
     val items = ArrayList<TimelineItem>(size + 1)
     forEachIndexed { index, message ->
-        items += TimelineItem.Bubble(message)
+        val older = getOrNull(index + 1)
+        val newer = getOrNull(index - 1)
+        items += TimelineItem.Bubble(
+            message = message,
+            startsGroup = !message.followsInGroup(older, zone),
+            endsGroup = newer == null || !newer.followsInGroup(message, zone),
+        )
         val day = message.dayIn(zone)
-        val olderDay = getOrNull(index + 1)?.dayIn(zone)
+        val olderDay = older?.dayIn(zone)
         if (day != olderDay) items += TimelineItem.DateHeader(day)
     }
     return items
 }
+
+/** True when this message continues a run of [previous]: same sender, same day and sent shortly after. */
+private fun Message.followsInGroup(previous: Message?, zone: ZoneId): Boolean = previous != null &&
+    senderId == previous.senderId &&
+    dayIn(zone) == previous.dayIn(zone) &&
+    createdAtEpochMillis - previous.createdAtEpochMillis < GROUP_WINDOW_MILLIS
 
 private fun Message.dayIn(zone: ZoneId): LocalDate =
     Instant.ofEpochMilli(createdAtEpochMillis).atZone(zone).toLocalDate()

@@ -135,6 +135,7 @@ internal fun ConversationScreen(
     TitledScreen(
         title = title,
         modifier = modifier,
+        subtitle = if (uiState.canPost && uiState.typingNames.isNotEmpty()) typingText(uiState.typingNames) else null,
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(
@@ -153,7 +154,6 @@ internal fun ConversationScreen(
                 onLoadOlder = onLoadOlder,
                 modifier = Modifier.weight(1f),
             )
-            if (uiState.canPost && uiState.typingNames.isNotEmpty()) TypingIndicator(uiState.typingNames)
             if (uiState.canPost) {
                 MessageComposer(
                     draft = uiState.draft,
@@ -207,6 +207,8 @@ private fun MessageList(
                         showSenderName = uiState.showSenderNames,
                         downloads = downloads,
                         actions = actions,
+                        startsGroup = item.startsGroup,
+                        endsGroup = item.endsGroup,
                     )
                     is TimelineItem.DateHeader -> DateHeader(item.date)
                 }

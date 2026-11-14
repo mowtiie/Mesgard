@@ -83,6 +83,54 @@ class TimelineItemsTest {
         assertEquals(listOf("a", "header 2026-11-11"), items.describe())
     }
 
+    private fun bubbles(items: List<TimelineItem>) = items.filterIsInstance<TimelineItem.Bubble>()
+        .associate { it.message.id to (it.startsGroup to it.endsGroup) }
+
+    private fun at(id: String, minute: Int, senderId: String = "s1"): Message {
+        val base = message(id, 2026, 11, 10, hour = 9)
+        return base.copy(senderId = senderId, createdAtEpochMillis = base.createdAtEpochMillis + minute * 60_000L)
+    }
+
+    @Test
+    fun `messages from one sender a few minutes apart form a group`() {
+        val newestFirst = listOf(at("c", 2), at("b", 1), at("a", 0))
+
+        assertEquals(
+            mapOf("c" to (false to true), "b" to (false to false), "a" to (true to false)),
+            bubbles(newestFirst.withDateHeaders(zone)),
+        )
+    }
+
+    @Test
+    fun `a different sender starts a new group`() {
+        val newestFirst = listOf(at("b", 1, senderId = "s2"), at("a", 0))
+
+        assertEquals(
+            mapOf("b" to (true to true), "a" to (true to true)),
+            bubbles(newestFirst.withDateHeaders(zone)),
+        )
+    }
+
+    @Test
+    fun `a long pause starts a new group`() {
+        val newestFirst = listOf(at("b", 30), at("a", 0))
+
+        assertEquals(
+            mapOf("b" to (true to true), "a" to (true to true)),
+            bubbles(newestFirst.withDateHeaders(zone)),
+        )
+    }
+
+    @Test
+    fun `a new day starts a new group`() {
+        val newestFirst = listOf(message("b", 2026, 11, 10, hour = 0), message("a", 2026, 11, 9, hour = 23))
+
+        assertEquals(
+            mapOf("b" to (true to true), "a" to (true to true)),
+            bubbles(newestFirst.withDateHeaders(zone)),
+        )
+    }
+
     @Test
     fun `keys are unique and stable`() {
         val newestFirst = listOf(message("b", 2026, 11, 10), message("a", 2026, 11, 9))

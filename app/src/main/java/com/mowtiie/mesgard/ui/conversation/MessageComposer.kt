@@ -32,6 +32,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,6 +58,7 @@ internal fun MessageComposer(
     modifier: Modifier = Modifier,
 ) {
     val pickers = rememberAttachmentPickers(onAttachmentsPicked)
+    val messageLabel = stringResource(R.string.message_label)
     Column(modifier = modifier.fillMaxWidth().padding(ComposerPadding)) {
         if (attachments.isNotEmpty()) PickedAttachments(attachments, onAttachmentRemoved)
         Row(verticalAlignment = Alignment.Bottom) {
@@ -63,9 +66,9 @@ internal fun MessageComposer(
             OutlinedTextField(
                 value = draft,
                 onValueChange = onDraftChanged,
-                label = { Text(stringResource(R.string.message_label)) },
+                placeholder = { Text(messageLabel) },
                 maxLines = COMPOSER_MAX_LINES,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).semantics { contentDescription = messageLabel },
             )
             FilledIconButton(onClick = onSendClicked, enabled = canSend) {
                 Icon(

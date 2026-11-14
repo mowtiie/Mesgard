@@ -12,6 +12,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import com.mowtiie.mesgard.ui.connectivity.ConnectionBanner
 import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
@@ -25,6 +28,7 @@ import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 internal fun TitledScreen(
     title: String,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     searchBar: (@Composable () -> Unit)? = null,
@@ -40,7 +44,7 @@ internal fun TitledScreen(
                     searchBar()
                 } else {
                     TopAppBar(
-                        title = { Text(text = title, style = TitleStyle()) },
+                        title = { TitleWithSubtitle(title, subtitle) },
                         navigationIcon = navigationIcon,
                         actions = actions,
                         scrollBehavior = scrollBehavior,
@@ -55,4 +59,16 @@ internal fun TitledScreen(
 }
 
 @Composable
-private fun TitleStyle() = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif)
+private fun TitleWithSubtitle(title: String, subtitle: String?) {
+    Column {
+        Text(text = title, style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif))
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        }
+    }
+}

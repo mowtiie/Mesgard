@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onLongClick
@@ -36,15 +37,14 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Attachment
 import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.domain.model.MessageStatus
-import com.mowtiie.mesgard.domain.network.ConnectionStatus
-import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
-private val BubbleMaxWidth = 320.dp
+private val BubbleMaxWidth = 480.dp
+private const val BUBBLE_WIDTH_FRACTION = 0.85f
 private val BubblePadding = 12.dp
 private val RowPadding = 12.dp
 private val RowSpacing = 2.dp
-private const val METADATA_SEPARATOR = " · "
+private val GroupSpacing = 8.dp
 
 /** What the user can do with a message or one of its attachments. */
 internal data class MessageActions(
@@ -63,6 +63,8 @@ internal fun MessageBubble(
     downloads: AttachmentDownloadsUiState,
     actions: MessageActions,
     modifier: Modifier = Modifier,
+    startsGroup: Boolean = true,
+    endsGroup: Boolean = true,
 ) {
     var isMenuOpen by remember { mutableStateOf(false) }
     val colors = bubbleColors(message)
@@ -70,7 +72,12 @@ internal fun MessageBubble(
     val copyLabel = stringResource(R.string.message_copy)
     val haptics = LocalHapticFeedback.current
     Column(
-        modifier = modifier.fillMaxWidth().padding(horizontal = RowPadding, vertical = RowSpacing),
+        modifier = modifier.fillMaxWidth().padding(
+            start = RowPadding,
+            end = RowPadding,
+            top = if (startsGroup) GroupSpacing else RowSpacing,
+            bottom = RowSpacing,
+        ),
         horizontalAlignment = if (message.isOwn) Alignment.End else Alignment.Start,
     ) {
         Box {
@@ -83,8 +90,8 @@ internal fun MessageBubble(
                 color = colors.container,
                 contentColor = colors.content,
             ) {
-                Column(modifier = Modifier.widthIn(max = BubbleMaxWidth).padding(BubblePadding)) {
-                    MessageText(message, showSenderName)
+                Column(modifier = Modifier.widthIn(max = maxBubbleWidth()).padding(BubblePadding)) {
+                    MessageText(message, showSenderName && startsGroup)
                     AttachmentList(
                         message.attachments,
                         downloads,
@@ -92,7 +99,9 @@ internal fun MessageBubble(
                         actions.onImageShown,
                         actions.onRetryDownload,
                     )
-                    Text(text = metadata(message), style = MaterialTheme.typography.labelSmall)
+                    if (endsGroup || message.status != MessageStatus.SENT || message.isEdited) {
+                        Text(text = metadata(message), style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
             DropdownMenu(expanded = isMenuOpen, onDismissRequest = { isMenuOpen = false }) {
@@ -110,6 +119,10 @@ internal fun MessageBubble(
         }
     }
 }
+
+@Composable
+private fun maxBubbleWidth() = (LocalConfiguration.current.screenWidthDp * BUBBLE_WIDTH_FRACTION).dp
+    .coerceAtMost(BubbleMaxWidth)
 
 /** A long press runs [action] and is offered to TalkBack as a custom action, so it needs no gesture. */
 private fun Modifier.onLongPress(enabled: Boolean, label: String, action: () -> Unit): Modifier = if (enabled) {
@@ -167,16 +180,6 @@ private fun MessageBody(message: Message) {
 }
 
 @Composable
-private fun metadata(message: Message): String {
-    val parts = listOfNotNull(
-        formatMessageTime(message.createdAtEpochMillis),
-        if (message.isEdited && !message.isDeleted) stringResource(R.string.message_edited) else null,
-        if (message.status == MessageStatus.PENDING) pendingLabel() else null,
-    )
-    return parts.joinToString(METADATA_SEPARATOR)
-}
-
-@Composable
 private fun FailedMessageNotice(onRetry: () -> Unit, onDiscard: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
         Text(
@@ -222,10 +225,3 @@ private fun previewMessage(isOwn: Boolean, body: String, status: MessageStatus =
     status = status,
     isOwn = isOwn,
 )
-
-@Composable
-private fun pendingLabel(): String = when (LocalConnectionStatus.current) {
-    ConnectionStatus.OFFLINE -> stringResource(R.string.message_waiting_for_network)
-    ConnectionStatus.SERVER_UNREACHABLE -> stringResource(R.string.message_waiting_for_server)
-    ConnectionStatus.ONLINE -> stringResource(R.string.message_sending)
-}
