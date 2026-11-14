@@ -36,3 +36,6 @@ supabase/functions/.env
 
 # Self-hosted deployment runtime data
 deploy/self-hosted/volumes/
+
+# Release signing
+keystore.properties

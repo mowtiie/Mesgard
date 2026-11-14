@@ -24,6 +24,14 @@ fun requiredSetting(propertyName: String, environmentName: String): String {
     }
 }
 
+val signingProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use(::load)
+}
+
+fun signingSetting(propertyName: String, environmentName: String): String? =
+    signingProperties.getProperty(propertyName) ?: System.getenv(environmentName)
+
 android {
     namespace = "com.mowtiie.mesgard"
     compileSdk {
@@ -50,8 +58,22 @@ android {
         )
     }
 
+    // Without a keystore the release build stays unsigned, so CI and contributors can still build it.
+    val releaseStoreFile = signingSetting("storeFile", "SIGNING_STORE_FILE")
+    if (releaseStoreFile != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = signingSetting("storePassword", "SIGNING_STORE_PASSWORD")
+                keyAlias = signingSetting("keyAlias", "SIGNING_KEY_ALIAS")
+                keyPassword = signingSetting("keyPassword", "SIGNING_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
