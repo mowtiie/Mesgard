@@ -16,6 +16,7 @@ import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.SessionManager
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.storage.Storage
@@ -47,6 +48,7 @@ internal object SupabaseModule {
             install(Postgrest)
             install(Realtime)
             install(Storage)
+            install(Functions)
         }
     }
 
