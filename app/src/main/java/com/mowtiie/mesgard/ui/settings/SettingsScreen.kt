@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.LockTimeout
 import com.mowtiie.mesgard.domain.model.NotificationPreview
+import com.mowtiie.mesgard.ui.admin.AdminNavigation
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.lock.AuthAvailability
 import com.mowtiie.mesgard.ui.lock.AuthOutcome
@@ -36,8 +37,7 @@ import org.unifiedpush.android.connector.UnifiedPush
 
 @Composable
 internal fun SettingsScreenRoute(
-    onOpenMembers: () -> Unit,
-    onOpenGroups: () -> Unit,
+    adminNavigation: AdminNavigation,
     onOpenConversation: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
@@ -69,8 +69,7 @@ internal fun SettingsScreenRoute(
         onAppLockChanged = ::onAppLockToggled,
         onLockTimeoutSelected = viewModel::onLockTimeoutSelected,
         onNotificationPreviewSelected = viewModel::onNotificationPreviewSelected,
-        onOpenMembers = onOpenMembers,
-        onOpenGroups = onOpenGroups,
+        adminNavigation = adminNavigation,
         onOpenConversation = onOpenConversation,
         onPushSetupClicked = {
             if (UnifiedPush.getDistributors(context).isEmpty()) {
@@ -93,8 +92,7 @@ internal fun SettingsScreen(
     onAppLockChanged: (Boolean) -> Unit,
     onLockTimeoutSelected: (LockTimeout) -> Unit,
     onNotificationPreviewSelected: (NotificationPreview) -> Unit,
-    onOpenMembers: () -> Unit,
-    onOpenGroups: () -> Unit,
+    adminNavigation: AdminNavigation,
     onOpenConversation: (String) -> Unit,
     onPushSetupClicked: () -> Unit,
     onErrorShown: () -> Unit,
@@ -116,7 +114,7 @@ internal fun SettingsScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
             AppearanceSection()
-            AdministrationSection(onOpenMembers, onOpenGroups)
+            AdministrationSection(adminNavigation)
             AnnouncementsSection(snackbarHostState, onOpenConversation)
             SectionHeader(R.string.settings_security)
             SwitchRow(

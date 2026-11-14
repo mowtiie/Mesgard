@@ -9,8 +9,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mowtiie.mesgard.ui.admin.AddMemberScreenRoute
+import com.mowtiie.mesgard.ui.admin.AdminNavigation
 import com.mowtiie.mesgard.ui.admin.ImportMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.MembersScreenRoute
+import com.mowtiie.mesgard.ui.admin.audit.AuditLogScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.AddGroupMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupDetailScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupsScreenRoute
@@ -36,8 +38,11 @@ internal fun MesgardNavHost(
             MainScreen(
                 onSignOut = onSignOut,
                 onConversationClick = { conversationId -> navController.navigate(ConversationRoute(conversationId)) },
-                onOpenMembers = { navController.navigate(MembersRoute) },
-                onOpenGroups = { navController.navigate(GroupsRoute) },
+                adminNavigation = AdminNavigation(
+                    onOpenMembers = { navController.navigate(MembersRoute) },
+                    onOpenGroups = { navController.navigate(GroupsRoute) },
+                    onOpenAuditLog = { navController.navigate(AuditLogRoute) },
+                ),
             )
         }
         composable<MembersRoute> {
@@ -62,6 +67,9 @@ internal fun MesgardNavHost(
         }
         composable<AddGroupMembersRoute> {
             AddGroupMembersScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<AuditLogRoute> {
+            AuditLogScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<ImportMembersRoute> {
             ImportMembersScreenRoute(onBack = { navController.popBackStack() })

@@ -14,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.admin.ObserveAdminOrganization
+import com.mowtiie.mesgard.ui.admin.AdminNavigation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,22 +34,23 @@ internal class AdministrationViewModel @Inject constructor(observeAdminOrganizat
 
 /** Only the admin of an organization sees this section. */
 @Composable
-internal fun AdministrationSection(
-    onOpenMembers: () -> Unit,
-    onOpenGroups: () -> Unit,
-    viewModel: AdministrationViewModel = hiltViewModel(),
-) {
+internal fun AdministrationSection(navigation: AdminNavigation, viewModel: AdministrationViewModel = hiltViewModel()) {
     val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
     if (!isAdmin) return
     SectionHeader(R.string.settings_administration)
     ListItem(
-        modifier = Modifier.clickable(role = Role.Button, onClick = onOpenMembers),
+        modifier = Modifier.clickable(role = Role.Button, onClick = navigation.onOpenMembers),
         headlineContent = { Text(stringResource(R.string.members_title)) },
         supportingContent = { Text(stringResource(R.string.settings_members_summary)) },
     )
     ListItem(
-        modifier = Modifier.clickable(role = Role.Button, onClick = onOpenGroups),
+        modifier = Modifier.clickable(role = Role.Button, onClick = navigation.onOpenGroups),
         headlineContent = { Text(stringResource(R.string.groups_title)) },
         supportingContent = { Text(stringResource(R.string.settings_groups_summary)) },
+    )
+    ListItem(
+        modifier = Modifier.clickable(role = Role.Button, onClick = navigation.onOpenAuditLog),
+        headlineContent = { Text(stringResource(R.string.audit_title)) },
+        supportingContent = { Text(stringResource(R.string.settings_audit_summary)) },
     )
 }
