@@ -1,6 +1,9 @@
 package com.mowtiie.mesgard.ui.conversation
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -25,7 +28,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,6 +45,7 @@ import com.mowtiie.mesgard.domain.model.Attachment
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
 import java.time.ZoneId
+import kotlinx.coroutines.launch
 
 private const val LOAD_OLDER_THRESHOLD = 5
 
@@ -171,13 +178,20 @@ private fun MessageList(
     val listState = rememberLazyListState()
     val timeline = remember(uiState.messages) { uiState.messages.withDateHeaders(ZoneId.systemDefault()) }
     val isNearOldestLoaded by remember { derivedStateOf { listState.isNearEnd() } }
+    val isAtBottom by remember { derivedStateOf { listState.isAtNewest() } }
+    val isScrolledUp by remember { derivedStateOf { listState.firstVisibleItemIndex >= SCROLLED_UP_ITEM_COUNT } }
     val newestMessage = uiState.messages.firstOrNull()
+    var lastSeenId by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(isNearOldestLoaded, uiState.messages.size) {
         if (isNearOldestLoaded && uiState.messages.isNotEmpty()) onLoadOlder()
     }
+    LaunchedEffect(isAtBottom, newestMessage?.id) {
+        if (isAtBottom) lastSeenId = newestMessage?.id
+    }
     LaunchedEffect(newestMessage?.id) {
-        if (newestMessage?.isOwn == true) listState.animateScrollToItem(0)
+        if (newestMessage?.isOwn == true || !isScrolledUp) listState.animateScrollToItem(0)
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -206,8 +220,21 @@ private fun MessageList(
                 modifier = Modifier.align(Alignment.Center),
             )
         }
+        AnimatedVisibility(
+            visible = isScrolledUp,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        ) {
+            ScrollToLatestButton(
+                unseenCount = unseenIncomingCount(uiState.messages, lastSeenId),
+                onClick = { scope.launch { listState.animateScrollToItem(0) } },
+            )
+        }
     }
 }
+
+private fun LazyListState.isAtNewest(): Boolean = firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0
 
 @Composable
 private fun LoadingOlderIndicator() {

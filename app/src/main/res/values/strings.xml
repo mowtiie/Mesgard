@@ -38,6 +38,11 @@
         <item quantity="one">%d unread message</item>
         <item quantity="other">%d unread messages</item>
     </plurals>
+    <plurals name="conversation_new_messages">
+        <item quantity="one">%d new message</item>
+        <item quantity="other">%d new messages</item>
+    </plurals>
+    <string name="scroll_to_latest">Scroll to latest message</string>
     <string name="navigate_back">Back</string>
     <string name="message_label">Message</string>
     <string name="date_today">Today</string>
