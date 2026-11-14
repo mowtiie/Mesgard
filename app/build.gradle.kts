@@ -95,6 +95,11 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
+    sourceSets {
+        // The exported schemas let the migration test open a database as it was in each earlier version. Only debug builds
+        // and the unit tests carry them.
+        getByName("debug").assets.srcDir("$projectDir/schemas")
+    }
 }
 
 room {
@@ -144,6 +149,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    testImplementation(libs.androidx.room.testing)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.work.testing)
     testImplementation(libs.junit)
