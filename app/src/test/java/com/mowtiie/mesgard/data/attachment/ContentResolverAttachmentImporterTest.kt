@@ -5,6 +5,8 @@ import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
 import android.database.MatrixCursor
+import android.graphics.Bitmap
+import android.graphics.Bitmap.CompressFormat.PNG
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.provider.OpenableColumns
@@ -87,6 +89,20 @@ class ContentResolverAttachmentImporterTest {
         val result = importer.import(pick("a.txt", "text/plain", "text"), "attachment-3") as ImportResult.Imported
 
         assertTrue(result.localPath.startsWith(application.noBackupFilesDir.absolutePath))
+    }
+
+    @Test
+    fun `reports the pixel size of a photo and none for a document`() = runTest {
+        val photo = temporaryFolder.newFile().also { file ->
+            file.outputStream().use { Bitmap.createBitmap(30, 20, Bitmap.Config.ARGB_8888).compress(PNG, 100, it) }
+        }
+        PickerProvider.files["photo.png"] = PickedFile(photo, "image/png", photo.length())
+
+        val image = importer.import("content://$AUTHORITY/photo.png", "attachment-4") as ImportResult.Imported
+        val document = importer.import(pick("a.txt", "text/plain", "text"), "attachment-5") as ImportResult.Imported
+
+        assertEquals(30 to 20, image.width to image.height)
+        assertEquals(null to null, document.width to document.height)
     }
 
     private fun pick(name: String, mimeType: String?, content: String, declaredSize: Long? = null): String {

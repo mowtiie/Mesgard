@@ -12,6 +12,8 @@ internal data class AttachmentDto(
     @SerialName("mime_type") val mimeType: String,
     @SerialName("size_bytes") val sizeBytes: Long,
     @SerialName("file_name") val fileName: String,
+    val width: Int? = null,
+    val height: Int? = null,
     @SerialName("message_id") val messageId: String? = null,
 )
 
@@ -22,6 +24,8 @@ internal fun AttachmentDto.toEntity(parentMessageId: String, localPath: String? 
     mimeType = mimeType,
     sizeBytes = sizeBytes,
     fileName = fileName,
+    width = width,
+    height = height,
     localPath = localPath,
 )
 
@@ -29,6 +33,8 @@ internal fun AttachmentEntity.toDomain() = Attachment(
     id = id,
     messageId = messageId,
     fileName = fileName,
+    width = width,
+    height = height,
     mimeType = mimeType,
     sizeBytes = sizeBytes,
     storagePath = storagePath,

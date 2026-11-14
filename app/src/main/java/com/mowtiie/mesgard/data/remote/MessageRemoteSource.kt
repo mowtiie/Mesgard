@@ -16,7 +16,7 @@ private const val ATTACHMENTS_TABLE = "attachments"
 private const val MARK_READ_FUNCTION = "mark_conversation_read"
 private val MESSAGE_COLUMNS = Columns.raw(
     "*, sender:profiles!messages_sender_id_fkey(id, display_name), " +
-        "attachments(id, storage_path, mime_type, size_bytes, file_name)",
+        "attachments(id, storage_path, mime_type, size_bytes, file_name, width, height)",
 )
 
 internal interface MessageRemoteSource {

@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.data.attachment
 
 import android.content.Context
 import android.database.Cursor
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.mowtiie.mesgard.domain.attachment.ALLOWED_ATTACHMENT_TYPES
@@ -59,10 +60,25 @@ internal class ContentResolverAttachmentImporter @Inject constructor(
 
     private fun describe(source: Uri, mimeType: String, target: File): ImportResult {
         if (target.length() <= MAX_ATTACHMENT_BYTES) {
-            return ImportResult.Imported(readName(source), mimeType, target.length(), target.absolutePath)
+            val size = imageSize(target, mimeType)
+            return ImportResult.Imported(
+                fileName = readName(source),
+                mimeType = mimeType,
+                sizeBytes = target.length(),
+                localPath = target.absolutePath,
+                width = size?.first,
+                height = size?.second,
+            )
         }
         target.delete()
         return ImportResult.Rejected(AttachmentRejection.TOO_LARGE)
+    }
+
+    private fun imageSize(file: File, mimeType: String): Pair<Int, Int>? {
+        if (!mimeType.startsWith("image/")) return null
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, bounds)
+        return if (bounds.outWidth > 0 && bounds.outHeight > 0) bounds.outWidth to bounds.outHeight else null
     }
 
     private fun writeCopy(source: Uri, target: File) {

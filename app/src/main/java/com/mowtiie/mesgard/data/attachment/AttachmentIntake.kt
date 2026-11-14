@@ -28,6 +28,8 @@ internal class AttachmentIntake @Inject constructor(private val importer: Attach
                     mimeType = result.mimeType,
                     sizeBytes = result.sizeBytes,
                     fileName = result.fileName,
+                    width = result.width,
+                    height = result.height,
                     localPath = result.localPath,
                 )
                 is ImportResult.Rejected -> {

@@ -21,8 +21,14 @@ internal val ALLOWED_ATTACHMENT_TYPES = setOf(
 )
 
 internal sealed interface ImportResult {
-    data class Imported(val fileName: String, val mimeType: String, val sizeBytes: Long, val localPath: String) :
-        ImportResult
+    data class Imported(
+        val fileName: String,
+        val mimeType: String,
+        val sizeBytes: Long,
+        val localPath: String,
+        val width: Int? = null,
+        val height: Int? = null,
+    ) : ImportResult
 
     data class Rejected(val reason: AttachmentRejection) : ImportResult
 }

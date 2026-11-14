@@ -52,6 +52,8 @@ internal class SupabaseAttachmentRemoteSource @Inject constructor(private val cl
                                     put("id", it.id)
                                     put("storage_path", it.storagePath)
                                     put("file_name", it.fileName)
+                                    it.width?.let { width -> put("width", width) }
+                                    it.height?.let { height -> put("height", height) }
                                 },
                             )
                         }

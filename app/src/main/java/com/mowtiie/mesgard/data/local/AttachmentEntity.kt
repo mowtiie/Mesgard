@@ -25,5 +25,7 @@ internal data class AttachmentEntity(
     @ColumnInfo(name = "mime_type") val mimeType: String,
     @ColumnInfo(name = "size_bytes") val sizeBytes: Long,
     @ColumnInfo(name = "file_name") val fileName: String,
+    val width: Int? = null,
+    val height: Int? = null,
     @ColumnInfo(name = "local_path") val localPath: String? = null,
 )
