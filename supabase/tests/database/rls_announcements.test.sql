@@ -42,6 +42,9 @@ select lives_ok(
   ),
   'an organization admin can post in an announcement conversation'
 );
+reset role;
+delete from public.conversations where org_id = tests.seed_id('10', 'a', 0) and type = 'announcement';
+select tests.authenticate_as(tests.seed_id('20', 'a', 1));
 select lives_ok(
   format(
     $$insert into public.conversations (id, org_id, type, title)
