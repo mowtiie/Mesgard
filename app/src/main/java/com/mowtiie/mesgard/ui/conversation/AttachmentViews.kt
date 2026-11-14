@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,6 +42,7 @@ private val FileIconSize = 32.dp
 private val ItemSpacing = 4.dp
 private val FileRowSpacing = 12.dp
 private val ProgressSize = 24.dp
+private val MinTouchTarget = 48.dp
 
 @Composable
 internal fun AttachmentList(
@@ -126,6 +128,7 @@ private fun FileAttachment(attachment: Attachment, isDownloading: Boolean, onCli
         modifier = Modifier.fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
             .clickable(enabled = !isDownloading) { onClick(attachment) }
+            .heightIn(min = MinTouchTarget)
             .padding(vertical = ItemSpacing),
         horizontalArrangement = Arrangement.spacedBy(FileRowSpacing),
         verticalAlignment = Alignment.CenterVertically,

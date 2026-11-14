@@ -1,5 +1,7 @@
 package com.mowtiie.mesgard.ui.conversation
 
+import android.content.ClipData
+import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -34,6 +36,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -41,7 +45,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
-import com.mowtiie.mesgard.domain.model.Attachment
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
 import java.time.ZoneId
@@ -69,13 +72,15 @@ internal fun ConversationScreenRoute(
         onBack = onBack,
         onDraftChanged = viewModel::onDraftChanged,
         onSendClicked = viewModel::onSendClicked,
-        onRetryClicked = failedMessagesViewModel::onRetryClicked,
-        onDiscardClicked = failedMessagesViewModel::onDiscardClicked,
+        actions = MessageActions(
+            onRetry = failedMessagesViewModel::onRetryClicked,
+            onDiscard = failedMessagesViewModel::onDiscardClicked,
+            onAttachmentClick = downloadsViewModel::onAttachmentClicked,
+            onImageShown = downloadsViewModel::onImageShown,
+            onRetryDownload = downloadsViewModel::onRetryDownload,
+        ),
         onAttachmentsPicked = viewModel::onAttachmentsPicked,
         onAttachmentRemoved = viewModel::onAttachmentRemoved,
-        onAttachmentClicked = downloadsViewModel::onAttachmentClicked,
-        onImageShown = downloadsViewModel::onImageShown,
-        onRetryDownload = downloadsViewModel::onRetryDownload,
         onAttachmentOpened = downloadsViewModel::onAttachmentOpened,
         onDownloadErrorShown = downloadsViewModel::onErrorShown,
         onLoadOlder = viewModel::onLoadOlder,
@@ -91,13 +96,9 @@ internal fun ConversationScreen(
     onBack: () -> Unit,
     onDraftChanged: (String) -> Unit,
     onSendClicked: () -> Unit,
-    onRetryClicked: (String) -> Unit,
-    onDiscardClicked: (String) -> Unit,
+    actions: MessageActions,
     onAttachmentsPicked: (List<PickedAttachment>) -> Unit,
     onAttachmentRemoved: (String) -> Unit,
-    onAttachmentClicked: (Attachment) -> Unit,
-    onImageShown: (Attachment) -> Unit,
-    onRetryDownload: (Attachment) -> Unit,
     onAttachmentOpened: () -> Unit,
     onDownloadErrorShown: () -> Unit,
     onLoadOlder: () -> Unit,
@@ -128,6 +129,8 @@ internal fun ConversationScreen(
         if (!opened) snackbarHostState.showSnackbar(openFailedMessage)
     }
 
+    val copyMessage = rememberCopyMessage(snackbarHostState)
+
     val title = uiState.title ?: uiState.type?.let { stringResource(it.fallbackTitleResource()) }.orEmpty()
     TitledScreen(
         title = title,
@@ -146,11 +149,7 @@ internal fun ConversationScreen(
             MessageList(
                 uiState = uiState,
                 downloads = downloads,
-                onRetryClicked = onRetryClicked,
-                onDiscardClicked = onDiscardClicked,
-                onAttachmentClick = onAttachmentClicked,
-                onImageShown = onImageShown,
-                onRetryDownload = onRetryDownload,
+                actions = actions.copy(onCopy = copyMessage),
                 onLoadOlder = onLoadOlder,
                 modifier = Modifier.weight(1f),
             )
@@ -176,11 +175,7 @@ internal fun ConversationScreen(
 private fun MessageList(
     uiState: ConversationUiState,
     downloads: AttachmentDownloadsUiState,
-    onRetryClicked: (String) -> Unit,
-    onDiscardClicked: (String) -> Unit,
-    onAttachmentClick: (Attachment) -> Unit,
-    onImageShown: (Attachment) -> Unit,
-    onRetryDownload: (Attachment) -> Unit,
+    actions: MessageActions,
     onLoadOlder: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -210,12 +205,8 @@ private fun MessageList(
                     is TimelineItem.Bubble -> MessageBubble(
                         message = item.message,
                         showSenderName = uiState.showSenderNames,
-                        onRetry = { onRetryClicked(item.message.id) },
-                        onDiscard = { onDiscardClicked(item.message.id) },
                         downloads = downloads,
-                        onAttachmentClick = onAttachmentClick,
-                        onImageShown = onImageShown,
-                        onRetryDownload = onRetryDownload,
+                        actions = actions,
                     )
                     is TimelineItem.DateHeader -> DateHeader(item.date)
                 }
@@ -270,4 +261,19 @@ private fun ConversationError.messageResource(): Int = when (this) {
     ConversationError.ATTACHMENT_TOO_LARGE -> R.string.conversation_error_attachment_too_large
     ConversationError.ATTACHMENT_TYPE_NOT_ALLOWED -> R.string.conversation_error_attachment_type
     ConversationError.ATTACHMENT_UNREADABLE -> R.string.conversation_error_attachment_unreadable
+    ConversationError.DOWNLOAD_NETWORK_UNAVAILABLE -> R.string.conversation_error_download_network_unavailable
+    ConversationError.DOWNLOAD_UNKNOWN -> R.string.conversation_error_download_unknown
+}
+
+@Composable
+private fun rememberCopyMessage(snackbarHostState: SnackbarHostState): (String) -> Unit {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    val copiedMessage = stringResource(R.string.message_copied)
+    return { text ->
+        scope.launch {
+            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(null, text)))
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) snackbarHostState.showSnackbar(copiedMessage)
+        }
+    }
 }

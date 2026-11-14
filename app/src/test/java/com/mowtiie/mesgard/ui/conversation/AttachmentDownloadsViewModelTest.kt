@@ -42,7 +42,7 @@ class AttachmentDownloadsViewModelTest {
 
         viewModel.uiState.test {
             val state = expectMostRecentItem()
-            assertEquals(ConversationError.NETWORK_UNAVAILABLE, state.error)
+            assertEquals(ConversationError.DOWNLOAD_NETWORK_UNAVAILABLE, state.error)
             assertEquals(null, state.attachmentToOpen)
             assertTrue(state.downloadingIds.isEmpty())
         }

@@ -1,20 +1,34 @@
 package com.mowtiie.mesgard.ui.conversation
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,36 +46,82 @@ private val RowPadding = 12.dp
 private val RowSpacing = 2.dp
 private const val METADATA_SEPARATOR = " · "
 
+/** What the user can do with a message or one of its attachments. */
+internal data class MessageActions(
+    val onRetry: (String) -> Unit = {},
+    val onDiscard: (String) -> Unit = {},
+    val onCopy: (String) -> Unit = {},
+    val onAttachmentClick: (Attachment) -> Unit = {},
+    val onImageShown: (Attachment) -> Unit = {},
+    val onRetryDownload: (Attachment) -> Unit = {},
+)
+
 @Composable
 internal fun MessageBubble(
     message: Message,
     showSenderName: Boolean,
-    onRetry: () -> Unit,
-    onDiscard: () -> Unit,
     downloads: AttachmentDownloadsUiState,
-    onAttachmentClick: (Attachment) -> Unit,
-    onImageShown: (Attachment) -> Unit,
-    onRetryDownload: (Attachment) -> Unit,
+    actions: MessageActions,
     modifier: Modifier = Modifier,
 ) {
+    var isMenuOpen by remember { mutableStateOf(false) }
+    val colors = bubbleColors(message)
+    val canCopy = !message.isDeleted && message.body.isNotEmpty()
+    val copyLabel = stringResource(R.string.message_copy)
+    val haptics = LocalHapticFeedback.current
     Column(
         modifier = modifier.fillMaxWidth().padding(horizontal = RowPadding, vertical = RowSpacing),
         horizontalAlignment = if (message.isOwn) Alignment.End else Alignment.Start,
     ) {
-        val colors = bubbleColors(message)
-        Surface(shape = MaterialTheme.shapes.large, color = colors.container, contentColor = colors.content) {
-            Column(modifier = Modifier.widthIn(max = BubbleMaxWidth).padding(BubblePadding)) {
-                SenderName(message, showSenderName)
-                MessageBody(message)
-                AttachmentList(message.attachments, downloads, onAttachmentClick, onImageShown, onRetryDownload)
-                Text(
-                    text = metadata(message),
-                    style = MaterialTheme.typography.labelSmall,
+        Box {
+            Surface(
+                modifier = Modifier.onLongPress(canCopy, copyLabel) {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    isMenuOpen = true
+                },
+                shape = MaterialTheme.shapes.large,
+                color = colors.container,
+                contentColor = colors.content,
+            ) {
+                Column(modifier = Modifier.widthIn(max = BubbleMaxWidth).padding(BubblePadding)) {
+                    MessageText(message, showSenderName)
+                    AttachmentList(
+                        message.attachments,
+                        downloads,
+                        actions.onAttachmentClick,
+                        actions.onImageShown,
+                        actions.onRetryDownload,
+                    )
+                    Text(text = metadata(message), style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            DropdownMenu(expanded = isMenuOpen, onDismissRequest = { isMenuOpen = false }) {
+                DropdownMenuItem(
+                    text = { Text(copyLabel) },
+                    onClick = {
+                        isMenuOpen = false
+                        actions.onCopy(message.body)
+                    },
                 )
             }
         }
-        if (message.status == MessageStatus.FAILED) FailedMessageNotice(onRetry, onDiscard)
+        if (message.status == MessageStatus.FAILED) {
+            FailedMessageNotice({ actions.onRetry(message.id) }, { actions.onDiscard(message.id) })
+        }
     }
+}
+
+/** A long press runs [action] and is offered to TalkBack as a custom action, so it needs no gesture. */
+private fun Modifier.onLongPress(enabled: Boolean, label: String, action: () -> Unit): Modifier = if (enabled) {
+    pointerInput(action) { detectTapGestures(onLongPress = { action() }) }
+        .semantics {
+            onLongClick(label) {
+                action()
+                true
+            }
+        }
+} else {
+    this
 }
 
 private data class BubbleColors(val container: Color, val content: Color)
@@ -76,11 +136,20 @@ private fun bubbleColors(message: Message): BubbleColors {
     }
 }
 
+/** The sender and the text are read as one item, and a message of the user says so. */
 @Composable
-private fun SenderName(message: Message, showSenderName: Boolean) {
-    val name = message.senderName
-    if (showSenderName && !message.isOwn && name != null) {
-        Text(text = name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+private fun MessageText(message: Message, showSenderName: Boolean) {
+    val sentByYou = stringResource(R.string.message_sent_by_you)
+    Column(
+        modifier = Modifier.semantics(mergeDescendants = true) {
+            if (message.isOwn) stateDescription = sentByYou
+        },
+    ) {
+        val name = message.senderName
+        if (showSenderName && !message.isOwn && name != null) {
+            Text(text = name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        }
+        MessageBody(message)
     }
 }
 
@@ -93,7 +162,7 @@ private fun MessageBody(message: Message) {
             fontStyle = FontStyle.Italic,
         )
     } else if (message.body.isNotEmpty()) {
-        Text(text = message.body, style = MaterialTheme.typography.bodyLarge)
+        Text(text = remember(message.body) { linkedText(message.body) }, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -126,24 +195,16 @@ private fun MessageBubblePreview() {
     MesgardTheme {
         Column {
             MessageBubble(
-                message = previewMessage(isOwn = false, body = "Reminder: bring your project proposals tomorrow."),
+                message = previewMessage(isOwn = false, body = "Reminder: see https://example.com/week-12 tomorrow."),
                 showSenderName = true,
-                onRetry = {},
-                onDiscard = {},
                 downloads = AttachmentDownloadsUiState(),
-                onAttachmentClick = {},
-                onImageShown = {},
-                onRetryDownload = {},
+                actions = MessageActions(),
             )
             MessageBubble(
                 message = previewMessage(isOwn = true, body = "Noted, thank you.", status = MessageStatus.FAILED),
                 showSenderName = true,
-                onRetry = {},
-                onDiscard = {},
                 downloads = AttachmentDownloadsUiState(),
-                onAttachmentClick = {},
-                onImageShown = {},
-                onRetryDownload = {},
+                actions = MessageActions(),
             )
         }
     }

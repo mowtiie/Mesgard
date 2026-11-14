@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mowtiie.mesgard.domain.model.Attachment
 import com.mowtiie.mesgard.domain.model.DownloadResult
+import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.repository.AttachmentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -59,10 +60,15 @@ internal class AttachmentDownloadsViewModel @Inject constructor(private val repo
             is DownloadResult.Downloaded -> result.localPath
             is DownloadResult.Failure -> {
                 mutableState.update {
-                    it.copy(error = result.error.toError(), failedIds = it.failedIds + attachment.id)
+                    it.copy(error = result.error.toDownloadError(), failedIds = it.failedIds + attachment.id)
                 }
                 null
             }
         }
     }
+}
+
+private fun RefreshError.toDownloadError() = when (this) {
+    RefreshError.NETWORK_UNAVAILABLE -> ConversationError.DOWNLOAD_NETWORK_UNAVAILABLE
+    RefreshError.UNKNOWN -> ConversationError.DOWNLOAD_UNKNOWN
 }

@@ -14,6 +14,8 @@ internal enum class ConversationError {
     ATTACHMENT_TOO_LARGE,
     ATTACHMENT_TYPE_NOT_ALLOWED,
     ATTACHMENT_UNREADABLE,
+    DOWNLOAD_NETWORK_UNAVAILABLE,
+    DOWNLOAD_UNKNOWN,
 }
 
 internal data class ConversationUiState(
