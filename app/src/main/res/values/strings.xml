@@ -59,6 +59,7 @@
     <string name="server_unreachable_banner">Unable to reach the server. Retrying.</string>
     <string name="message_not_sent">Not sent</string>
     <string name="message_retry">Retry</string>
+    <string name="message_discard">Discard</string>
     <string name="message_edited">Edited</string>
     <string name="message_deleted">This message was deleted</string>
     <string name="conversation_empty">No messages yet.</string>
@@ -76,6 +77,10 @@
     <string name="attach_file">File</string>
     <string name="remove_attachment">Remove %1$s</string>
     <string name="attachment_photo">Photo %1$s</string>
+    <string name="attachment_photo_failed">Photo %1$s could not be loaded</string>
+    <string name="attachment_failed_hint">Could not load. Tap to retry.</string>
+    <string name="attachment_open">Open</string>
+    <string name="attachment_retry">Retry</string>
     <string name="contacts_empty">No contacts yet.</string>
     <string name="contacts_section_people">People</string>
     <string name="contacts_section_groups">Groups</string>

@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 
 internal data class AttachmentDownloadsUiState(
     val downloadingIds: Set<String> = emptySet(),
+    val failedIds: Set<String> = emptySet(),
     val attachmentToOpen: Attachment? = null,
     val error: ConversationError? = null,
 )
@@ -33,9 +34,13 @@ internal class AttachmentDownloadsViewModel @Inject constructor(private val repo
         }
     }
 
-    /** Images are downloaded as soon as they scroll into view so the thumbnail can be shown. */
+    /** Images are downloaded as soon as they scroll into view. A failed one waits for the user to retry. */
     fun onImageShown(attachment: Attachment) {
-        if (attachment.localPath != null) return
+        if (attachment.localPath != null || attachment.id in mutableState.value.failedIds) return
+        viewModelScope.launch { download(attachment) }
+    }
+
+    fun onRetryDownload(attachment: Attachment) {
         viewModelScope.launch { download(attachment) }
     }
 
@@ -45,13 +50,17 @@ internal class AttachmentDownloadsViewModel @Inject constructor(private val repo
 
     private suspend fun download(attachment: Attachment): String? {
         if (attachment.id in mutableState.value.downloadingIds) return null
-        mutableState.update { it.copy(downloadingIds = it.downloadingIds + attachment.id) }
+        mutableState.update {
+            it.copy(downloadingIds = it.downloadingIds + attachment.id, failedIds = it.failedIds - attachment.id)
+        }
         val result = repository.download(attachment.id)
         mutableState.update { it.copy(downloadingIds = it.downloadingIds - attachment.id) }
         return when (result) {
             is DownloadResult.Downloaded -> result.localPath
             is DownloadResult.Failure -> {
-                mutableState.update { it.copy(error = result.error.toError()) }
+                mutableState.update {
+                    it.copy(error = result.error.toError(), failedIds = it.failedIds + attachment.id)
+                }
                 null
             }
         }

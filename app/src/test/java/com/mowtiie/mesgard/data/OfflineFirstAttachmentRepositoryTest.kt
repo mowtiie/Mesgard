@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.data
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import com.mowtiie.mesgard.data.attachment.attachmentDirectory
+import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.remote.AttachmentRemoteSource
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.domain.model.DownloadResult

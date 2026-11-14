@@ -51,6 +51,24 @@ class AttachmentDownloadsViewModelTest {
     }
 
     @Test
+    fun `marks a failed image download and does not fetch it again until retried`() = runTest {
+        coEvery { repository.download("a1") } returns DownloadResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
+        val viewModel = AttachmentDownloadsViewModel(repository)
+
+        viewModel.onImageShown(attachment("a1"))
+        viewModel.onImageShown(attachment("a1"))
+
+        viewModel.uiState.test { assertEquals(setOf("a1"), expectMostRecentItem().failedIds) }
+        coVerify(exactly = 1) { repository.download("a1") }
+
+        coEvery { repository.download("a1") } returns DownloadResult.Downloaded("/files/a1")
+        viewModel.onRetryDownload(attachment("a1"))
+
+        viewModel.uiState.test { assertTrue(expectMostRecentItem().failedIds.isEmpty()) }
+        coVerify(exactly = 2) { repository.download("a1") }
+    }
+
+    @Test
     fun `downloads an image when it is shown without a stored file`() = runTest {
         coEvery { repository.download("a1") } returns DownloadResult.Downloaded("/files/a1")
         val viewModel = AttachmentDownloadsViewModel(repository)

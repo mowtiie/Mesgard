@@ -226,15 +226,6 @@ class ConversationViewModelTest {
     }
 
     @Test
-    fun `retries a failed message through the repository`() = runTest {
-        coEvery { messageRepository.retry("failed") } returns Unit
-
-        viewModel().onRetryClicked("failed")
-
-        coVerify(exactly = 1) { messageRepository.retry("failed") }
-    }
-
-    @Test
     fun `loading older messages widens the window and fetches the previous page`() = runTest {
         coEvery { messageRepository.loadOlder(CONVERSATION_ID) } returns PageResult.Loaded(endReached = false)
         val viewModel = viewModel()

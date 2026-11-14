@@ -55,6 +55,7 @@ internal fun ConversationScreenRoute(
     modifier: Modifier = Modifier,
     viewModel: ConversationViewModel = hiltViewModel(),
     downloadsViewModel: AttachmentDownloadsViewModel = hiltViewModel(),
+    failedMessagesViewModel: FailedMessagesViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
@@ -68,11 +69,13 @@ internal fun ConversationScreenRoute(
         onBack = onBack,
         onDraftChanged = viewModel::onDraftChanged,
         onSendClicked = viewModel::onSendClicked,
-        onRetryClicked = viewModel::onRetryClicked,
+        onRetryClicked = failedMessagesViewModel::onRetryClicked,
+        onDiscardClicked = failedMessagesViewModel::onDiscardClicked,
         onAttachmentsPicked = viewModel::onAttachmentsPicked,
         onAttachmentRemoved = viewModel::onAttachmentRemoved,
         onAttachmentClicked = downloadsViewModel::onAttachmentClicked,
         onImageShown = downloadsViewModel::onImageShown,
+        onRetryDownload = downloadsViewModel::onRetryDownload,
         onAttachmentOpened = downloadsViewModel::onAttachmentOpened,
         onDownloadErrorShown = downloadsViewModel::onErrorShown,
         onLoadOlder = viewModel::onLoadOlder,
@@ -89,10 +92,12 @@ internal fun ConversationScreen(
     onDraftChanged: (String) -> Unit,
     onSendClicked: () -> Unit,
     onRetryClicked: (String) -> Unit,
+    onDiscardClicked: (String) -> Unit,
     onAttachmentsPicked: (List<PickedAttachment>) -> Unit,
     onAttachmentRemoved: (String) -> Unit,
     onAttachmentClicked: (Attachment) -> Unit,
     onImageShown: (Attachment) -> Unit,
+    onRetryDownload: (Attachment) -> Unit,
     onAttachmentOpened: () -> Unit,
     onDownloadErrorShown: () -> Unit,
     onLoadOlder: () -> Unit,
@@ -140,10 +145,12 @@ internal fun ConversationScreen(
         Column(modifier = Modifier.padding(padding).consumeWindowInsets(padding).imePadding().fillMaxSize()) {
             MessageList(
                 uiState = uiState,
-                downloadingIds = downloads.downloadingIds,
+                downloads = downloads,
                 onRetryClicked = onRetryClicked,
+                onDiscardClicked = onDiscardClicked,
                 onAttachmentClick = onAttachmentClicked,
                 onImageShown = onImageShown,
+                onRetryDownload = onRetryDownload,
                 onLoadOlder = onLoadOlder,
                 modifier = Modifier.weight(1f),
             )
@@ -168,10 +175,12 @@ internal fun ConversationScreen(
 @Composable
 private fun MessageList(
     uiState: ConversationUiState,
-    downloadingIds: Set<String>,
+    downloads: AttachmentDownloadsUiState,
     onRetryClicked: (String) -> Unit,
+    onDiscardClicked: (String) -> Unit,
     onAttachmentClick: (Attachment) -> Unit,
     onImageShown: (Attachment) -> Unit,
+    onRetryDownload: (Attachment) -> Unit,
     onLoadOlder: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -202,9 +211,11 @@ private fun MessageList(
                         message = item.message,
                         showSenderName = uiState.showSenderNames,
                         onRetry = { onRetryClicked(item.message.id) },
-                        downloadingIds = downloadingIds,
+                        onDiscard = { onDiscardClicked(item.message.id) },
+                        downloads = downloads,
                         onAttachmentClick = onAttachmentClick,
                         onImageShown = onImageShown,
+                        onRetryDownload = onRetryDownload,
                     )
                     is TimelineItem.DateHeader -> DateHeader(item.date)
                 }

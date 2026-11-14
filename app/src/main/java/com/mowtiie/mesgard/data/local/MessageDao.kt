@@ -21,9 +21,6 @@ internal data class TimelineMessage(
 @Dao
 internal interface MessageDao {
     @Upsert
-    suspend fun upsert(message: MessageEntity)
-
-    @Upsert
     suspend fun upsertAll(messages: List<MessageEntity>)
 
     @Query("DELETE FROM messages WHERE conversation_id NOT IN (:keptConversationIds)")
@@ -64,9 +61,14 @@ internal interface MessageDao {
     )
     suspend fun deleteSentOlderThan(conversationId: String, before: Long)
 
+    @Query("DELETE FROM messages WHERE id = :messageId AND status = 'FAILED'")
+    suspend fun deleteFailed(messageId: String): Int
+
     @Query("UPDATE messages SET status = :status WHERE id = :messageId")
     suspend fun updateStatus(messageId: String, status: MessageStatus)
 
     @Query("UPDATE messages SET status = 'SENT', created_at = :createdAtEpochMillis WHERE id = :messageId")
     suspend fun markSent(messageId: String, createdAtEpochMillis: Long)
 }
+
+internal suspend fun MessageDao.upsert(message: MessageEntity) = upsertAll(listOf(message))

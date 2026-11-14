@@ -2,6 +2,8 @@ package com.mowtiie.mesgard.data
 
 import app.cash.turbine.test
 import com.mowtiie.mesgard.data.attachment.AttachmentIntake
+import com.mowtiie.mesgard.data.local.AttachmentEntity
+import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.work.MessageSendScheduler
@@ -28,6 +30,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.io.File
 import java.io.IOException
 import java.time.Clock
 import java.time.Instant
@@ -35,6 +38,7 @@ import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -159,6 +163,48 @@ class OfflineFirstMessageRepositoryTest {
         assertEquals(MessageStatus.PENDING, dao.findById("failed")?.status)
         verify(exactly = 1) { sendScheduler.schedule("failed") }
     }
+
+    @Test
+    fun `discard removes a failed message with its attachment files`() = runTest {
+        val file = File.createTempFile("attachment", ".bin")
+        val dao = databaseRule.database.messageDao()
+        dao.upsert(messageEntity("failed", CONVERSATION_ID, 1_000L, status = MessageStatus.FAILED))
+        databaseRule.database.attachmentDao().upsertAll(
+            listOf(storedAttachment("failed", file.absolutePath)),
+        )
+
+        repository.discard("failed")
+
+        assertEquals(null, dao.findById("failed"))
+        assertTrue(databaseRule.database.attachmentDao().findByMessage("failed").isEmpty())
+        assertFalse(file.exists())
+    }
+
+    @Test
+    fun `discard keeps a message that is not failed`() = runTest {
+        val file = File.createTempFile("attachment", ".bin")
+        val dao = databaseRule.database.messageDao()
+        dao.upsert(messageEntity("pending", CONVERSATION_ID, 1_000L, status = MessageStatus.PENDING))
+        databaseRule.database.attachmentDao().upsertAll(
+            listOf(storedAttachment("pending", file.absolutePath)),
+        )
+
+        repository.discard("pending")
+
+        assertEquals(MessageStatus.PENDING, dao.findById("pending")?.status)
+        assertTrue(file.exists())
+        file.delete()
+    }
+
+    private fun storedAttachment(messageId: String, localPath: String) = AttachmentEntity(
+        id = "a-$messageId",
+        messageId = messageId,
+        storagePath = "path/$messageId",
+        mimeType = "image/png",
+        sizeBytes = 1L,
+        fileName = "photo.png",
+        localPath = localPath,
+    )
 
     @Test
     fun `refresh stores the attachments of a message and shows them in the timeline`() = runTest {

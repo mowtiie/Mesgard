@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.data.sync
 
 import com.mowtiie.mesgard.data.local.ProfileEntity
+import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.remote.MessageRealtimeSource
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.ProfileRemoteSource

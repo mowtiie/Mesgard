@@ -7,6 +7,7 @@ import com.mowtiie.mesgard.data.local.AttachmentEntity
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.MessageEntity
 import com.mowtiie.mesgard.data.local.TimelineMessage
+import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.local.upsertKeepingLocalPaths
 import com.mowtiie.mesgard.data.remote.MessageDto
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
@@ -29,6 +30,7 @@ import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.MAX_MESSAGE_LENGTH
 import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.domain.repository.MessageRepository
+import java.io.File
 import java.time.Clock
 import java.util.UUID
 import javax.inject.Inject
@@ -85,7 +87,12 @@ internal class OfflineFirstMessageRepository @Inject constructor(
     override suspend fun send(conversationId: String, body: String, attachmentUris: List<String>): SendResult {
         val text = body.trim()
         val senderId = authRepository.currentUserId
-        val rejection = rejectionFor(text, attachmentUris.size, senderId, conversationId)
+        val rejection = rejectionFor(
+            text,
+            attachmentUris.size,
+            senderId,
+            conversationDao.findOrgId(conversationId) != null,
+        )
         return if (rejection != null || senderId == null) {
             SendResult.Rejected(rejection ?: SendRejection.NOT_SIGNED_IN)
         } else {
@@ -119,6 +126,11 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         sendScheduler.schedule(messageId)
     }
 
+    override suspend fun discard(messageId: String) {
+        val localPaths = attachmentDao.findByMessage(messageId).mapNotNull { it.localPath }
+        if (messageDao.deleteFailed(messageId) > 0) localPaths.forEach { File(it).delete() }
+    }
+
     override suspend fun markConversationRead(conversationId: String): RefreshResult {
         conversationDao.clearUnreadCount(conversationId)
         val newestIncomingId = authRepository.currentUserId
@@ -127,20 +139,6 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         return attemptRemote(TAG) {
             remoteSource.markConversationRead(conversationId, newestIncomingId)
         }.toRefreshResult()
-    }
-
-    private suspend fun rejectionFor(
-        text: String,
-        attachmentCount: Int,
-        senderId: String?,
-        conversationId: String,
-    ): SendRejection? = when {
-        text.isEmpty() && attachmentCount == 0 -> SendRejection.EMPTY_MESSAGE
-        text.length > MAX_MESSAGE_LENGTH -> SendRejection.MESSAGE_TOO_LONG
-        attachmentCount > MAX_ATTACHMENTS_PER_MESSAGE -> SendRejection.TOO_MANY_ATTACHMENTS
-        senderId == null -> SendRejection.NOT_SIGNED_IN
-        conversationDao.findOrgId(conversationId) == null -> SendRejection.CONVERSATION_UNAVAILABLE
-        else -> null
     }
 
     private suspend fun storeLatestPage(conversationId: String, page: List<MessageDto>) {
@@ -180,3 +178,17 @@ private fun toMessage(item: TimelineMessage, currentUserId: String?, attachments
 )
 
 private data class NewMessage(val id: String, val conversationId: String, val senderId: String, val body: String)
+
+private fun rejectionFor(
+    text: String,
+    attachmentCount: Int,
+    senderId: String?,
+    conversationExists: Boolean,
+): SendRejection? = when {
+    text.isEmpty() && attachmentCount == 0 -> SendRejection.EMPTY_MESSAGE
+    text.length > MAX_MESSAGE_LENGTH -> SendRejection.MESSAGE_TOO_LONG
+    attachmentCount > MAX_ATTACHMENTS_PER_MESSAGE -> SendRejection.TOO_MANY_ATTACHMENTS
+    senderId == null -> SendRejection.NOT_SIGNED_IN
+    !conversationExists -> SendRejection.CONVERSATION_UNAVAILABLE
+    else -> null
+}

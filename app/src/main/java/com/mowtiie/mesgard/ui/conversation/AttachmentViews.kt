@@ -45,45 +45,78 @@ private val ProgressSize = 24.dp
 @Composable
 internal fun AttachmentList(
     attachments: List<Attachment>,
-    downloadingIds: Set<String>,
+    downloads: AttachmentDownloadsUiState,
     onClick: (Attachment) -> Unit,
     onImageShown: (Attachment) -> Unit,
+    onRetryDownload: (Attachment) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(ItemSpacing)) {
         attachments.forEach { attachment ->
             if (attachment.isImage) {
-                ImageAttachment(attachment, onClick, onImageShown)
+                ImageAttachment(
+                    attachment,
+                    attachment.id in downloads.failedIds,
+                    onClick,
+                    onImageShown,
+                    onRetryDownload,
+                )
             } else {
-                FileAttachment(attachment, attachment.id in downloadingIds, onClick)
+                FileAttachment(attachment, attachment.id in downloads.downloadingIds, onClick)
             }
         }
     }
 }
 
 @Composable
-private fun ImageAttachment(attachment: Attachment, onClick: (Attachment) -> Unit, onShown: (Attachment) -> Unit) {
+private fun ImageAttachment(
+    attachment: Attachment,
+    isFailed: Boolean,
+    onClick: (Attachment) -> Unit,
+    onShown: (Attachment) -> Unit,
+    onRetryDownload: (Attachment) -> Unit,
+) {
     LaunchedEffect(attachment.id, attachment.localPath) { onShown(attachment) }
-    val description = stringResource(R.string.attachment_photo, attachment.fileName)
-    val shape = MaterialTheme.shapes.medium
+    val localPath = attachment.localPath
+    val description = stringResource(
+        if (isFailed) R.string.attachment_photo_failed else R.string.attachment_photo,
+        attachment.fileName,
+    )
+    val clickLabel = stringResource(if (isFailed) R.string.attachment_retry else R.string.attachment_open)
     Box(
         modifier = Modifier.size(ImageWidth, ImageHeight)
-            .clip(shape)
-            .clickable(enabled = attachment.localPath != null) { onClick(attachment) }
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(enabled = isFailed || localPath != null, onClickLabel = clickLabel) {
+                if (isFailed) onRetryDownload(attachment) else onClick(attachment)
+            }
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        val localPath = attachment.localPath
-        if (localPath == null) {
-            CircularProgressIndicator(modifier = Modifier.size(ProgressSize))
-        } else {
-            AsyncImage(
+        when {
+            isFailed -> FailedImage()
+            localPath == null -> CircularProgressIndicator(modifier = Modifier.size(ProgressSize))
+            else -> AsyncImage(
                 model = File(localPath),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(ImageWidth, ImageHeight),
             )
         }
+    }
+}
+
+@Composable
+private fun FailedImage() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(ItemSpacing),
+    ) {
+        Icon(painterResource(R.drawable.ic_error), contentDescription = null, tint = MaterialTheme.colorScheme.error)
+        Text(
+            text = stringResource(R.string.attachment_failed_hint),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
     }
 }
 

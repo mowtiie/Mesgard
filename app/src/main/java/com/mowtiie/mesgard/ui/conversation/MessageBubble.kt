@@ -13,6 +13,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,39 +37,42 @@ internal fun MessageBubble(
     message: Message,
     showSenderName: Boolean,
     onRetry: () -> Unit,
-    downloadingIds: Set<String>,
+    onDiscard: () -> Unit,
+    downloads: AttachmentDownloadsUiState,
     onAttachmentClick: (Attachment) -> Unit,
     onImageShown: (Attachment) -> Unit,
+    onRetryDownload: (Attachment) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.fillMaxWidth().padding(horizontal = RowPadding, vertical = RowSpacing),
         horizontalAlignment = if (message.isOwn) Alignment.End else Alignment.Start,
     ) {
-        Surface(
-            shape = MaterialTheme.shapes.large,
-            color = if (message.isOwn) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            },
-            contentColor = if (message.isOwn) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
-        ) {
+        val colors = bubbleColors(message)
+        Surface(shape = MaterialTheme.shapes.large, color = colors.container, contentColor = colors.content) {
             Column(modifier = Modifier.widthIn(max = BubbleMaxWidth).padding(BubblePadding)) {
                 SenderName(message, showSenderName)
                 MessageBody(message)
-                AttachmentList(message.attachments, downloadingIds, onAttachmentClick, onImageShown)
+                AttachmentList(message.attachments, downloads, onAttachmentClick, onImageShown, onRetryDownload)
                 Text(
                     text = metadata(message),
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
         }
-        if (message.status == MessageStatus.FAILED) FailedMessageNotice(onRetry)
+        if (message.status == MessageStatus.FAILED) FailedMessageNotice(onRetry, onDiscard)
+    }
+}
+
+private data class BubbleColors(val container: Color, val content: Color)
+
+@Composable
+private fun bubbleColors(message: Message): BubbleColors {
+    val scheme = MaterialTheme.colorScheme
+    return when {
+        message.status == MessageStatus.FAILED -> BubbleColors(scheme.errorContainer, scheme.onErrorContainer)
+        message.isOwn -> BubbleColors(scheme.primaryContainer, scheme.onPrimaryContainer)
+        else -> BubbleColors(scheme.surfaceContainerHigh, scheme.onSurface)
     }
 }
 
@@ -104,7 +108,7 @@ private fun metadata(message: Message): String {
 }
 
 @Composable
-private fun FailedMessageNotice(onRetry: () -> Unit) {
+private fun FailedMessageNotice(onRetry: () -> Unit, onDiscard: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
         Text(
             text = stringResource(R.string.message_not_sent),
@@ -112,6 +116,7 @@ private fun FailedMessageNotice(onRetry: () -> Unit) {
             color = MaterialTheme.colorScheme.error,
         )
         TextButton(onClick = onRetry) { Text(stringResource(R.string.message_retry)) }
+        TextButton(onClick = onDiscard) { Text(stringResource(R.string.message_discard)) }
     }
 }
 
@@ -124,17 +129,21 @@ private fun MessageBubblePreview() {
                 message = previewMessage(isOwn = false, body = "Reminder: bring your project proposals tomorrow."),
                 showSenderName = true,
                 onRetry = {},
-                downloadingIds = emptySet(),
+                onDiscard = {},
+                downloads = AttachmentDownloadsUiState(),
                 onAttachmentClick = {},
                 onImageShown = {},
+                onRetryDownload = {},
             )
             MessageBubble(
                 message = previewMessage(isOwn = true, body = "Noted, thank you.", status = MessageStatus.FAILED),
                 showSenderName = true,
                 onRetry = {},
-                downloadingIds = emptySet(),
+                onDiscard = {},
+                downloads = AttachmentDownloadsUiState(),
                 onAttachmentClick = {},
                 onImageShown = {},
+                onRetryDownload = {},
             )
         }
     }

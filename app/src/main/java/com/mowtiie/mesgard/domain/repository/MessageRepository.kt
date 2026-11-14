@@ -20,5 +20,8 @@ internal interface MessageRepository {
 
     suspend fun retry(messageId: String)
 
+    /** Removes a message that failed to send, with its attachment files. Other messages are left alone. */
+    suspend fun discard(messageId: String)
+
     suspend fun markConversationRead(conversationId: String): RefreshResult
 }

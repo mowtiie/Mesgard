@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.data.sync
 import android.util.Log
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.ProfileEntity
+import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.local.upsertKeepingLocalPaths
 import com.mowtiie.mesgard.data.remote.MessageDto
 import com.mowtiie.mesgard.data.remote.MessageRealtimeSource

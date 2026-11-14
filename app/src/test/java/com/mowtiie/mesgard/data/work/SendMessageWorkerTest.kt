@@ -8,6 +8,7 @@ import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.workDataOf
 import com.mowtiie.mesgard.data.local.AttachmentEntity
+import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.remote.AttachmentRemoteSource
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.NewMessageDto

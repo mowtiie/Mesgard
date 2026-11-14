@@ -114,10 +114,6 @@ internal class ConversationViewModel @Inject constructor(
         state.copy(attachments = state.attachments.filterNot { it.uri == uri })
     }
 
-    fun onRetryClicked(messageId: String) {
-        viewModelScope.launch { messageRepository.retry(messageId) }
-    }
-
     fun onLoadOlder() {
         val state = localState.value
         if (state.isLoadingOlder) return
