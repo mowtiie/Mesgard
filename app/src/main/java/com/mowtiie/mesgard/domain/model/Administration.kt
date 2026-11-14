@@ -35,3 +35,14 @@ internal sealed interface AdminResult<out T> {
 
     data class Failure(val error: AdminError) : AdminResult<Nothing>
 }
+
+internal enum class GroupRole {
+    MEMBER,
+    MODERATOR,
+}
+
+internal data class AdminGroup(val id: String, val name: String, val memberCount: Int)
+
+internal data class GroupMember(val userId: String, val role: GroupRole)
+
+internal data class GroupDetail(val id: String, val name: String, val members: List<GroupMember>)

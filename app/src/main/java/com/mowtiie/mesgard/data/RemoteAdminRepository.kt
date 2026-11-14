@@ -44,7 +44,7 @@ internal class RemoteAdminRepository @Inject constructor(private val remote: Adm
     }
 }
 
-private suspend fun <T> attemptAdmin(block: suspend () -> T): AdminResult<T> = try {
+internal suspend fun <T> attemptAdmin(block: suspend () -> T): AdminResult<T> = try {
     AdminResult.Success(block())
 } catch (exception: HttpRequestException) {
     Log.i(TAG, "The server could not be reached", exception)
