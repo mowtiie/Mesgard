@@ -21,7 +21,11 @@ import com.mowtiie.mesgard.data.push.EXTRA_CONVERSATION_ID
 import com.mowtiie.mesgard.domain.lifecycle.AppVisibility
 import com.mowtiie.mesgard.domain.lock.AppLock
 import com.mowtiie.mesgard.domain.repository.DeviceSettingsRepository
+import com.mowtiie.mesgard.domain.server.ServerConfigStore
 import com.mowtiie.mesgard.ui.MesgardApp
+import com.mowtiie.mesgard.ui.server.ServerSetupPrefill
+import com.mowtiie.mesgard.ui.server.ServerSetupRoute
+import com.mowtiie.mesgard.ui.server.parseSetupLink
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 import com.mowtiie.mesgard.ui.theme.isDark
 import dagger.hilt.android.AndroidEntryPoint
@@ -42,12 +46,18 @@ class MainActivity : FragmentActivity() {
     @Inject
     internal lateinit var appVisibility: AppVisibility
 
+    @Inject
+    internal lateinit var serverConfigStore: ServerConfigStore
+
     private var conversationToOpen by mutableStateOf<String?>(null)
+    private var setupPrefill by mutableStateOf<ServerSetupPrefill?>(null)
+    private var isChangingServer by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyScreenPrivacy(deviceSettings.settings.value.screenPrivacyEnabled)
         conversationToOpen = intent.getStringExtra(EXTRA_CONVERSATION_ID)
+        setupPrefill = parseSetupLink(intent.data)
         setContent {
             val settings by deviceSettings.settings.collectAsStateWithLifecycle()
             val darkTheme = settings.themeMode.isDark(isSystemInDarkTheme())
@@ -59,10 +69,21 @@ class MainActivity : FragmentActivity() {
                 onDispose {}
             }
             MesgardTheme(darkTheme = darkTheme, contrast = settings.contrast, dynamicColor = settings.dynamicColor) {
-                MesgardApp(
-                    conversationToOpen = conversationToOpen,
-                    onConversationOpened = { conversationToOpen = null },
-                )
+                if (serverConfigStore.current == null || isChangingServer || setupPrefill != null) {
+                    ServerSetupRoute(
+                        prefill = setupPrefill,
+                        onFinished = {
+                            isChangingServer = false
+                            setupPrefill = null
+                        },
+                    )
+                } else {
+                    MesgardApp(
+                        conversationToOpen = conversationToOpen,
+                        onConversationOpened = { conversationToOpen = null },
+                        onChangeServer = { isChangingServer = true },
+                    )
+                }
             }
         }
         lifecycleScope.launch {
@@ -75,6 +96,7 @@ class MainActivity : FragmentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         intent.getStringExtra(EXTRA_CONVERSATION_ID)?.let { conversationToOpen = it }
+        parseSetupLink(intent.data)?.let { setupPrefill = it }
     }
 
     override fun onStart() {

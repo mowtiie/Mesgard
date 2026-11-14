@@ -16,13 +16,8 @@ val localProperties = Properties().apply {
     if (file.exists()) file.inputStream().use(::load)
 }
 
-fun requiredSetting(propertyName: String, environmentName: String): String {
-    val value = localProperties.getProperty(propertyName) ?: System.getenv(environmentName)
-    return checkNotNull(value) {
-        "Missing $propertyName in local.properties or $environmentName in the environment. " +
-            "See local.properties.example."
-    }
-}
+fun optionalSetting(propertyName: String, environmentName: String): String =
+    localProperties.getProperty(propertyName) ?: System.getenv(environmentName).orEmpty()
 
 val signingProperties = Properties().apply {
     val file = rootProject.file("keystore.properties")
@@ -50,11 +45,11 @@ android {
         manifestPlaceholders["appIcon"] = "@mipmap/ic_launcher"
         manifestPlaceholders["appRoundIcon"] = "@mipmap/ic_launcher_round"
 
-        buildConfigField("String", "SUPABASE_URL", "\"${requiredSetting("supabase.url", "SUPABASE_URL")}\"")
+        buildConfigField("String", "SUPABASE_URL", "\"${optionalSetting("supabase.url", "SUPABASE_URL")}\"")
         buildConfigField(
             "String",
             "SUPABASE_ANON_KEY",
-            "\"${requiredSetting("supabase.anonKey", "SUPABASE_ANON_KEY")}\"",
+            "\"${optionalSetting("supabase.anonKey", "SUPABASE_ANON_KEY")}\"",
         )
     }
 

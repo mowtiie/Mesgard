@@ -3,9 +3,12 @@ package com.mowtiie.mesgard.ui.auth
 import com.mowtiie.mesgard.domain.model.SignInError
 import com.mowtiie.mesgard.domain.model.SignInResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
+import com.mowtiie.mesgard.domain.server.ServerConfig
+import com.mowtiie.mesgard.domain.server.ServerConfigStore
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertEquals
@@ -20,7 +23,10 @@ class SignInViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val authRepository = mockk<AuthRepository>()
-    private val viewModel by lazy { SignInViewModel(authRepository) }
+    private val serverConfigStore = mockk<ServerConfigStore> {
+        every { current } returns ServerConfig("https://school.example/path", "key")
+    }
+    private val viewModel by lazy { SignInViewModel(authRepository, serverConfigStore) }
 
     @Test
     fun `cannot submit while the email or password is empty`() {
@@ -134,10 +140,7 @@ class SignInViewModelTest {
 
     @Test
     fun `shows the host of the server`() {
-        assertFalse(viewModel.uiState.value.serverHost.isBlank())
-        assertEquals("school.example", serverHostOf("https://school.example/path"))
-        assertEquals("10.0.2.2", serverHostOf("http://10.0.2.2:54321"))
-        assertEquals("not a url", serverHostOf("not a url"))
+        assertEquals("school.example", viewModel.uiState.value.serverHost)
     }
 
     private companion object {

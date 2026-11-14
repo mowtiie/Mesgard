@@ -19,6 +19,7 @@ import com.mowtiie.mesgard.ui.navigation.MesgardNavHost
 internal fun MesgardApp(
     conversationToOpen: String?,
     onConversationOpened: () -> Unit,
+    onChangeServer: () -> Unit,
     viewModel: AppViewModel = hiltViewModel(),
     connectivityViewModel: ConnectivityViewModel = hiltViewModel(),
 ) {
@@ -28,7 +29,7 @@ internal fun MesgardApp(
     CompositionLocalProvider(LocalConnectionStatus provides connectionStatus) {
         when (authState) {
             AuthState.Loading -> Surface(modifier = Modifier.fillMaxSize()) {}
-            AuthState.SignedOut -> SignInRoute()
+            AuthState.SignedOut -> SignInRoute(onChangeServer = onChangeServer)
             is AuthState.SignedIn -> if (isLocked) {
                 LockScreenRoute()
             } else {

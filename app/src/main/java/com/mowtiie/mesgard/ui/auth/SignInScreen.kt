@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,7 +54,11 @@ private val ProgressSize = 20.dp
 private val ProgressStrokeWidth = 2.dp
 
 @Composable
-internal fun SignInRoute(modifier: Modifier = Modifier, viewModel: SignInViewModel = hiltViewModel()) {
+internal fun SignInRoute(
+    onChangeServer: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SignInViewModel = hiltViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SignInScreen(
         uiState = uiState,
@@ -61,6 +66,7 @@ internal fun SignInRoute(modifier: Modifier = Modifier, viewModel: SignInViewMod
         onPasswordChanged = viewModel::onPasswordChanged,
         onSignInClicked = viewModel::onSignInClicked,
         onErrorShown = viewModel::onErrorShown,
+        onChangeServerClicked = onChangeServer,
         modifier = modifier,
     )
 }
@@ -72,6 +78,7 @@ internal fun SignInScreen(
     onPasswordChanged: (String) -> Unit,
     onSignInClicked: () -> Unit,
     onErrorShown: () -> Unit,
+    onChangeServerClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -92,7 +99,7 @@ internal fun SignInScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Spacer(modifier = Modifier.height(TopSpacing))
-                SignInForm(uiState, onEmailChanged, onPasswordChanged, onSignInClicked)
+                SignInForm(uiState, onEmailChanged, onPasswordChanged, onSignInClicked, onChangeServerClicked)
             }
         }
     }
@@ -108,6 +115,7 @@ private fun SignInForm(
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
     onSignInClicked: () -> Unit,
+    onChangeServerClicked: () -> Unit,
 ) {
     val fieldError = uiState.error?.takeIf { it.isFieldError }
     val focusManager = LocalFocusManager.current
@@ -153,7 +161,7 @@ private fun SignInForm(
                 Text(stringResource(R.string.sign_in_button))
             }
         }
-        SignInHelp(uiState.serverHost)
+        SignInHelp(uiState.serverHost, onChangeServerClicked)
     }
 }
 
@@ -174,7 +182,7 @@ private fun BrandHeader() {
 }
 
 @Composable
-private fun SignInHelp(serverHost: String) {
+private fun SignInHelp(serverHost: String, onChangeServerClicked: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = FieldSpacing),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -194,6 +202,7 @@ private fun SignInHelp(serverHost: String) {
                 textAlign = TextAlign.Center,
             )
         }
+        TextButton(onClick = onChangeServerClicked) { Text(stringResource(R.string.server_setup_change)) }
     }
 }
 
@@ -222,6 +231,7 @@ private fun SignInScreenPreview() {
             onPasswordChanged = {},
             onSignInClicked = {},
             onErrorShown = {},
+            onChangeServerClicked = {},
         )
     }
 }
