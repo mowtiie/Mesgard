@@ -3,7 +3,6 @@
     <string name="notification_channel_messages">Messages</string>
     <string name="notification_new_message">New message</string>
     <string name="sign_in_title">Sign in to continue</string>
-    <string name="sign_in_password_hint">Use the password your school gave you.</string>
     <string name="sign_in_help">Need an account or forgot your password? Contact your school administrator.</string>
     <string name="sign_in_server">Server: %1$s</string>
     <string name="server_setup_title">Connect to your school</string>

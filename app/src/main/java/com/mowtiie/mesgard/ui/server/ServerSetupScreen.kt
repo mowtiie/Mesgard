@@ -3,24 +3,15 @@ package com.mowtiie.mesgard.ui.server
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,17 +29,16 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.ui.common.CenteredForm
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
-private val FormMaxWidth = 400.dp
-private val ContentPadding = 24.dp
 private val FieldSpacing = 16.dp
-private val TopSpacing = 56.dp
 private val ProgressSize = 20.dp
 private val ProgressStrokeWidth = 2.dp
 private const val ACCESS_KEY_MAX_LINES = 4
@@ -87,26 +77,15 @@ internal fun ServerSetupScreen(
     onCancelClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(modifier = modifier.fillMaxSize()) { padding ->
-        Column(
-            modifier = Modifier.padding(padding).fillMaxSize().imePadding().verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(modifier = Modifier.height(TopSpacing))
-            Column(
-                modifier = Modifier.widthIn(max = FormMaxWidth).padding(horizontal = ContentPadding),
-                verticalArrangement = Arrangement.spacedBy(FieldSpacing),
-            ) {
-                SetupHeader(uiState.isFromLink)
-                AddressField(uiState, onAddressChanged)
-                AccessKeyField(uiState, onAccessKeyChanged, onConnectClicked)
-                if (uiState.error == ServerSetupError.SIGN_OUT_FIRST) SignOutFirstNotice()
-                ConnectButton(uiState, onConnectClicked)
-                if (uiState.canCancel) {
-                    TextButton(onClick = onCancelClicked, modifier = Modifier.fillMaxWidth()) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
+    CenteredForm(modifier = modifier) {
+        SetupHeader(uiState.isFromLink)
+        AddressField(uiState, onAddressChanged)
+        AccessKeyField(uiState, onAccessKeyChanged, onConnectClicked)
+        if (uiState.error == ServerSetupError.SIGN_OUT_FIRST) SignOutFirstNotice()
+        ConnectButton(uiState, onConnectClicked)
+        if (uiState.canCancel) {
+            TextButton(onClick = onCancelClicked, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.cancel))
             }
         }
     }
@@ -114,8 +93,14 @@ internal fun ServerSetupScreen(
 
 @Composable
 private fun SetupHeader(isFromLink: Boolean) {
-    Column(verticalArrangement = Arrangement.spacedBy(FieldSpacing / 2)) {
-        Column(modifier = Modifier.semantics(mergeDescendants = true) { heading() }) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(FieldSpacing / 2),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Column(
+            modifier = Modifier.semantics(mergeDescendants = true) { heading() },
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Text(
                 text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.displaySmall.copy(fontFamily = FontFamily.Serif),
@@ -131,6 +116,7 @@ private fun SetupHeader(isFromLink: Boolean) {
             text = stringResource(if (isFromLink) R.string.server_setup_link_warning else R.string.server_setup_help),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
         )
     }
 }

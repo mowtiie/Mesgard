@@ -55,10 +55,7 @@ internal fun EmailField(
     )
 }
 
-/**
- * The supporting line is always there: it explains the field, and the error takes its place so the layout stays
- * still. Done submits the form.
- */
+/** The error shows under the field when the credentials are refused. Done submits the form. */
 @Composable
 internal fun PasswordField(
     password: String,
@@ -81,11 +78,10 @@ internal fun PasswordField(
         enabled = enabled,
         isError = error != null,
         trailingIcon = { PasswordVisibilityToggle(visible = isVisible, onClick = { isVisible = !isVisible }) },
-        supportingText = {
-            Text(
-                text = errorMessage ?: stringResource(R.string.sign_in_password_hint),
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-            )
+        supportingText = errorMessage?.let { message ->
+            {
+                Text(text = message, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+            }
         },
         modifier = Modifier
             .fillMaxWidth()

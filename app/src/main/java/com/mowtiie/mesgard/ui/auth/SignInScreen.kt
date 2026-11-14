@@ -3,21 +3,14 @@ package com.mowtiie.mesgard.ui.auth
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -42,14 +35,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.SignInError
+import com.mowtiie.mesgard.ui.common.CenteredForm
 import com.mowtiie.mesgard.ui.connectivity.ConnectionBanner
 import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
-private val FormMaxWidth = 400.dp
-private val ContentPadding = 24.dp
 private val FieldSpacing = 16.dp
-private val TopSpacing = 56.dp
 private val ProgressSize = 20.dp
 private val ProgressStrokeWidth = 2.dp
 
@@ -91,26 +82,20 @@ internal fun SignInScreen(
         }
     }
 
-    Scaffold(modifier = modifier.fillMaxSize(), snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+    CenteredForm(
+        modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        banner = {
             ConnectionBanner(status = LocalConnectionStatus.current, offlineMessage = R.string.sign_in_offline_banner)
-            Column(
-                modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Spacer(modifier = Modifier.height(TopSpacing))
-                SignInForm(uiState, onEmailChanged, onPasswordChanged, onSignInClicked, onChangeServerClicked)
-            }
-        }
+        },
+    ) {
+        SignInForm(uiState, onEmailChanged, onPasswordChanged, onSignInClicked, onChangeServerClicked)
     }
 }
 
-/**
- * The form is anchored to the top and scrolls, so the keyboard, landscape and large fonts never hide the button.
- * The error replaces the supporting text under the password, so nothing moves when it appears.
- */
+/** The error appears under the password field. */
 @Composable
-private fun SignInForm(
+private fun ColumnScope.SignInForm(
     uiState: SignInUiState,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
@@ -129,45 +114,43 @@ private fun SignInForm(
     LaunchedEffect(fieldError, uiState.isSubmitting) {
         if (fieldError != null && !uiState.isSubmitting) passwordFocus.requestFocus()
     }
-    Column(
-        modifier = Modifier.widthIn(max = FormMaxWidth).padding(horizontal = ContentPadding),
-        verticalArrangement = Arrangement.spacedBy(FieldSpacing),
-    ) {
-        BrandHeader()
-        EmailField(
-            email = uiState.email,
-            enabled = !uiState.isSubmitting,
-            hasError = fieldError != null,
-            onChange = onEmailChanged,
-            onNext = { passwordFocus.requestFocus() },
-        )
-        PasswordField(
-            password = uiState.password,
-            enabled = !uiState.isSubmitting,
-            error = fieldError,
-            onChange = onPasswordChanged,
-            onDone = submit,
-            focusRequester = passwordFocus,
-        )
-        Button(onClick = submit, enabled = uiState.canSubmit, modifier = Modifier.fillMaxWidth()) {
-            if (uiState.isSubmitting) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(ProgressSize),
-                    color = LocalContentColor.current,
-                    trackColor = Color.Transparent,
-                    strokeWidth = ProgressStrokeWidth,
-                )
-            } else {
-                Text(stringResource(R.string.sign_in_button))
-            }
+    BrandHeader()
+    EmailField(
+        email = uiState.email,
+        enabled = !uiState.isSubmitting,
+        hasError = fieldError != null,
+        onChange = onEmailChanged,
+        onNext = { passwordFocus.requestFocus() },
+    )
+    PasswordField(
+        password = uiState.password,
+        enabled = !uiState.isSubmitting,
+        error = fieldError,
+        onChange = onPasswordChanged,
+        onDone = submit,
+        focusRequester = passwordFocus,
+    )
+    Button(onClick = submit, enabled = uiState.canSubmit, modifier = Modifier.fillMaxWidth()) {
+        if (uiState.isSubmitting) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(ProgressSize),
+                color = LocalContentColor.current,
+                trackColor = Color.Transparent,
+                strokeWidth = ProgressStrokeWidth,
+            )
+        } else {
+            Text(stringResource(R.string.sign_in_button))
         }
-        SignInHelp(uiState.serverHost, onChangeServerClicked)
     }
+    SignInHelp(uiState.serverHost, onChangeServerClicked)
 }
 
 @Composable
 private fun BrandHeader() {
-    Column(modifier = Modifier.semantics(mergeDescendants = true) { heading() }) {
+    Column(
+        modifier = Modifier.semantics(mergeDescendants = true) { heading() },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Text(
             text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.displaySmall.copy(fontFamily = FontFamily.Serif),
