@@ -27,6 +27,7 @@ import com.mowtiie.mesgard.ui.settings.SettingsScreenRoute
 internal fun MainScreen(
     onSignOut: () -> Unit,
     onConversationClick: (String) -> Unit,
+    onOpenMembers: () -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
@@ -61,7 +62,7 @@ internal fun MainScreen(
             }
             composable<ContactsRoute> { ContactsScreenRoute(onConversationStarted = onConversationClick) }
             composable<ProfileRoute> { ProfileScreenRoute(onSignOut = onSignOut) }
-            composable<SettingsRoute> { SettingsScreenRoute() }
+            composable<SettingsRoute> { SettingsScreenRoute(onOpenMembers = onOpenMembers) }
         }
     }
 }

@@ -11,15 +11,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.mowtiie.mesgard.R
 
 /** The overflow icon button of an app bar and its menu. [content] gets a function that closes the menu. */
 @Composable
-internal fun OverflowMenu(content: @Composable ColumnScope.(dismiss: () -> Unit) -> Unit) {
+internal fun OverflowMenu(
+    modifier: Modifier = Modifier,
+    description: String = stringResource(R.string.more_options),
+    content: @Composable ColumnScope.(dismiss: () -> Unit) -> Unit,
+) {
     var isExpanded by remember { mutableStateOf(false) }
-    IconButton(onClick = { isExpanded = true }) {
-        Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.more_options))
+    IconButton(onClick = { isExpanded = true }, modifier = modifier) {
+        Icon(Icons.Default.MoreVert, contentDescription = description)
     }
     DropdownMenu(expanded = isExpanded, onDismissRequest = { isExpanded = false }) {
         content { isExpanded = false }

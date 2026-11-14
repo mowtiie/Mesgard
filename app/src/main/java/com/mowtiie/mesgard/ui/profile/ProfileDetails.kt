@@ -30,6 +30,7 @@ import com.mowtiie.mesgard.domain.model.Account
 import com.mowtiie.mesgard.domain.model.AccountMembership
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.labelResource
 
 private val ProfileAvatarSize = 96.dp
 private val AvatarRingPadding = 4.dp
@@ -132,12 +133,4 @@ private fun RoleBadge(role: OrgRole) {
             modifier = Modifier.padding(horizontal = ContentPadding, vertical = CardSpacing / 2),
         )
     }
-}
-
-@StringRes
-internal fun OrgRole.labelResource(): Int = when (this) {
-    OrgRole.ORG_ADMIN -> R.string.role_org_admin
-    OrgRole.STAFF -> R.string.role_staff
-    OrgRole.STUDENT -> R.string.role_student
-    OrgRole.OTHER -> R.string.role_member
 }

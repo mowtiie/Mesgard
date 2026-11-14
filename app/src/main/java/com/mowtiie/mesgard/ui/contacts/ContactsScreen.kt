@@ -33,13 +33,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.Group
-import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.RefreshMenuItem
 import com.mowtiie.mesgard.ui.common.SearchAction
 import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
+import com.mowtiie.mesgard.ui.common.labelResource
 
 @Composable
 internal fun ContactsScreenRoute(
@@ -205,14 +205,6 @@ private fun LazyItemScope.CenteredMessage(@StringRes message: Int) {
     Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
         Text(text = stringResource(message), style = MaterialTheme.typography.bodyLarge)
     }
-}
-
-@StringRes
-private fun OrgRole.labelResource(): Int = when (this) {
-    OrgRole.ORG_ADMIN -> R.string.role_org_admin
-    OrgRole.STAFF -> R.string.role_staff
-    OrgRole.STUDENT -> R.string.role_student
-    OrgRole.OTHER -> R.string.role_member
 }
 
 @StringRes

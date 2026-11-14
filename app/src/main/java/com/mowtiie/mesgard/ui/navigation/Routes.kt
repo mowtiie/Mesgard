@@ -19,3 +19,9 @@ internal data object ProfileRoute
 
 @Serializable
 internal data object SettingsRoute
+
+@Serializable
+internal data object MembersRoute
+
+@Serializable
+internal data object AddMemberRoute

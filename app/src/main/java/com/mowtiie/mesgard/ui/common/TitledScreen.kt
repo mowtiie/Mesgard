@@ -33,6 +33,7 @@ internal fun TitledScreen(
     actions: @Composable RowScope.() -> Unit = {},
     searchBar: (@Composable () -> Unit)? = null,
     snackbarHost: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -54,6 +55,7 @@ internal fun TitledScreen(
             }
         },
         snackbarHost = snackbarHost,
+        floatingActionButton = floatingActionButton,
         content = content,
     )
 }

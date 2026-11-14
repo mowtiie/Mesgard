@@ -35,7 +35,11 @@ import kotlinx.coroutines.launch
 import org.unifiedpush.android.connector.UnifiedPush
 
 @Composable
-internal fun SettingsScreenRoute(modifier: Modifier = Modifier, viewModel: SettingsViewModel = hiltViewModel()) {
+internal fun SettingsScreenRoute(
+    onOpenMembers: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val activity = LocalActivity.current as? FragmentActivity
@@ -63,6 +67,7 @@ internal fun SettingsScreenRoute(modifier: Modifier = Modifier, viewModel: Setti
         onAppLockChanged = ::onAppLockToggled,
         onLockTimeoutSelected = viewModel::onLockTimeoutSelected,
         onNotificationPreviewSelected = viewModel::onNotificationPreviewSelected,
+        onOpenMembers = onOpenMembers,
         onPushSetupClicked = {
             if (UnifiedPush.getDistributors(context).isEmpty()) {
                 viewModel.onPushDistributorUnavailable()
@@ -84,6 +89,7 @@ internal fun SettingsScreen(
     onAppLockChanged: (Boolean) -> Unit,
     onLockTimeoutSelected: (LockTimeout) -> Unit,
     onNotificationPreviewSelected: (NotificationPreview) -> Unit,
+    onOpenMembers: () -> Unit,
     onPushSetupClicked: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
@@ -104,6 +110,7 @@ internal fun SettingsScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
             AppearanceSection()
+            AdministrationSection(onOpenMembers)
             SectionHeader(R.string.settings_security)
             SwitchRow(
                 title = R.string.settings_screen_privacy,
