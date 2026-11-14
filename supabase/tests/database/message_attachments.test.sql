@@ -1,5 +1,5 @@
 begin;
-select plan(15);
+select plan(16);
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 6));
 select throws_ok(
@@ -34,7 +34,7 @@ select lives_ok(
 select lives_ok(
   format(
     $$select public.send_message(%L, %L, '', jsonb_build_array(
-      jsonb_build_object('id', %L, 'storage_path', '%s/%s/photo', 'file_name', 'photo.png')))$$,
+      jsonb_build_object('id', %L, 'storage_path', '%s/%s/photo', 'file_name', 'photo.png', 'width', 800, 'height', 600)))$$,
     tests.seed_id('50', 'a', 98), tests.seed_id('40', 'a', 1), tests.seed_id('60', 'a', 99),
     tests.seed_id('40', 'a', 1), tests.seed_id('50', 'a', 98)
   ),
@@ -57,6 +57,14 @@ select is(
   (select id from public.attachments where message_id = tests.seed_id('50', 'a', 98)),
   tests.seed_id('60', 'a', 99),
   'the attachment keeps the identifier chosen by the client'
+);
+select results_eq(
+  format(
+    $$select width, height from public.attachments where message_id = %L$$,
+    tests.seed_id('50', 'a', 98)
+  ),
+  $$values (800, 600)$$,
+  'the attachment keeps the pixel size sent by the client'
 );
 select lives_ok(
   format(
