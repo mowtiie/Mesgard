@@ -28,3 +28,12 @@ internal data object AddMemberRoute
 
 @Serializable
 internal data object ImportMembersRoute
+
+@Serializable
+internal data object GroupsRoute
+
+@Serializable
+internal data class GroupRoute(val groupId: String)
+
+@Serializable
+internal data class AddGroupMembersRoute(val groupId: String)

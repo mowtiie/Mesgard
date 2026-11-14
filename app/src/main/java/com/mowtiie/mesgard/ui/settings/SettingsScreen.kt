@@ -37,6 +37,7 @@ import org.unifiedpush.android.connector.UnifiedPush
 @Composable
 internal fun SettingsScreenRoute(
     onOpenMembers: () -> Unit,
+    onOpenGroups: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -68,6 +69,7 @@ internal fun SettingsScreenRoute(
         onLockTimeoutSelected = viewModel::onLockTimeoutSelected,
         onNotificationPreviewSelected = viewModel::onNotificationPreviewSelected,
         onOpenMembers = onOpenMembers,
+        onOpenGroups = onOpenGroups,
         onPushSetupClicked = {
             if (UnifiedPush.getDistributors(context).isEmpty()) {
                 viewModel.onPushDistributorUnavailable()
@@ -90,6 +92,7 @@ internal fun SettingsScreen(
     onLockTimeoutSelected: (LockTimeout) -> Unit,
     onNotificationPreviewSelected: (NotificationPreview) -> Unit,
     onOpenMembers: () -> Unit,
+    onOpenGroups: () -> Unit,
     onPushSetupClicked: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
@@ -110,7 +113,7 @@ internal fun SettingsScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
             AppearanceSection()
-            AdministrationSection(onOpenMembers)
+            AdministrationSection(onOpenMembers, onOpenGroups)
             SectionHeader(R.string.settings_security)
             SwitchRow(
                 title = R.string.settings_screen_privacy,

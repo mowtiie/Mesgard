@@ -7,9 +7,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.mowtiie.mesgard.ui.admin.AddMemberScreenRoute
 import com.mowtiie.mesgard.ui.admin.ImportMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.MembersScreenRoute
+import com.mowtiie.mesgard.ui.admin.groups.AddGroupMembersScreenRoute
+import com.mowtiie.mesgard.ui.admin.groups.GroupDetailScreenRoute
+import com.mowtiie.mesgard.ui.admin.groups.GroupsScreenRoute
 import com.mowtiie.mesgard.ui.conversation.ConversationScreenRoute
 
 @Composable
@@ -33,6 +37,7 @@ internal fun MesgardNavHost(
                 onSignOut = onSignOut,
                 onConversationClick = { conversationId -> navController.navigate(ConversationRoute(conversationId)) },
                 onOpenMembers = { navController.navigate(MembersRoute) },
+                onOpenGroups = { navController.navigate(GroupsRoute) },
             )
         }
         composable<MembersRoute> {
@@ -41,6 +46,22 @@ internal fun MesgardNavHost(
                 onAddMember = { navController.navigate(AddMemberRoute) },
                 onImportMembers = { navController.navigate(ImportMembersRoute) },
             )
+        }
+        composable<GroupsRoute> {
+            GroupsScreenRoute(
+                onBack = { navController.popBackStack() },
+                onOpenGroup = { navController.navigate(GroupRoute(it)) },
+            )
+        }
+        composable<GroupRoute> { entry ->
+            val groupId = entry.toRoute<GroupRoute>().groupId
+            GroupDetailScreenRoute(
+                onBack = { navController.popBackStack() },
+                onAddMembers = { navController.navigate(AddGroupMembersRoute(groupId)) },
+            )
+        }
+        composable<AddGroupMembersRoute> {
+            AddGroupMembersScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<ImportMembersRoute> {
             ImportMembersScreenRoute(onBack = { navController.popBackStack() })

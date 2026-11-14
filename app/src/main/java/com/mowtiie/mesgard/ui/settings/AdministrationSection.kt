@@ -33,7 +33,11 @@ internal class AdministrationViewModel @Inject constructor(observeAdminOrganizat
 
 /** Only the admin of an organization sees this section. */
 @Composable
-internal fun AdministrationSection(onOpenMembers: () -> Unit, viewModel: AdministrationViewModel = hiltViewModel()) {
+internal fun AdministrationSection(
+    onOpenMembers: () -> Unit,
+    onOpenGroups: () -> Unit,
+    viewModel: AdministrationViewModel = hiltViewModel(),
+) {
     val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
     if (!isAdmin) return
     SectionHeader(R.string.settings_administration)
@@ -41,5 +45,10 @@ internal fun AdministrationSection(onOpenMembers: () -> Unit, viewModel: Adminis
         modifier = Modifier.clickable(role = Role.Button, onClick = onOpenMembers),
         headlineContent = { Text(stringResource(R.string.members_title)) },
         supportingContent = { Text(stringResource(R.string.settings_members_summary)) },
+    )
+    ListItem(
+        modifier = Modifier.clickable(role = Role.Button, onClick = onOpenGroups),
+        headlineContent = { Text(stringResource(R.string.groups_title)) },
+        supportingContent = { Text(stringResource(R.string.settings_groups_summary)) },
     )
 }
