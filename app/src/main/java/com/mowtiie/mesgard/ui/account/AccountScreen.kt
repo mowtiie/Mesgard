@@ -1,4 +1,4 @@
-package com.mowtiie.mesgard.ui.profile
+package com.mowtiie.mesgard.ui.account
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
@@ -8,15 +8,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,25 +24,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Account
 import com.mowtiie.mesgard.domain.model.AccountMembership
 import com.mowtiie.mesgard.domain.model.OrgRole
-import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
+private val ButtonPadding = 16.dp
+
 @Composable
-internal fun ProfileScreenRoute(
+internal fun AccountScreenRoute(
+    onBack: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ProfileViewModel = hiltViewModel(),
+    viewModel: AccountViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    ProfileScreen(
+    AccountScreen(
         uiState = uiState,
+        onBack = onBack,
         onSignOutClicked = viewModel::onSignOutClicked,
         onSignOutConfirmed = {
             viewModel.onSignOutDismissed()
@@ -55,8 +59,9 @@ internal fun ProfileScreenRoute(
 }
 
 @Composable
-internal fun ProfileScreen(
-    uiState: ProfileUiState,
+internal fun AccountScreen(
+    uiState: AccountUiState,
+    onBack: () -> Unit,
     onSignOutClicked: () -> Unit,
     onSignOutConfirmed: () -> Unit,
     onSignOutDismissed: () -> Unit,
@@ -73,18 +78,11 @@ internal fun ProfileScreen(
     }
 
     TitledScreen(
-        title = stringResource(R.string.tab_profile),
+        title = stringResource(R.string.account_title),
         modifier = modifier,
-        actions = {
-            OverflowMenu { dismiss ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.sign_out_button)) },
-                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null) },
-                    onClick = {
-                        dismiss()
-                        onSignOutClicked()
-                    },
-                )
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.navigate_back))
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -94,8 +92,15 @@ internal fun ProfileScreen(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
             uiState.account?.let { account ->
-                ProfileHeader(account)
+                AccountHeader(account)
                 AccountDetails(account)
+            }
+            OutlinedButton(
+                onClick = onSignOutClicked,
+                modifier = Modifier.fillMaxWidth().padding(ButtonPadding),
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
+                Text(stringResource(R.string.sign_out_button), modifier = Modifier.padding(start = ButtonPadding / 2))
             }
         }
     }
@@ -105,35 +110,25 @@ internal fun ProfileScreen(
     }
 }
 
-@Composable
-private fun SignOutDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.sign_out_dialog_title)) },
-        text = { Text(stringResource(R.string.sign_out_dialog_message)) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.sign_out_button)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
-    )
-}
-
 @StringRes
-private fun ProfileError.messageResource(): Int = when (this) {
-    ProfileError.REFRESH_NETWORK_UNAVAILABLE -> R.string.refresh_error_network_unavailable
-    ProfileError.REFRESH_UNKNOWN -> R.string.refresh_error_unknown
+private fun AccountError.messageResource(): Int = when (this) {
+    AccountError.REFRESH_NETWORK_UNAVAILABLE -> R.string.refresh_error_network_unavailable
+    AccountError.REFRESH_UNKNOWN -> R.string.refresh_error_unknown
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun ProfileScreenPreview() {
+private fun AccountScreenPreview() {
     MesgardTheme {
-        ProfileScreen(
-            uiState = ProfileUiState(
+        AccountScreen(
+            uiState = AccountUiState(
                 account = Account(
                     displayName = "Staff One",
                     email = "staff1@rnhs.test",
                     memberships = listOf(AccountMembership("org", "Rizal National High School", OrgRole.STAFF)),
                 ),
             ),
+            onBack = {},
             onSignOutClicked = {},
             onSignOutConfirmed = {},
             onSignOutDismissed = {},

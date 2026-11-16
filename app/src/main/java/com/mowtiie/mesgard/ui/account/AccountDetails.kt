@@ -1,4 +1,4 @@
-package com.mowtiie.mesgard.ui.profile
+package com.mowtiie.mesgard.ui.account
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
@@ -32,7 +32,7 @@ import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.labelResource
 
-private val ProfileAvatarSize = 96.dp
+private val AccountAvatarSize = 96.dp
 private val AvatarRingPadding = 4.dp
 private val ContentPadding = 16.dp
 private val HeaderVerticalPadding = 32.dp
@@ -40,7 +40,7 @@ private val CardSpacing = 12.dp
 
 /** The name is the most important thing on this screen, so it sits on a colored container at the top. */
 @Composable
-internal fun ProfileHeader(account: Account) {
+internal fun AccountHeader(account: Account) {
     Surface(color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(horizontal = ContentPadding, vertical = HeaderVerticalPadding),
@@ -50,7 +50,7 @@ internal fun ProfileHeader(account: Account) {
             Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary) {
                 InitialAvatar(
                     name = account.displayName,
-                    size = ProfileAvatarSize,
+                    size = AccountAvatarSize,
                     modifier = Modifier.padding(AvatarRingPadding),
                 )
             }
@@ -72,16 +72,16 @@ internal fun AccountDetails(account: Account) {
         verticalArrangement = Arrangement.spacedBy(CardSpacing),
     ) {
         if (account.memberships.isNotEmpty()) {
-            SectionHeader(R.string.profile_organizations)
+            SectionHeader(R.string.account_organizations)
             account.memberships.forEach { MembershipCard(it) }
         }
         account.email?.let { email ->
-            SectionHeader(R.string.profile_account)
+            SectionHeader(R.string.account_details)
             DetailsCard {
                 ListItem(
                     colors = transparentListItemColors(),
                     leadingContent = { Icon(Icons.Default.Email, contentDescription = null) },
-                    overlineContent = { Text(stringResource(R.string.profile_email)) },
+                    overlineContent = { Text(stringResource(R.string.account_email)) },
                     headlineContent = { Text(email) },
                 )
             }

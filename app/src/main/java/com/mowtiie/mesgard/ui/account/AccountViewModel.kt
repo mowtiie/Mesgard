@@ -1,4 +1,4 @@
-package com.mowtiie.mesgard.ui.profile
+package com.mowtiie.mesgard.ui.account
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,11 +18,11 @@ import kotlinx.coroutines.launch
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
 @HiltViewModel
-internal class ProfileViewModel @Inject constructor(private val repository: AccountRepository) : ViewModel() {
+internal class AccountViewModel @Inject constructor(private val repository: AccountRepository) : ViewModel() {
     private val localState = MutableStateFlow(LocalState())
 
-    val uiState: StateFlow<ProfileUiState> = combine(repository.observeAccount(), localState) { account, local ->
-        ProfileUiState(
+    val uiState: StateFlow<AccountUiState> = combine(repository.observeAccount(), localState) { account, local ->
+        AccountUiState(
             account = account,
             isRefreshing = local.isRefreshing,
             showSignOutConfirmation = local.showSignOutConfirmation,
@@ -31,14 +31,14 @@ internal class ProfileViewModel @Inject constructor(private val repository: Acco
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
-        initialValue = ProfileUiState(isRefreshing = true),
+        initialValue = AccountUiState(isRefreshing = true),
     )
 
     init {
         viewModelScope.launch {
             val result = repository.refresh()
             localState.update {
-                it.copy(isRefreshing = false, error = (result as? RefreshResult.Failure)?.error?.toProfileError())
+                it.copy(isRefreshing = false, error = (result as? RefreshResult.Failure)?.error?.toAccountError())
             }
         }
     }
@@ -52,11 +52,11 @@ internal class ProfileViewModel @Inject constructor(private val repository: Acco
     private data class LocalState(
         val isRefreshing: Boolean = true,
         val showSignOutConfirmation: Boolean = false,
-        val error: ProfileError? = null,
+        val error: AccountError? = null,
     )
 }
 
-private fun RefreshError.toProfileError() = when (this) {
-    RefreshError.NETWORK_UNAVAILABLE -> ProfileError.REFRESH_NETWORK_UNAVAILABLE
-    RefreshError.UNKNOWN -> ProfileError.REFRESH_UNKNOWN
+private fun RefreshError.toAccountError() = when (this) {
+    RefreshError.NETWORK_UNAVAILABLE -> AccountError.REFRESH_NETWORK_UNAVAILABLE
+    RefreshError.UNKNOWN -> AccountError.REFRESH_UNKNOWN
 }

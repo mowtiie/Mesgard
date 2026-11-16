@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.mowtiie.mesgard.ui.account.AccountScreenRoute
 import com.mowtiie.mesgard.ui.admin.AddMemberScreenRoute
 import com.mowtiie.mesgard.ui.admin.AdminNavigation
 import com.mowtiie.mesgard.ui.admin.ImportMembersScreenRoute
@@ -38,12 +39,16 @@ internal fun MesgardNavHost(
             MainScreen(
                 onSignOut = onSignOut,
                 onConversationClick = { conversationId -> navController.navigate(ConversationRoute(conversationId)) },
+                onOpenAccount = { navController.navigate(AccountRoute) },
                 adminNavigation = AdminNavigation(
                     onOpenMembers = { navController.navigate(MembersRoute) },
                     onOpenGroups = { navController.navigate(GroupsRoute) },
                     onOpenAuditLog = { navController.navigate(AuditLogRoute) },
                 ),
             )
+        }
+        composable<AccountRoute> {
+            AccountScreenRoute(onBack = { navController.popBackStack() }, onSignOut = onSignOut)
         }
         composable<MembersRoute> {
             MembersScreenRoute(

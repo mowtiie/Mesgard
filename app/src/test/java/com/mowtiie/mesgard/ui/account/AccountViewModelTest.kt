@@ -1,4 +1,4 @@
-package com.mowtiie.mesgard.ui.profile
+package com.mowtiie.mesgard.ui.account
 
 import app.cash.turbine.test
 import com.mowtiie.mesgard.domain.model.Account
@@ -19,7 +19,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-class ProfileViewModelTest {
+class AccountViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
@@ -31,7 +31,7 @@ class ProfileViewModelTest {
 
     @Test
     fun `loads the account when it is created`() = runTest {
-        ProfileViewModel(repository).uiState.test { cancelAndIgnoreRemainingEvents() }
+        AccountViewModel(repository).uiState.test { cancelAndIgnoreRemainingEvents() }
 
         coVerify(exactly = 1) { repository.refresh() }
     }
@@ -40,7 +40,7 @@ class ProfileViewModelTest {
     fun `exposes the stored account`() = runTest {
         account.value = Account("Ana Reyes", "ana@school.test", emptyList())
 
-        ProfileViewModel(repository).uiState.test {
+        AccountViewModel(repository).uiState.test {
             assertEquals("Ana Reyes", expectMostRecentItem().account?.displayName)
         }
     }
@@ -49,21 +49,21 @@ class ProfileViewModelTest {
     fun `has no account and is not refreshing once the load fails`() = runTest {
         coEvery { repository.refresh() } returns RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
 
-        ProfileViewModel(repository).uiState.test {
+        AccountViewModel(repository).uiState.test {
             val state = expectMostRecentItem()
             assertNull(state.account)
             assertFalse(state.isRefreshing)
-            assertEquals(ProfileError.REFRESH_NETWORK_UNAVAILABLE, state.error)
+            assertEquals(AccountError.REFRESH_NETWORK_UNAVAILABLE, state.error)
         }
     }
 
     @Test
     fun `clears the error once it has been shown`() = runTest {
         coEvery { repository.refresh() } returns RefreshResult.Failure(RefreshError.UNKNOWN)
-        val viewModel = ProfileViewModel(repository)
+        val viewModel = AccountViewModel(repository)
 
         viewModel.uiState.test {
-            assertEquals(ProfileError.REFRESH_UNKNOWN, expectMostRecentItem().error)
+            assertEquals(AccountError.REFRESH_UNKNOWN, expectMostRecentItem().error)
             viewModel.onErrorShown()
             assertNull(awaitItem().error)
         }
@@ -71,7 +71,7 @@ class ProfileViewModelTest {
 
     @Test
     fun `asks for confirmation before signing out and can be dismissed`() = runTest {
-        val viewModel = ProfileViewModel(repository)
+        val viewModel = AccountViewModel(repository)
 
         viewModel.uiState.test {
             assertFalse(expectMostRecentItem().showSignOutConfirmation)

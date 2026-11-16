@@ -8,6 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -15,8 +19,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -27,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.LockTimeout
 import com.mowtiie.mesgard.domain.model.NotificationPreview
+import com.mowtiie.mesgard.ui.account.SignOutDialog
 import com.mowtiie.mesgard.ui.admin.AdminNavigation
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.lock.AuthAvailability
@@ -38,6 +46,8 @@ import org.unifiedpush.android.connector.UnifiedPush
 @Composable
 internal fun SettingsScreenRoute(
     adminNavigation: AdminNavigation,
+    onOpenAccount: () -> Unit,
+    onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -69,6 +79,8 @@ internal fun SettingsScreenRoute(
         onLockTimeoutSelected = viewModel::onLockTimeoutSelected,
         onNotificationPreviewSelected = viewModel::onNotificationPreviewSelected,
         adminNavigation = adminNavigation,
+        onOpenAccount = onOpenAccount,
+        onSignOut = onSignOut,
         onPushSetupClicked = {
             if (UnifiedPush.getDistributors(context).isEmpty()) {
                 viewModel.onPushDistributorUnavailable()
@@ -91,10 +103,13 @@ internal fun SettingsScreen(
     onLockTimeoutSelected: (LockTimeout) -> Unit,
     onNotificationPreviewSelected: (NotificationPreview) -> Unit,
     adminNavigation: AdminNavigation,
+    onOpenAccount: () -> Unit,
+    onSignOut: () -> Unit,
     onPushSetupClicked: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var isSignOutConfirmationShown by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val errorMessage = uiState.error?.let { stringResource(it.messageResource()) }
     LaunchedEffect(errorMessage) {
@@ -110,6 +125,7 @@ internal fun SettingsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+            AccountSummary(onOpenAccount)
             AppearanceSection()
             AdministrationSection(adminNavigation)
             SectionHeader(R.string.settings_security)
@@ -143,8 +159,29 @@ internal fun SettingsScreen(
                 selected = uiState.settings.notificationPreview,
                 onSelected = onNotificationPreviewSelected,
             )
+            HorizontalDivider()
+            SignOutRow { isSignOutConfirmationShown = true }
         }
     }
+
+    if (isSignOutConfirmationShown) {
+        SignOutDialog(
+            onConfirm = {
+                isSignOutConfirmationShown = false
+                onSignOut()
+            },
+            onDismiss = { isSignOutConfirmationShown = false },
+        )
+    }
+}
+
+@Composable
+private fun SignOutRow(onClick: () -> Unit) {
+    ListItem(
+        modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
+        leadingContent = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null) },
+        headlineContent = { Text(stringResource(R.string.sign_out_button)) },
+    )
 }
 
 @StringRes

@@ -15,7 +15,7 @@ internal data object ChatsRoute
 internal data object ContactsRoute
 
 @Serializable
-internal data object ProfileRoute
+internal data object AccountRoute
 
 @Serializable
 internal data object SettingsRoute
