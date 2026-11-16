@@ -21,13 +21,14 @@ import androidx.navigation.compose.rememberNavController
 import com.mowtiie.mesgard.ui.admin.AdminNavigation
 import com.mowtiie.mesgard.ui.chats.ConversationListRoute
 import com.mowtiie.mesgard.ui.contacts.ContactsScreenRoute
+import com.mowtiie.mesgard.ui.settings.SettingsNavigation
 import com.mowtiie.mesgard.ui.settings.SettingsScreenRoute
 
 @Composable
 internal fun MainScreen(
     onSignOut: () -> Unit,
     onConversationClick: (String) -> Unit,
-    onOpenAccount: () -> Unit,
+    settingsNavigation: SettingsNavigation,
     adminNavigation: AdminNavigation,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
@@ -65,7 +66,7 @@ internal fun MainScreen(
             composable<SettingsRoute> {
                 SettingsScreenRoute(
                     adminNavigation = adminNavigation,
-                    onOpenAccount = onOpenAccount,
+                    navigation = settingsNavigation,
                     onSignOut = onSignOut,
                 )
             }

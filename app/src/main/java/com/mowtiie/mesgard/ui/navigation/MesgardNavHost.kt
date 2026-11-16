@@ -19,6 +19,10 @@ import com.mowtiie.mesgard.ui.admin.groups.AddGroupMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupDetailScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupsScreenRoute
 import com.mowtiie.mesgard.ui.conversation.ConversationScreenRoute
+import com.mowtiie.mesgard.ui.settings.AppearanceSettingsScreenRoute
+import com.mowtiie.mesgard.ui.settings.NotificationSettingsScreenRoute
+import com.mowtiie.mesgard.ui.settings.SecuritySettingsScreenRoute
+import com.mowtiie.mesgard.ui.settings.SettingsNavigation
 
 @Composable
 internal fun MesgardNavHost(
@@ -40,7 +44,12 @@ internal fun MesgardNavHost(
             MainScreen(
                 onSignOut = onSignOut,
                 onConversationClick = { conversationId -> navController.navigate(ConversationRoute(conversationId)) },
-                onOpenAccount = { navController.navigate(AccountRoute) },
+                settingsNavigation = SettingsNavigation(
+                    onOpenAccount = { navController.navigate(AccountRoute) },
+                    onOpenAppearance = { navController.navigate(AppearanceSettingsRoute) },
+                    onOpenNotifications = { navController.navigate(NotificationSettingsRoute) },
+                    onOpenSecurity = { navController.navigate(SecuritySettingsRoute) },
+                ),
                 adminNavigation = AdminNavigation(
                     onOpenMembers = { navController.navigate(MembersRoute) },
                     onOpenGroups = { navController.navigate(GroupsRoute) },
@@ -57,6 +66,15 @@ internal fun MesgardNavHost(
         }
         composable<ChangePasswordRoute> {
             ChangePasswordScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<AppearanceSettingsRoute> {
+            AppearanceSettingsScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<NotificationSettingsRoute> {
+            NotificationSettingsScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<SecuritySettingsRoute> {
+            SecuritySettingsScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<MembersRoute> {
             MembersScreenRoute(

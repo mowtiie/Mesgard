@@ -39,7 +39,7 @@ internal fun AppearanceSection(viewModel: AppearanceViewModel = hiltViewModel())
 }
 
 @StringRes
-private fun ThemeMode.labelResource(): Int = when (this) {
+internal fun ThemeMode.labelResource(): Int = when (this) {
     ThemeMode.SYSTEM -> R.string.theme_system
     ThemeMode.LIGHT -> R.string.theme_light
     ThemeMode.DARK -> R.string.theme_dark

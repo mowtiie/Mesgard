@@ -21,6 +21,15 @@ internal data object AccountRoute
 internal data object ChangePasswordRoute
 
 @Serializable
+internal data object AppearanceSettingsRoute
+
+@Serializable
+internal data object NotificationSettingsRoute
+
+@Serializable
+internal data object SecuritySettingsRoute
+
+@Serializable
 internal data object SettingsRoute
 
 @Serializable

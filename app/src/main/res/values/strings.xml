@@ -289,6 +289,16 @@
     <string name="lock_title">Mesgard is locked</string>
     <string name="lock_unlock_button">Unlock</string>
     <string name="lock_prompt_title">Unlock Mesgard</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_appearance_summary_dynamic">%1$s, dynamic color</string>
+    <string name="settings_notifications_title">Notifications</string>
+    <string name="settings_notifications_summary_using">Using %1$s</string>
+    <string name="settings_notifications_summary_not_set_up">Push not set up</string>
+    <string name="settings_privacy_security">Privacy and security</string>
+    <string name="settings_security_summary_both">App lock and screen privacy are on</string>
+    <string name="settings_security_summary_app_lock">App lock is on</string>
+    <string name="settings_security_summary_screen_privacy">Screen privacy is on</string>
+    <string name="settings_security_summary_nothing">App lock and screen privacy are off</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_contrast">Contrast</string>
     <string name="settings_dynamic_color">Dynamic color</string>
@@ -299,7 +309,6 @@
     <string name="contrast_standard">Standard</string>
     <string name="contrast_medium">Medium</string>
     <string name="contrast_high">High</string>
-    <string name="settings_security">Security</string>
     <string name="settings_screen_privacy">Screen privacy</string>
     <string name="settings_screen_privacy_summary">Block screenshots and screen recording in Mesgard.</string>
     <string name="settings_app_lock">App lock</string>

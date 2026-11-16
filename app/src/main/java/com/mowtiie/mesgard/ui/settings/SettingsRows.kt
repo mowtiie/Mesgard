@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.ui.settings
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
@@ -74,4 +75,20 @@ internal fun <T> RadioGroup(
             )
         }
     }
+}
+
+/** A row of the Settings home that opens a page. The summary says what is currently set. */
+@Composable
+internal fun SettingsCategoryRow(
+    icon: @Composable () -> Unit,
+    @StringRes title: Int,
+    summary: String,
+    onClick: () -> Unit,
+) {
+    ListItem(
+        modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
+        leadingContent = icon,
+        headlineContent = { Text(stringResource(title)) },
+        supportingContent = { Text(summary) },
+    )
 }
