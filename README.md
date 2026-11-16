@@ -17,11 +17,11 @@ Mesgard is an open-source, real-time messaging app for schools, universities and
 * **Bring your own backend:** Connect to any Supabase project, Cloud or self-hosted, with your project URL and public (anon) key. Switch servers anytime from the Sign in screen. Administrators can share a setup link or a QR code.
 * **Private per organization:** People only see their own organization's data, enforced by Row Level Security in your database.
 * **Direct messages and group chats:** Real-time messaging with typing indicators, online status, read marking and unread counts.
-* **Announcements:** Administrators and staff post to everyone in the organization. Students can read but not reply.
+* **Announcements:** Every organization has an announcement conversation. Administrators and staff post to everyone in it. Students can read but not reply.
 * **Photos and files:** Send photos and documents (up to 20 MB each, 10 per message). Photos open in a full screen viewer.
 * **Works offline:** Your conversations are saved on the device (encrypted), so the list opens instantly. You can write without a connection, and messages send when you are back online. A message that fails to send can be retried or discarded.
 * **Notifications without Google:** Push uses [UnifiedPush](https://unifiedpush.org) with a distributor app such as ntfy. There is no Firebase and no Google services, and an institution can run its own push server. Choose how much a notification shows: sender and text, sender only, or nothing.
-* **Administration:** Administrators add members, import a roster from a CSV file, reset passwords, change roles, manage groups and read an audit log of every change. New accounts get a temporary password and must choose their own at first sign in.
+* **Administration:** Administrators get an Administration page in Settings with quick actions, counts and the latest changes. They add members, import a roster from a CSV file, reset passwords, change roles, manage groups and read an audit log of every change. New accounts get a temporary password and must choose their own at first sign in. Anyone can change their own password later from their Account.
 * **Themes and privacy:** Light and dark themes, three contrast levels, dynamic colors, an optional app lock and an optional screen privacy mode that blocks screenshots.
 
 **Not end-to-end encrypted.** Messages are protected in transit (TLS) and on the device, and your server can read them. This is by design, so that your institution can search, audit and keep its own records.
@@ -41,13 +41,13 @@ You need Android 8.0 (API 26) or later, and a Supabase project that is reachable
    supabase functions deploy admin-users
    ```
 4. Under **Authentication → Sign In / Providers**, keep **Email** enabled. Accounts are created by administrators, so you can turn off public sign-ups.
-5. Create your first organization and its administrator account with SQL. [`supabase/seed.sql`](supabase/seed.sql) shows the rows an organization, its members and their roles need. After that, the administrator adds everyone else from the app.
+5. Create your first organization and its administrator account, as described in [`docs/first-organization.md`](docs/first-organization.md). After that, the administrator adds everyone else from the app.
 6. Copy your **Project URL** and **anon (publishable) key** from the project's **Connect** dialog (or **Settings → API Keys**).
 7. Open Mesgard, enter the URL and key on the setup screen, and sign in.
 
 **Only use the anon (publishable) key.** Never paste a secret or `service_role` key into the app: it bypasses Row Level Security. The app refuses both.
 
-To use another server later, tap **Change server** on the Sign in screen. More details are in [`docs/server-setup.md`](docs/server-setup.md).
+To use another server later, tap **Change server** on the Sign in screen. More details are in [`docs/server-setup.md`](docs/server-setup.md). When you update Mesgard later, update the server first: see [`docs/upgrading.md`](docs/upgrading.md).
 
 ## Verification
 
