@@ -1,8 +1,6 @@
 package com.mowtiie.mesgard.ui.auth
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,20 +13,15 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,7 +29,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.SignInError
+import com.mowtiie.mesgard.ui.common.AuthHeader
 import com.mowtiie.mesgard.ui.common.CenteredForm
+import com.mowtiie.mesgard.ui.common.ServerCard
 import com.mowtiie.mesgard.ui.connectivity.ConnectionBanner
 import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
@@ -115,7 +110,8 @@ private fun ColumnScope.SignInForm(
     LaunchedEffect(fieldError, uiState.isSubmitting) {
         if (fieldError != null && !uiState.isSubmitting) passwordFocus.requestFocus()
     }
-    BrandHeader()
+    AuthHeader(R.string.sign_in_title)
+    if (uiState.serverHost.isNotBlank()) ServerCard(uiState.serverHost, onChangeServerClicked)
     EmailField(
         email = uiState.email,
         enabled = !uiState.isSubmitting,
@@ -143,51 +139,18 @@ private fun ColumnScope.SignInForm(
             Text(stringResource(R.string.sign_in_button))
         }
     }
-    SignInHelp(uiState.serverHost, onChangeServerClicked)
+    SignInHelp()
 }
 
 @Composable
-private fun BrandHeader() {
-    Column(
-        modifier = Modifier.semantics(mergeDescendants = true) { heading() },
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.displaySmall.copy(fontFamily = FontFamily.Serif),
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            text = stringResource(R.string.sign_in_title),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun SignInHelp(serverHost: String, onChangeServerClicked: () -> Unit) {
-    Column(
+private fun SignInHelp() {
+    Text(
+        text = stringResource(R.string.sign_in_help),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(top = FieldSpacing),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(FieldSpacing / 2),
-    ) {
-        Text(
-            text = stringResource(R.string.sign_in_help),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        if (serverHost.isNotBlank()) {
-            Text(
-                text = stringResource(R.string.sign_in_server, serverHost),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-        }
-        TextButton(onClick = onChangeServerClicked) { Text(stringResource(R.string.server_setup_change)) }
-    }
+    )
 }
 
 internal val SignInError.isFieldError: Boolean

@@ -100,7 +100,7 @@ private fun AboutHeader() {
             fontFamily = FontFamily.Serif,
         )
         Text(
-            text = stringResource(R.string.about_tagline),
+            text = stringResource(R.string.app_tagline),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

@@ -23,10 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.error
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -35,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.ui.common.AuthHeader
 import com.mowtiie.mesgard.ui.common.CenteredForm
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
@@ -97,21 +96,7 @@ private fun SetupHeader(isFromLink: Boolean) {
         verticalArrangement = Arrangement.spacedBy(FieldSpacing / 2),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier.semantics(mergeDescendants = true) { heading() },
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.displaySmall.copy(fontFamily = FontFamily.Serif),
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = stringResource(R.string.server_setup_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        AuthHeader(R.string.server_setup_title)
         Text(
             text = stringResource(if (isFromLink) R.string.server_setup_link_warning else R.string.server_setup_help),
             style = MaterialTheme.typography.bodyMedium,
