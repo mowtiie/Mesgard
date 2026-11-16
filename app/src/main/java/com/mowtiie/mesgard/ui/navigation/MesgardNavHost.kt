@@ -8,6 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.mowtiie.mesgard.ui.about.AboutScreenRoute
+import com.mowtiie.mesgard.ui.about.OpenSourceLicensesScreenRoute
 import com.mowtiie.mesgard.ui.account.AccountScreenRoute
 import com.mowtiie.mesgard.ui.account.ChangePasswordScreenRoute
 import com.mowtiie.mesgard.ui.admin.AddMemberScreenRoute
@@ -49,6 +51,7 @@ internal fun MesgardNavHost(
                     onOpenAppearance = { navController.navigate(AppearanceSettingsRoute) },
                     onOpenNotifications = { navController.navigate(NotificationSettingsRoute) },
                     onOpenSecurity = { navController.navigate(SecuritySettingsRoute) },
+                    onOpenAbout = { navController.navigate(AboutRoute) },
                 ),
                 adminNavigation = AdminNavigation(
                     onOpenMembers = { navController.navigate(MembersRoute) },
@@ -75,6 +78,15 @@ internal fun MesgardNavHost(
         }
         composable<SecuritySettingsRoute> {
             SecuritySettingsScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<AboutRoute> {
+            AboutScreenRoute(
+                onBack = { navController.popBackStack() },
+                onOpenLicenses = { navController.navigate(OpenSourceLicensesRoute) },
+            )
+        }
+        composable<OpenSourceLicensesRoute> {
+            OpenSourceLicensesScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<MembersRoute> {
             MembersScreenRoute(

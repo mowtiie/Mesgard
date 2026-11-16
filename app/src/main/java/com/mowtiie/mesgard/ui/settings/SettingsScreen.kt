@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.HorizontalDivider
@@ -25,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mowtiie.mesgard.BuildConfig
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.DeviceSettings
 import com.mowtiie.mesgard.ui.account.SignOutDialog
@@ -82,6 +84,12 @@ internal fun SettingsScreen(
                 title = R.string.settings_privacy_security,
                 summary = stringResource(securitySummary(uiState.settings).text),
                 onClick = navigation.onOpenSecurity,
+            )
+            SettingsCategoryRow(
+                icon = { Icon(Icons.Default.Info, contentDescription = null) },
+                title = R.string.about_title,
+                summary = stringResource(R.string.settings_about_summary, BuildConfig.VERSION_NAME),
+                onClick = navigation.onOpenAbout,
             )
             HorizontalDivider()
             SignOutRow { isSignOutConfirmationShown = true }

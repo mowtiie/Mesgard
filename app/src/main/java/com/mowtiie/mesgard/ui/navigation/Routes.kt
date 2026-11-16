@@ -30,6 +30,12 @@ internal data object NotificationSettingsRoute
 internal data object SecuritySettingsRoute
 
 @Serializable
+internal data object AboutRoute
+
+@Serializable
+internal data object OpenSourceLicensesRoute
+
+@Serializable
 internal data object SettingsRoute
 
 @Serializable
