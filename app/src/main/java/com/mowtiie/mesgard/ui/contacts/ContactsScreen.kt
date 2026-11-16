@@ -2,13 +2,11 @@ package com.mowtiie.mesgard.ui.contacts
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
@@ -25,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -33,7 +30,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.Group
+import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.NoResultsState
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.RefreshMenuItem
 import com.mowtiie.mesgard.ui.common.SearchAction
@@ -163,10 +162,17 @@ internal fun ContactList(
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         if (uiState.showEmptyMessage && section == ContactsSection.PEOPLE) {
-            item(key = "empty") { CenteredMessage(R.string.contacts_empty) }
+            item(key = "empty") {
+                EmptyState(
+                    R.drawable.illustration_contacts,
+                    R.string.contacts_empty,
+                    R.string.contacts_empty_hint,
+                    Modifier.fillParentMaxSize(),
+                )
+            }
         }
         if (uiState.showNoResults(section)) {
-            item(key = "no-results") { CenteredMessage(R.string.search_no_results) }
+            item(key = "no-results") { NoResultsState(Modifier.fillParentMaxSize()) }
         }
         if (section == ContactsSection.PEOPLE) {
             items(uiState.contacts, key = { "contact:${it.orgId}:${it.userId}" }) { contact ->
@@ -197,13 +203,6 @@ internal fun ContactList(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun LazyItemScope.CenteredMessage(@StringRes message: Int) {
-    Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = stringResource(message), style = MaterialTheme.typography.bodyLarge)
     }
 }
 

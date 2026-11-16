@@ -1,7 +1,6 @@
 package com.mowtiie.mesgard.ui.chats
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,10 +8,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,13 +18,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.RefreshError
+import com.mowtiie.mesgard.ui.common.EmptyState
+import com.mowtiie.mesgard.ui.common.NoResultsState
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.RefreshMenuItem
 import com.mowtiie.mesgard.ui.common.SearchAction
@@ -130,23 +128,16 @@ private fun ConversationList(
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
         if (uiState.showEmptyMessage) {
             item(key = "empty") {
-                Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = stringResource(R.string.conversation_list_empty),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
+                EmptyState(
+                    R.drawable.illustration_chats,
+                    R.string.conversation_list_empty,
+                    R.string.conversation_list_empty_hint,
+                    Modifier.fillParentMaxSize(),
+                )
             }
         }
         if (uiState.showNoResults) {
-            item(key = "no-results") {
-                Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = stringResource(R.string.search_no_results),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
-            }
+            item(key = "no-results") { NoResultsState(Modifier.fillParentMaxSize()) }
         }
         items(uiState.conversations, key = { it.id }) { conversation ->
             ConversationRow(

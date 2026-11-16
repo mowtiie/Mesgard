@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -27,7 +26,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -37,6 +35,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.admin.messageResource
+import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.SearchAction
 import com.mowtiie.mesgard.ui.common.SearchAppBar
@@ -113,9 +112,11 @@ internal fun AddGroupMembersScreenRoute(
 private fun CandidateList(uiState: AddGroupMembersUiState, onToggled: (String) -> Unit, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth()) {
         if (uiState.candidates.isEmpty() && !uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.group_add_empty), style = MaterialTheme.typography.bodyLarge)
-            }
+            EmptyState(
+                R.drawable.illustration_members,
+                R.string.group_add_empty,
+                R.string.group_add_empty_hint,
+            )
         }
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(uiState.candidates, key = { it.userId }) { contact ->

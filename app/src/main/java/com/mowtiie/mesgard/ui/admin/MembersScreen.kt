@@ -1,7 +1,6 @@
 package com.mowtiie.mesgard.ui.admin
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -31,7 +29,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -40,7 +37,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.NoResultsState
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.RefreshMenuItem
 import com.mowtiie.mesgard.ui.common.SearchAction
@@ -161,15 +160,10 @@ internal fun MembersScreen(
 
 @Composable
 private fun MemberList(uiState: MembersUiState, onMemberAction: (Contact, MemberAction) -> Unit) {
-    if (uiState.showEmptyMessage || uiState.showNoResults) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                text = stringResource(
-                    if (uiState.showNoResults) R.string.search_no_results else R.string.members_empty,
-                ),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
+    if (uiState.showNoResults) {
+        NoResultsState()
+    } else if (uiState.showEmptyMessage) {
+        EmptyState(R.drawable.illustration_members, R.string.members_empty, R.string.members_empty_hint)
     }
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 88.dp)) {
         items(uiState.members, key = { "${it.orgId}:${it.userId}" }) { member ->

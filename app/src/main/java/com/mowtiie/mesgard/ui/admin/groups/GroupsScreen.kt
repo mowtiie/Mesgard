@@ -1,7 +1,6 @@
 package com.mowtiie.mesgard.ui.admin.groups
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,7 +15,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -28,7 +26,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -37,7 +34,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.admin.messageResource
+import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.NoResultsState
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.RefreshMenuItem
 import com.mowtiie.mesgard.ui.common.SearchAction
@@ -155,13 +154,10 @@ internal fun GroupsScreen(
 
 @Composable
 private fun GroupList(uiState: GroupsUiState, onOpenGroup: (String) -> Unit) {
-    if (uiState.showEmptyMessage || uiState.showNoResults) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(
-                text = stringResource(if (uiState.showNoResults) R.string.search_no_results else R.string.groups_empty),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
+    if (uiState.showNoResults) {
+        NoResultsState()
+    } else if (uiState.showEmptyMessage) {
+        EmptyState(R.drawable.illustration_group_no_group, R.string.groups_empty, R.string.groups_empty_hint)
     }
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = FabClearance)) {
         items(uiState.visibleGroups, key = { it.id }) { group ->

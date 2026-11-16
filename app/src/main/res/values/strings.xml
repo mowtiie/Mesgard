@@ -53,7 +53,8 @@
     <string name="settings_members_summary">Add people, change roles and reset passwords.</string>
     <string name="members_title">Members</string>
     <string name="members_search_placeholder">Search members</string>
-    <string name="members_empty">No members yet.</string>
+    <string name="members_empty">No members yet</string>
+    <string name="members_empty_hint">Add a member, or import a roster from a CSV file.</string>
     <string name="members_add">Add member</string>
     <string name="members_add_button">Add</string>
     <string name="members_add_help">The person gets a temporary password that is shown once. They choose their own password the first time they sign in.</string>
@@ -75,7 +76,8 @@
     <string name="settings_groups_summary">Create groups and manage who is in them.</string>
     <string name="settings_audit_summary">See who changed what.</string>
     <string name="audit_title">Audit log</string>
-    <string name="audit_empty">No activity recorded yet.</string>
+    <string name="audit_empty">No activity recorded yet</string>
+    <string name="audit_empty_hint">Changes made by administrators are listed here.</string>
     <string name="audit_former_member">a former member</string>
     <string name="audit_member_added">%1$s added %2$s as %3$s</string>
     <string name="audit_member_removed">%1$s removed %2$s from the organization</string>
@@ -95,7 +97,8 @@
     <string name="announcements_summary">Send a message to everyone in the organization.</string>
     <string name="groups_title">Groups</string>
     <string name="groups_search_placeholder">Search groups</string>
-    <string name="groups_empty">No groups yet.</string>
+    <string name="groups_empty">No groups yet</string>
+    <string name="groups_empty_hint">Create a group to message a class or section together.</string>
     <string name="groups_add">New group</string>
     <string name="groups_create_title">New group</string>
     <string name="groups_create_confirm">Create</string>
@@ -108,8 +111,10 @@
     <string name="group_delete_message">%1$s and its group chat, including every message in it, will be deleted. This cannot be undone.</string>
     <string name="group_delete_confirm">Delete</string>
     <string name="group_add_members">Add members</string>
-    <string name="group_add_empty">Everyone in the organization is already in this group.</string>
-    <string name="group_members_empty">This group has no members yet.</string>
+    <string name="group_add_empty">Everyone is already in this group</string>
+    <string name="group_add_empty_hint">There is nobody left in the organization to add.</string>
+    <string name="group_members_empty">No members in this group</string>
+    <string name="group_members_empty_hint">Add members to start the group conversation.</string>
     <string name="group_unknown_member">Unknown member</string>
     <string name="group_role_moderator">Moderator</string>
     <string name="group_role_member">Member</string>
@@ -202,7 +207,8 @@
     <string name="conversation_title_announcement">Announcements</string>
     <string name="conversation_no_messages">No messages yet</string>
     <string name="conversation_attachment_preview">Attachment</string>
-    <string name="conversation_list_empty">No conversations yet.</string>
+    <string name="conversation_list_empty">No conversations yet</string>
+    <string name="conversation_list_empty_hint">Your conversations appear here. Start one from Contacts.</string>
     <string name="refresh_error_network_unavailable">Unable to refresh. Check your connection.</string>
     <string name="refresh_error_unknown">Unable to refresh. Try again later.</string>
     <plurals name="conversation_unread_messages">
@@ -236,7 +242,8 @@
     <string name="message_sent_by_you">Sent by you</string>
     <string name="message_edited">Edited</string>
     <string name="message_deleted">This message was deleted</string>
-    <string name="conversation_empty">No messages yet.</string>
+    <string name="conversation_empty">No messages yet</string>
+    <string name="conversation_empty_hint">Send the first message to start the conversation.</string>
     <string name="announcement_read_only">Only staff and administrators can post here.</string>
     <string name="conversation_error_message_too_long">The message is too long.</string>
     <string name="conversation_error_not_signed_in">Sign in again to send messages.</string>
@@ -258,7 +265,8 @@
     <string name="attachment_open">Open</string>
     <string name="attachment_open_with">Open with</string>
     <string name="attachment_retry">Retry</string>
-    <string name="contacts_empty">No contacts yet.</string>
+    <string name="contacts_empty">No contacts yet</string>
+    <string name="contacts_empty_hint">People in your organization appear here once an administrator adds them.</string>
     <string name="contacts_section_people">People</string>
     <string name="contacts_section_groups">Groups</string>
     <string name="contacts_search_placeholder">Search</string>
@@ -268,7 +276,8 @@
     <string name="close_search">Close search</string>
     <string name="more_options">More options</string>
     <string name="refresh">Refresh</string>
-    <string name="search_no_results">No results.</string>
+    <string name="search_no_results">No results</string>
+    <string name="search_no_results_hint">Try a different name or check the spelling.</string>
     <string name="contact_online">Online</string>
     <string name="role_org_admin">Administrator</string>
     <string name="role_staff">Staff</string>
