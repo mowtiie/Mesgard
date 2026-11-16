@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colors of the empty state illustrations. The night variants keep the same roles on a dark surface. -->
+    <color name="illustration_accent">#415F91</color>
+    <color name="illustration_ink_deep">#090814</color>
+    <color name="illustration_ink">#2F2E41</color>
+    <color name="illustration_ink_soft">#3F3D56</color>
+    <color name="illustration_surface">#FFFFFF</color>
+    <color name="illustration_surface_variant">#F2F2F2</color>
+    <color name="illustration_outline">#E6E6E6</color>
+    <color name="illustration_outline_strong">#CCCCCC</color>
+</resources>

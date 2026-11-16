@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="illustration_accent">#AAC7FF</color>
+    <color name="illustration_ink_deep">#7C7F98</color>
+    <color name="illustration_ink">#9094AD</color>
+    <color name="illustration_ink_soft">#A6A9C0</color>
+    <color name="illustration_surface">#33363F</color>
+    <color name="illustration_surface_variant">#2A2D35</color>
+    <color name="illustration_outline">#3F434D</color>
+    <color name="illustration_outline_strong">#565B67</color>
+</resources>
