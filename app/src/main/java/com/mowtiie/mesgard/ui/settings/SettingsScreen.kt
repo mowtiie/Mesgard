@@ -30,13 +30,11 @@ import com.mowtiie.mesgard.BuildConfig
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.DeviceSettings
 import com.mowtiie.mesgard.ui.account.SignOutDialog
-import com.mowtiie.mesgard.ui.admin.AdminNavigation
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.theme.IsDynamicColorSupported
 
 @Composable
 internal fun SettingsScreenRoute(
-    adminNavigation: AdminNavigation,
     navigation: SettingsNavigation,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
@@ -45,7 +43,6 @@ internal fun SettingsScreenRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsScreen(
         uiState = uiState,
-        adminNavigation = adminNavigation,
         navigation = navigation,
         onSignOut = onSignOut,
         modifier = modifier,
@@ -56,7 +53,6 @@ internal fun SettingsScreenRoute(
 @Composable
 internal fun SettingsScreen(
     uiState: SettingsUiState,
-    adminNavigation: AdminNavigation,
     navigation: SettingsNavigation,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
@@ -66,7 +62,7 @@ internal fun SettingsScreen(
     TitledScreen(title = stringResource(R.string.tab_settings), modifier = modifier) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
             AccountSummary(navigation.onOpenAccount)
-            AdministrationSection(adminNavigation)
+            AdministrationEntry(navigation.onOpenAdministration)
             SettingsCategoryRow(
                 icon = { Icon(painterResource(R.drawable.ic_palette), contentDescription = null) },
                 title = R.string.settings_appearance,

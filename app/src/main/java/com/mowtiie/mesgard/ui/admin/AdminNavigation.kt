@@ -1,8 +1,10 @@
 package com.mowtiie.mesgard.ui.admin
 
-/** Where the Administration section of Settings leads. */
+/** Where the Administration page leads. */
 internal data class AdminNavigation(
     val onOpenMembers: () -> Unit,
     val onOpenGroups: () -> Unit,
     val onOpenAuditLog: () -> Unit,
+    val onAddMember: () -> Unit,
+    val onImportMembers: () -> Unit,
 )

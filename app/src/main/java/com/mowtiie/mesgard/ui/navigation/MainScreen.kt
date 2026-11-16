@@ -18,7 +18,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.mowtiie.mesgard.ui.admin.AdminNavigation
 import com.mowtiie.mesgard.ui.chats.ConversationListRoute
 import com.mowtiie.mesgard.ui.contacts.ContactsScreenRoute
 import com.mowtiie.mesgard.ui.settings.SettingsNavigation
@@ -29,7 +28,6 @@ internal fun MainScreen(
     onSignOut: () -> Unit,
     onConversationClick: (String) -> Unit,
     settingsNavigation: SettingsNavigation,
-    adminNavigation: AdminNavigation,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
@@ -65,7 +63,6 @@ internal fun MainScreen(
             composable<ContactsRoute> { ContactsScreenRoute(onConversationStarted = onConversationClick) }
             composable<SettingsRoute> {
                 SettingsScreenRoute(
-                    adminNavigation = adminNavigation,
                     navigation = settingsNavigation,
                     onSignOut = onSignOut,
                 )

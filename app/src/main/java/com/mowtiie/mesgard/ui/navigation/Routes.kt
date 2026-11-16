@@ -39,6 +39,9 @@ internal data object OpenSourceLicensesRoute
 internal data object SettingsRoute
 
 @Serializable
+internal data object AdministrationRoute
+
+@Serializable
 internal data object MembersRoute
 
 @Serializable

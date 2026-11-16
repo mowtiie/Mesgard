@@ -14,6 +14,7 @@ import com.mowtiie.mesgard.ui.account.AccountScreenRoute
 import com.mowtiie.mesgard.ui.account.ChangePasswordScreenRoute
 import com.mowtiie.mesgard.ui.admin.AddMemberScreenRoute
 import com.mowtiie.mesgard.ui.admin.AdminNavigation
+import com.mowtiie.mesgard.ui.admin.AdministrationScreenRoute
 import com.mowtiie.mesgard.ui.admin.ImportMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.MembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.audit.AuditLogScreenRoute
@@ -48,15 +49,11 @@ internal fun MesgardNavHost(
                 onConversationClick = { conversationId -> navController.navigate(ConversationRoute(conversationId)) },
                 settingsNavigation = SettingsNavigation(
                     onOpenAccount = { navController.navigate(AccountRoute) },
+                    onOpenAdministration = { navController.navigate(AdministrationRoute) },
                     onOpenAppearance = { navController.navigate(AppearanceSettingsRoute) },
                     onOpenNotifications = { navController.navigate(NotificationSettingsRoute) },
                     onOpenSecurity = { navController.navigate(SecuritySettingsRoute) },
                     onOpenAbout = { navController.navigate(AboutRoute) },
-                ),
-                adminNavigation = AdminNavigation(
-                    onOpenMembers = { navController.navigate(MembersRoute) },
-                    onOpenGroups = { navController.navigate(GroupsRoute) },
-                    onOpenAuditLog = { navController.navigate(AuditLogRoute) },
                 ),
             )
         }
@@ -87,6 +84,18 @@ internal fun MesgardNavHost(
         }
         composable<OpenSourceLicensesRoute> {
             OpenSourceLicensesScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<AdministrationRoute> {
+            AdministrationScreenRoute(
+                onBack = { navController.popBackStack() },
+                navigation = AdminNavigation(
+                    onOpenMembers = { navController.navigate(MembersRoute) },
+                    onOpenGroups = { navController.navigate(GroupsRoute) },
+                    onOpenAuditLog = { navController.navigate(AuditLogRoute) },
+                    onAddMember = { navController.navigate(AddMemberRoute) },
+                    onImportMembers = { navController.navigate(ImportMembersRoute) },
+                ),
+            )
         }
         composable<MembersRoute> {
             MembersScreenRoute(
