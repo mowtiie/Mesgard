@@ -64,10 +64,7 @@ internal fun MainScreen(
             composable<ContactsRoute> { ContactsScreenRoute(onConversationStarted = onConversationClick) }
             composable<ProfileRoute> { ProfileScreenRoute(onSignOut = onSignOut) }
             composable<SettingsRoute> {
-                SettingsScreenRoute(
-                    adminNavigation = adminNavigation,
-                    onOpenConversation = onConversationClick,
-                )
+                SettingsScreenRoute(adminNavigation = adminNavigation)
             }
         }
     }

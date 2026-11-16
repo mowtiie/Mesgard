@@ -38,7 +38,6 @@ import org.unifiedpush.android.connector.UnifiedPush
 @Composable
 internal fun SettingsScreenRoute(
     adminNavigation: AdminNavigation,
-    onOpenConversation: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -70,7 +69,6 @@ internal fun SettingsScreenRoute(
         onLockTimeoutSelected = viewModel::onLockTimeoutSelected,
         onNotificationPreviewSelected = viewModel::onNotificationPreviewSelected,
         adminNavigation = adminNavigation,
-        onOpenConversation = onOpenConversation,
         onPushSetupClicked = {
             if (UnifiedPush.getDistributors(context).isEmpty()) {
                 viewModel.onPushDistributorUnavailable()
@@ -93,7 +91,6 @@ internal fun SettingsScreen(
     onLockTimeoutSelected: (LockTimeout) -> Unit,
     onNotificationPreviewSelected: (NotificationPreview) -> Unit,
     adminNavigation: AdminNavigation,
-    onOpenConversation: (String) -> Unit,
     onPushSetupClicked: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
@@ -115,7 +112,6 @@ internal fun SettingsScreen(
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
             AppearanceSection()
             AdministrationSection(adminNavigation)
-            AnnouncementsSection(snackbarHostState, onOpenConversation)
             SectionHeader(R.string.settings_security)
             SwitchRow(
                 title = R.string.settings_screen_privacy,

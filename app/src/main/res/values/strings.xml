@@ -92,9 +92,6 @@
     <string name="audit_group_member_role_changed">%1$s changed the role of %2$s in a group from %3$s to %4$s</string>
     <string name="audit_announcements_enabled">%1$s turned on announcements</string>
     <string name="audit_unknown">%1$s: %2$s</string>
-    <string name="settings_announcements">Announcements</string>
-    <string name="announcements_post">Post an announcement</string>
-    <string name="announcements_summary">Send a message to everyone in the organization.</string>
     <string name="groups_title">Groups</string>
     <string name="groups_search_placeholder">Search groups</string>
     <string name="groups_empty">No groups yet</string>
