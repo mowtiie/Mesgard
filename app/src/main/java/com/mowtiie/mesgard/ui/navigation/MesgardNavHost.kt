@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mowtiie.mesgard.ui.account.AccountScreenRoute
+import com.mowtiie.mesgard.ui.account.ChangePasswordScreenRoute
 import com.mowtiie.mesgard.ui.admin.AddMemberScreenRoute
 import com.mowtiie.mesgard.ui.admin.AdminNavigation
 import com.mowtiie.mesgard.ui.admin.ImportMembersScreenRoute
@@ -48,7 +49,14 @@ internal fun MesgardNavHost(
             )
         }
         composable<AccountRoute> {
-            AccountScreenRoute(onBack = { navController.popBackStack() }, onSignOut = onSignOut)
+            AccountScreenRoute(
+                onBack = { navController.popBackStack() },
+                onChangePassword = { navController.navigate(ChangePasswordRoute) },
+                onSignOut = onSignOut,
+            )
+        }
+        composable<ChangePasswordRoute> {
+            ChangePasswordScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<MembersRoute> {
             MembersScreenRoute(

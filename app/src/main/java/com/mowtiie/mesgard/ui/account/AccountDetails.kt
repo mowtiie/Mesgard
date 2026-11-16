@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.ui.account
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -21,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -66,7 +69,7 @@ internal fun AccountHeader(account: Account) {
 }
 
 @Composable
-internal fun AccountDetails(account: Account) {
+internal fun AccountDetails(account: Account, onChangePassword: () -> Unit) {
     Column(
         modifier = Modifier.padding(ContentPadding),
         verticalArrangement = Arrangement.spacedBy(CardSpacing),
@@ -75,14 +78,22 @@ internal fun AccountDetails(account: Account) {
             SectionHeader(R.string.account_organizations)
             account.memberships.forEach { MembershipCard(it) }
         }
-        account.email?.let { email ->
-            SectionHeader(R.string.account_details)
-            DetailsCard {
+        SectionHeader(R.string.account_details)
+        DetailsCard {
+            Column {
+                account.email?.let { email ->
+                    ListItem(
+                        colors = transparentListItemColors(),
+                        leadingContent = { Icon(Icons.Default.Email, contentDescription = null) },
+                        overlineContent = { Text(stringResource(R.string.account_email)) },
+                        headlineContent = { Text(email) },
+                    )
+                }
                 ListItem(
+                    modifier = Modifier.clickable(role = Role.Button, onClick = onChangePassword),
                     colors = transparentListItemColors(),
-                    leadingContent = { Icon(Icons.Default.Email, contentDescription = null) },
-                    overlineContent = { Text(stringResource(R.string.account_email)) },
-                    headlineContent = { Text(email) },
+                    leadingContent = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    headlineContent = { Text(stringResource(R.string.account_change_password)) },
                 )
             }
         }

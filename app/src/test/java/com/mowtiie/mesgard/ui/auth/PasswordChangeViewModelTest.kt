@@ -110,6 +110,45 @@ class PasswordChangeViewModelTest {
     }
 
     @Test
+    fun `reports the change and clears the fields once the password is saved`() {
+        coEvery { authRepository.changePassword(NEW_PASSWORD) } returns PasswordChangeResult.Success
+        fill()
+
+        viewModel.onSaveClicked()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isChanged)
+        assertEquals("", state.password)
+        assertEquals("", state.confirmation)
+        assertFalse(state.canSubmit)
+    }
+
+    @Test
+    fun `stops reporting the change once it has been announced`() {
+        coEvery { authRepository.changePassword(NEW_PASSWORD) } returns PasswordChangeResult.Success
+        fill()
+        viewModel.onSaveClicked()
+
+        viewModel.onChangeAnnounced()
+
+        assertFalse(viewModel.uiState.value.isChanged)
+    }
+
+    @Test
+    fun `keeps the fields and reports no change when the server refuses the password`() {
+        coEvery { authRepository.changePassword(NEW_PASSWORD) } returns
+            PasswordChangeResult.Failure(PasswordChangeError.WEAK_PASSWORD)
+        fill()
+
+        viewModel.onSaveClicked()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isChanged)
+        assertEquals(NEW_PASSWORD, state.password)
+        assertEquals(NEW_PASSWORD, state.confirmation)
+    }
+
+    @Test
     fun `signs out from the screen`() {
         coEvery { authRepository.signOut() } returns Unit
 

@@ -39,6 +39,7 @@ private val ButtonPadding = 16.dp
 @Composable
 internal fun AccountScreenRoute(
     onBack: () -> Unit,
+    onChangePassword: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AccountViewModel = hiltViewModel(),
@@ -47,6 +48,7 @@ internal fun AccountScreenRoute(
     AccountScreen(
         uiState = uiState,
         onBack = onBack,
+        onChangePassword = onChangePassword,
         onSignOutClicked = viewModel::onSignOutClicked,
         onSignOutConfirmed = {
             viewModel.onSignOutDismissed()
@@ -62,6 +64,7 @@ internal fun AccountScreenRoute(
 internal fun AccountScreen(
     uiState: AccountUiState,
     onBack: () -> Unit,
+    onChangePassword: () -> Unit,
     onSignOutClicked: () -> Unit,
     onSignOutConfirmed: () -> Unit,
     onSignOutDismissed: () -> Unit,
@@ -93,7 +96,7 @@ internal fun AccountScreen(
             }
             uiState.account?.let { account ->
                 AccountHeader(account)
-                AccountDetails(account)
+                AccountDetails(account, onChangePassword)
             }
             OutlinedButton(
                 onClick = onSignOutClicked,
@@ -129,6 +132,7 @@ private fun AccountScreenPreview() {
                 ),
             ),
             onBack = {},
+            onChangePassword = {},
             onSignOutClicked = {},
             onSignOutConfirmed = {},
             onSignOutDismissed = {},

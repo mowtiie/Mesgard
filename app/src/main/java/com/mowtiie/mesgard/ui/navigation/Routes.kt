@@ -18,6 +18,9 @@ internal data object ContactsRoute
 internal data object AccountRoute
 
 @Serializable
+internal data object ChangePasswordRoute
+
+@Serializable
 internal data object SettingsRoute
 
 @Serializable

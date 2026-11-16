@@ -29,6 +29,7 @@ internal data class PasswordChangeUiState(
     val confirmation: String = "",
     val isSaving: Boolean = false,
     val issue: PasswordChangeIssue? = null,
+    val isChanged: Boolean = false,
 ) {
     val canSubmit: Boolean
         get() = password.isNotEmpty() && confirmation.isNotEmpty() && !isSaving
@@ -44,7 +45,10 @@ internal data class PasswordChangeUiState(
         get() = issue == PasswordChangeIssue.MISMATCH
 }
 
-/** Shown after sign in while the account still has the temporary password an admin handed out. */
+/**
+ * Changes the password of the signed in person: right after sign in while the account still has the temporary password
+ * an admin handed out, and later from the Account screen.
+ */
 @HiltViewModel
 internal class PasswordChangeViewModel @Inject constructor(private val authRepository: AuthRepository) : ViewModel() {
     private val mutableUiState = MutableStateFlow(PasswordChangeUiState())
@@ -56,6 +60,8 @@ internal class PasswordChangeViewModel @Inject constructor(private val authRepos
         mutableUiState.update { it.copy(confirmation = confirmation, issue = null) }
 
     fun onIssueShown() = mutableUiState.update { it.copy(issue = null) }
+
+    fun onChangeAnnounced() = mutableUiState.update { it.copy(isChanged = false) }
 
     fun onSignOutClicked() {
         viewModelScope.launch { authRepository.signOut() }
@@ -73,8 +79,13 @@ internal class PasswordChangeViewModel @Inject constructor(private val authRepos
         viewModelScope.launch {
             val issue = (authRepository.changePassword(state.password) as? PasswordChangeResult.Failure)
                 ?.error?.toIssue()
-            // On success the session changes and this screen is replaced, so there is nothing else to update.
-            mutableUiState.update { it.copy(isSaving = false, issue = issue) }
+            mutableUiState.update {
+                if (issue == null) {
+                    PasswordChangeUiState(isChanged = true)
+                } else {
+                    it.copy(isSaving = false, issue = issue)
+                }
+            }
         }
     }
 }
