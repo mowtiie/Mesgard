@@ -3,7 +3,12 @@
     <string name="notification_channel_messages">Messages</string>
     <string name="notification_new_message">New message</string>
     <string name="sign_in_title">Sign in to continue</string>
-    <string name="sign_in_help">Need an account or forgot your password? Contact your school administrator.</string>
+    <string name="sign_in_help">Accounts are created by the administrator of your school.</string>
+    <string name="sign_in_forgot_password">Forgot password?</string>
+    <string name="sign_in_in_progress">Signing in</string>
+    <string name="forgot_password_title">Forgot your password?</string>
+    <string name="forgot_password_message">Ask the administrator of your school to reset it. They give you a temporary password, and you choose your own the next time you sign in.</string>
+    <string name="forgot_password_confirm">Got it</string>
     <string name="server_card_label">Server</string>
     <string name="server_card_change">Change</string>
     <string name="server_setup_title">Connect to your school</string>

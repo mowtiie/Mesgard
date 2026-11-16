@@ -26,7 +26,7 @@ private val TextPadding = 12.dp
 
 /** Which server the person signs in to, with the way to change it. Only the host shows, never the access key. */
 @Composable
-internal fun ServerCard(host: String, onChange: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ServerCard(host: String, onChange: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val changeLabel = stringResource(R.string.server_setup_change)
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -62,7 +62,14 @@ internal fun ServerCard(host: String, onChange: () -> Unit, modifier: Modifier =
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            TextButton(onClick = onChange, modifier = Modifier.semantics { contentDescription = changeLabel }) {
+            TextButton(
+                onClick = onChange,
+                enabled = enabled,
+                modifier = Modifier.semantics {
+                    contentDescription =
+                        changeLabel
+                },
+            ) {
                 Text(stringResource(R.string.server_card_change))
             }
         }

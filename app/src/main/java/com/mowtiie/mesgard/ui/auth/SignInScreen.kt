@@ -1,5 +1,6 @@
 package com.mowtiie.mesgard.ui.auth
 
+import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,15 +14,27 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalAutofillManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -69,6 +82,8 @@ internal fun SignInScreen(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    var isForgotPasswordShown by rememberSaveable { mutableStateOf(false) }
+    SaveCredentialsOnSuccess(uiState)
     val snackbarMessage = uiState.error?.takeUnless { it.isFieldError }?.let { stringResource(it.messageResource()) }
 
     LaunchedEffect(snackbarMessage) {
@@ -85,7 +100,33 @@ internal fun SignInScreen(
             ConnectionBanner(status = LocalConnectionStatus.current, offlineMessage = R.string.sign_in_offline_banner)
         },
     ) {
-        SignInForm(uiState, onEmailChanged, onPasswordChanged, onSignInClicked, onChangeServerClicked)
+        SignInForm(
+            uiState = uiState,
+            onEmailChanged = onEmailChanged,
+            onPasswordChanged = onPasswordChanged,
+            onSignInClicked = onSignInClicked,
+            onChangeServerClicked = onChangeServerClicked,
+            onForgotPasswordClicked = { isForgotPasswordShown = true },
+        )
+    }
+    if (isForgotPasswordShown) ForgotPasswordSheet(onDismiss = { isForgotPasswordShown = false })
+}
+
+/**
+ * Tells the password manager the form was submitted, so it can offer to save the credentials. The root replaces this
+ * screen once the person is signed in, so leaving while a sign in is in flight means it worked. Turning the device and
+ * closing the app also leave the screen, and must not count.
+ */
+@Composable
+private fun SaveCredentialsOnSuccess(uiState: SignInUiState) {
+    val autofillManager = LocalAutofillManager.current
+    val activity = LocalActivity.current
+    val latestState by rememberUpdatedState(uiState)
+    DisposableEffect(Unit) {
+        onDispose {
+            val isLeaving = activity?.isChangingConfigurations != true && activity?.isFinishing != true
+            if (latestState.isSubmitting && isLeaving) autofillManager?.commit()
+        }
     }
 }
 
@@ -97,6 +138,7 @@ private fun ColumnScope.SignInForm(
     onPasswordChanged: (String) -> Unit,
     onSignInClicked: () -> Unit,
     onChangeServerClicked: () -> Unit,
+    onForgotPasswordClicked: () -> Unit,
 ) {
     val fieldError = uiState.error?.takeIf { it.isFieldError }
     val focusManager = LocalFocusManager.current
@@ -111,7 +153,9 @@ private fun ColumnScope.SignInForm(
         if (fieldError != null && !uiState.isSubmitting) passwordFocus.requestFocus()
     }
     AuthHeader(R.string.sign_in_title)
-    if (uiState.serverHost.isNotBlank()) ServerCard(uiState.serverHost, onChangeServerClicked)
+    if (uiState.serverHost.isNotBlank()) {
+        ServerCard(uiState.serverHost, onChangeServerClicked, enabled = !uiState.isSubmitting)
+    }
     EmailField(
         email = uiState.email,
         enabled = !uiState.isSubmitting,
@@ -127,7 +171,24 @@ private fun ColumnScope.SignInForm(
         onDone = submit,
         focusRequester = passwordFocus,
     )
-    Button(onClick = submit, enabled = uiState.canSubmit, modifier = Modifier.fillMaxWidth()) {
+    TextButton(onClick = onForgotPasswordClicked, modifier = Modifier.align(Alignment.End)) {
+        Text(stringResource(R.string.sign_in_forgot_password))
+    }
+    SignInButton(uiState, submit)
+    SignInHelp()
+}
+
+@Composable
+private fun SignInButton(uiState: SignInUiState, onClick: () -> Unit) {
+    val progressDescription = stringResource(R.string.sign_in_in_progress)
+    Button(
+        onClick = onClick,
+        enabled = uiState.canSubmit,
+        modifier = Modifier.fillMaxWidth().semantics {
+            liveRegion = LiveRegionMode.Polite
+            if (uiState.isSubmitting) stateDescription = progressDescription
+        },
+    ) {
         if (uiState.isSubmitting) {
             CircularProgressIndicator(
                 modifier = Modifier.size(ProgressSize),
@@ -139,7 +200,6 @@ private fun ColumnScope.SignInForm(
             Text(stringResource(R.string.sign_in_button))
         }
     }
-    SignInHelp()
 }
 
 @Composable

@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -43,7 +44,12 @@ internal fun EmailField(
         value = email,
         onValueChange = onChange,
         label = { Text(stringResource(R.string.sign_in_email_label)) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.None,
+            autoCorrectEnabled = false,
+            keyboardType = KeyboardType.Email,
+            imeAction = ImeAction.Next,
+        ),
         keyboardActions = KeyboardActions(onNext = { onNext() }),
         singleLine = true,
         enabled = enabled,
