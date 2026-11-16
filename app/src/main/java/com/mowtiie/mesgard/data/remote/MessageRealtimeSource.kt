@@ -39,7 +39,7 @@ internal interface MessageRealtimeSource {
 internal class SupabaseMessageRealtimeSource @Inject constructor(private val client: SupabaseClient) :
     MessageRealtimeSource {
     override fun events(): Flow<RealtimeEvent> = flow {
-        val channel = client.channel(CHANNEL_NAME)
+        val channel = client.channel(CHANNEL_NAME) { isPrivate = true }
         val inserts = channel.postgresChangeFlow<PostgresAction.Insert>(schema = SCHEMA) { table = TABLE }
         val updates = channel.postgresChangeFlow<PostgresAction.Update>(schema = SCHEMA) { table = TABLE }
         val connections = channel.status.filter { it == RealtimeChannel.Status.SUBSCRIBED }
