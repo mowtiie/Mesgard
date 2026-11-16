@@ -11,6 +11,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -77,7 +78,7 @@ internal fun SignInScreen(
 
     LaunchedEffect(snackbarMessage) {
         if (snackbarMessage != null) {
-            snackbarHostState.showSnackbar(snackbarMessage)
+            snackbarHostState.showSnackbar(snackbarMessage, duration = SnackbarDuration.Long)
             onErrorShown()
         }
     }
@@ -195,6 +196,8 @@ internal val SignInError.isFieldError: Boolean
 @StringRes
 internal fun SignInError.messageResource(): Int = when (this) {
     SignInError.INVALID_CREDENTIALS -> R.string.sign_in_error_invalid_credentials
+    SignInError.ACCOUNT_DISABLED -> R.string.sign_in_error_account_disabled
+    SignInError.TOO_MANY_ATTEMPTS -> R.string.sign_in_error_too_many_attempts
     SignInError.NETWORK_UNAVAILABLE -> R.string.sign_in_error_network_unavailable
     SignInError.UNKNOWN -> R.string.sign_in_error_unknown
 }

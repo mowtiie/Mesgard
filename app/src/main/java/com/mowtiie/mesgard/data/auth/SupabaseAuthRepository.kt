@@ -24,7 +24,6 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
 private const val TAG = "SupabaseAuthRepository"
-private const val INVALID_CREDENTIALS_CODE = "invalid_credentials"
 private const val WEAK_PASSWORD_CODE = "weak_password"
 private const val SAME_PASSWORD_CODE = "same_password"
 private const val MUST_CHANGE_PASSWORD_KEY = "must_change_password"
@@ -103,11 +102,11 @@ internal class SupabaseAuthRepository @Inject constructor(
         }
     }
 
-    private fun toSignInError(exception: RestException): SignInError {
-        if (exception.error == INVALID_CREDENTIALS_CODE) return SignInError.INVALID_CREDENTIALS
-        Log.w(TAG, "Sign in rejected by the server: ${exception.error}", exception)
-        return SignInError.UNKNOWN
-    }
+    private fun toSignInError(exception: RestException): SignInError =
+        signInErrorFor(exception.error, exception.statusCode) ?: run {
+            Log.w(TAG, "Sign in rejected by the server: ${exception.error}", exception)
+            SignInError.UNKNOWN
+        }
 
     private fun networkFailure(cause: Exception): SignInResult {
         Log.i(TAG, "Sign in could not reach the server", cause)

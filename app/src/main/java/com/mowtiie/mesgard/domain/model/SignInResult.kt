@@ -8,6 +8,8 @@ internal sealed interface SignInResult {
 
 internal enum class SignInError {
     INVALID_CREDENTIALS,
+    ACCOUNT_DISABLED,
+    TOO_MANY_ATTEMPTS,
     NETWORK_UNAVAILABLE,
     UNKNOWN,
 }

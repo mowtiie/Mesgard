@@ -40,6 +40,8 @@
     <string name="password_change_error_unknown">Unable to save the password. Try again later.</string>
     <string name="sign_in_button">Sign in</string>
     <string name="sign_in_error_invalid_credentials">Incorrect email or password.</string>
+    <string name="sign_in_error_account_disabled">This account is disabled. Contact the administrator of your school.</string>
+    <string name="sign_in_error_too_many_attempts">Too many attempts. Wait a few minutes and try again.</string>
     <string name="sign_in_error_network_unavailable">Unable to reach the server. Check your connection.</string>
     <string name="sign_in_error_unknown">Unable to sign in. Try again later.</string>
     <string name="sign_out_button">Sign out</string>
