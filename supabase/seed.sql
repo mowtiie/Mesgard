@@ -112,6 +112,9 @@ select * from (values
   (4, 'direct', null::int, 'Student Two and Student Three', 5)
 ) as conversation (number, type, group_number, title, creator_number);
 
+-- Adding the first member of an organization already created its announcement conversation; the seed uses fixed ids.
+delete from public.conversations where type = 'announcement';
+
 insert into public.conversations (id, org_id, type, group_id, title, created_by)
 select
   ('40000000-0000-4000-8000-000000000' || organization.letter || lpad(conversation.number::text, 2, '0'))::uuid,
