@@ -1,0 +1,89 @@
+name: Deploy backend
+
+# Sets up or updates a Supabase project from the Actions tab, without installing anything. It is meant for your own
+# copy (fork) of the repository, with the secrets below. See docs/supabase-setup.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_ref:
+        description: Project ref (the 20 letters in your project URL)
+        required: true
+        type: string
+      organization_name:
+        description: First organization name. Leave empty to skip creating one.
+        required: false
+        type: string
+      organization_short_name:
+        description: Short name (lowercase letters, digits, hyphens). Taken from the name when empty.
+        required: false
+        type: string
+      admin_email:
+        description: Email of the first administrator
+        required: false
+        type: string
+      admin_name:
+        description: Name of the first administrator
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      MESGARD_ADMIN_PASSWORD: ${{ secrets.MESGARD_ADMIN_PASSWORD }}
+      PROJECT_REF: ${{ inputs.project_ref }}
+      ORGANIZATION_NAME: ${{ inputs.organization_name }}
+      ORGANIZATION_SHORT_NAME: ${{ inputs.organization_short_name }}
+      ADMIN_EMAIL: ${{ inputs.admin_email }}
+      ADMIN_NAME: ${{ inputs.admin_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the secrets
+        run: |
+          missing=0
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::The secret $name is not set. See docs/supabase-setup.md."
+              missing=1
+            fi
+          done
+          if [ -n "$ORGANIZATION_NAME" ] && [ -z "$MESGARD_ADMIN_PASSWORD" ]; then
+            echo "::error::Creating an organization needs the secret MESGARD_ADMIN_PASSWORD (12 or more characters)."
+            missing=1
+          fi
+          exit $missing
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 3.1.0
+
+      - name: Set up the project
+        run: |
+          arguments=(setup --project-ref "$PROJECT_REF" --yes)
+          if [ -n "$ORGANIZATION_NAME" ]; then
+            arguments+=(--org-name "$ORGANIZATION_NAME" --admin-email "$ADMIN_EMAIL" --admin-name "$ADMIN_NAME"
+              --admin-password-env MESGARD_ADMIN_PASSWORD)
+            if [ -n "$ORGANIZATION_SHORT_NAME" ]; then
+              arguments+=(--org-slug "$ORGANIZATION_SHORT_NAME")
+            fi
+          else
+            arguments+=(--skip-organization)
+          fi
+          node scripts/server/index.mjs "${arguments[@]}"

@@ -36,7 +36,7 @@ You need Android 8.0 (API 26) or later, and a Supabase project that is reachable
    ```
    node scripts/server/index.mjs setup --project-ref <your-project-ref>
    ```
-   It needs [Node.js](https://nodejs.org) 18 or later, and no Docker. The details, a checklist command (`doctor`) and the same steps by hand are in [`docs/supabase-setup.md`](docs/supabase-setup.md). Push notifications are optional: see [`docs/push-notifications.md`](docs/push-notifications.md).
+   It needs [Node.js](https://nodejs.org) 18 or later, and no Docker. The details, a checklist command (`doctor`) and the same steps by hand are in [`docs/supabase-setup.md`](docs/supabase-setup.md). You can also run the setup from the **Actions** tab of your own copy of the repository, with nothing installed. Push notifications are optional: see [`docs/push-notifications.md`](docs/push-notifications.md).
 3. Open Mesgard on your phone, open the link the script printed (or enter the **Project URL** and **anon (publishable) key** from the project's **Connect** dialog), and sign in with the administrator's email and the temporary password. You are asked to choose your own. After that, the administrator adds everyone else from the app.
 
 **Only use the anon (publishable) key.** Never paste a secret or `service_role` key into the app: it bypasses Row Level Security. The app refuses both.

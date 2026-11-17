@@ -36,6 +36,26 @@ The temporary password is shown once. The administrator must choose their own at
 
 You can give the answers as options so nothing is asked: `--org-name`, `--org-slug`, `--admin-email`, `--admin-name`. Add `--yes` to apply the Auth settings without a question, and `--add-organization` to create another organization on a server that has one.
 
+## Without installing anything: GitHub Actions
+
+If you would rather not install the CLI or Node, a workflow in this repository does the same setup from the Actions tab.
+
+1. Copy the repository to your own GitHub account (a fork).
+2. In the Supabase dashboard, create an access token under your account settings, then in your copy open **Settings, Secrets and variables, Actions** and add these secrets:
+
+   | Secret | Value |
+   |---|---|
+   | `SUPABASE_ACCESS_TOKEN` | The access token |
+   | `SUPABASE_DB_PASSWORD` | The database password you chose for the project |
+   | `MESGARD_ADMIN_PASSWORD` | A password of 12 or more characters for the first administrator. Only needed when you create the first organization. |
+
+3. Open the **Actions** tab, choose **Deploy backend**, and select **Run workflow**. Enter the project ref. To create the first organization, also enter its name, the administrator's email and name, and optionally a short name. Leave those empty to only deploy.
+4. When the run finishes, its log ends with the connect link and the checklist.
+
+The administrator signs in with `MESGARD_ADMIN_PASSWORD` and is asked to choose their own password right away. That password is never printed. The log only contains public values (the project address and the public key), but anyone who can read your copy's Actions logs can see them, so keep the copy private if you can. To update later, bring your copy up to date with this repository and run the workflow again with the organization fields empty.
+
+This workflow has not been run on GitHub yet. The script it runs is tested, and the workflow file passes `actionlint`.
+
 ## Checking a server
 
 ```
