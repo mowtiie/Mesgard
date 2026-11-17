@@ -1,4 +1,11 @@
-import { findProblems, generatePassword, organizationSql, setupLink, slugFrom } from "./organization.mjs";
+import {
+  findProblems,
+  generatePassword,
+  organizationSql,
+  REQUIRE_TWO_STEP_SQL,
+  setupLink,
+  slugFrom,
+} from "./organization.mjs";
 import { CliError } from "./supabase.mjs";
 
 const EMAIL_EXISTS_CODE = "email_exists";
@@ -84,6 +91,7 @@ async function createFirstOrganization(target, options, deps, log) {
   const problems = findProblems(answers);
   if (problems.length > 0) throw new CliError(problems.join("\n"));
 
+  const requireTwoStep = await decideTwoStep(target, options, deps, log);
   const supplied = suppliedPassword(options, deps.env);
   const password = supplied ?? generatePassword();
   const login = await deps.createLogin({
@@ -95,8 +103,28 @@ async function createFirstOrganization(target, options, deps, log) {
   });
   if (!login.created) log(`A login for ${answers.email} already exists. It keeps its current password.`);
   log("Creating the organization");
-  deps.execute(organizationSql(answers));
+  deps.execute(requireTwoStep ? `${organizationSql(answers)}\n${REQUIRE_TWO_STEP_SQL}` : organizationSql(answers));
+  if (requireTwoStep) log("Two-step verification is now required for administrators and staff");
   return { email: answers.email, password: login.created && !supplied ? password : null, usedSuppliedPassword: login.created && Boolean(supplied) };
+}
+
+/**
+ * Asked with the other answers, before anything is created. A server that already requires it is left as it is, and
+ * a server that does not is never changed without a yes, so an upgrade through the workflow cannot switch it on.
+ */
+async function decideTwoStep(target, options, deps, log) {
+  if (options["require-mfa"] === true && options["no-require-mfa"] === true) {
+    throw new CliError("Use either --require-mfa or --no-require-mfa, not both.");
+  }
+  const [settings] = await target.query("select enforced from private.mfa_settings");
+  if (settings?.enforced === true) {
+    log("Two-step verification is already required for administrators and staff");
+    return false;
+  }
+  if (options["no-require-mfa"] === true) return false;
+  if (options["require-mfa"] === true || options.yes === true) return true;
+  const answer = await deps.ask("Require two-step verification for administrators and staff? [Y/n]: ");
+  return !/^n(o)?$/i.test(answer.trim());
 }
 
 async function collectAnswers(options, deps) {

@@ -115,6 +115,70 @@ test("asks for what the flags do not give, and proposes a short name", async () 
   assert.ok(deps.calls.some(([name, email]) => name === "createLogin" && email === answers.email));
 });
 
+const executedSql = (deps) => deps.calls.filter(([name]) => name === "execute").map(([, sql]) => sql).join("\n");
+const TWO_STEP = "update private.mfa_settings set enforced = true;";
+
+test("asks about two-step verification and treats Enter as yes", async () => {
+  const asked = [];
+  const deps = fakeDeps({ ask: async (question) => { asked.push(question); return ""; } });
+
+  await runSetup({ target: fakeTarget(), options: flags, deps, log: () => {} });
+
+  assert.ok(asked.some((question) => question.startsWith("Require two-step verification for administrators and staff? [Y/n]")));
+  assert.ok(executedSql(deps).includes(TWO_STEP));
+});
+
+test("leaves two-step verification off after a no", async () => {
+  for (const answer of ["n", "N", "no", " No "]) {
+    const deps = fakeDeps({ ask: async () => answer });
+    await runSetup({ target: fakeTarget(), options: flags, deps, log: () => {} });
+    assert.ok(!executedSql(deps).includes(TWO_STEP), answer);
+  }
+});
+
+test("the options answer the two-step question, and --yes accepts the default", async () => {
+  const neverAsked = { ask: async () => { throw new Error("should not ask"); } };
+
+  const required = fakeDeps(neverAsked);
+  await runSetup({ target: fakeTarget(), options: { ...flags, "require-mfa": true }, deps: required, log: () => {} });
+  assert.ok(executedSql(required).includes(TWO_STEP));
+
+  const declined = fakeDeps(neverAsked);
+  await runSetup({ target: fakeTarget(), options: { ...flags, "no-require-mfa": true }, deps: declined, log: () => {} });
+  assert.ok(!executedSql(declined).includes(TWO_STEP));
+
+  const accepted = fakeDeps(neverAsked);
+  await runSetup({ target: fakeTarget(), options: { ...flags, yes: true }, deps: accepted, log: () => {} });
+  assert.ok(executedSql(accepted).includes(TWO_STEP));
+});
+
+test("refuses both two-step options before creating anything", async () => {
+  const deps = fakeDeps();
+
+  await assert.rejects(
+    runSetup({ target: fakeTarget(), options: { ...flags, "require-mfa": true, "no-require-mfa": true }, deps, log: () => {} }),
+    /not both/,
+  );
+  assert.ok(!deps.calls.some(([name]) => name === "createLogin"));
+});
+
+test("does not ask again when a server already requires two-step verification", async () => {
+  const target = fakeTarget({ query: async (sql) => (sql.includes("mfa_settings") ? [{ enforced: true }] : [{ organizations: 0 }]) });
+  const deps = fakeDeps({ ask: async () => { throw new Error("should not ask"); } });
+
+  await runSetup({ target, options: { ...flags, "no-require-mfa": true }, deps, log: () => {} });
+
+  assert.ok(!executedSql(deps).includes(TWO_STEP));
+});
+
+test("never changes the setting when no organization is created", async () => {
+  const deps = fakeDeps({ ask: async () => { throw new Error("should not ask"); } });
+
+  await runSetup({ target: fakeTarget({ query: async () => [{ organizations: 3 }] }), options: { "require-mfa": true }, deps, log: () => {} });
+
+  assert.ok(!deps.calls.some(([name]) => name === "execute"));
+});
+
 test("the local stack skips migrations, functions and Auth settings", async () => {
   const deps = fakeDeps();
 

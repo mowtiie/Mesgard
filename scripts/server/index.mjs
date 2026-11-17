@@ -30,6 +30,9 @@ Options:
   --skip-organization   setup: do not create an organization
   --admin-password-env <NAME>
                         setup: environment variable holding the first administrator's password (12+ characters)
+  --require-mfa, --no-require-mfa
+                        setup: answer the two-step verification question (asked when an organization is created;
+                        --yes means yes; a server that already requires it is never changed)
   --with-push           setup: also set up push notifications
   --push-hosts <list>   push: comma separated hosts of your own push server (default: any public push server)
   --rotate              push: replace the secret even when push is already set up

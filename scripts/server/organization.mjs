@@ -54,6 +54,9 @@ from new_organization, auth.users as users
 where lower(users.email) = lower(${quote(email)});`;
 }
 
+/** The statement from docs/mfa.md that holds administrators and staff to two-step verification. */
+export const REQUIRE_TWO_STEP_SQL = "update private.mfa_settings set enforced = true;";
+
 function pick(alphabet) {
   return alphabet[randomInt(alphabet.length)];
 }
