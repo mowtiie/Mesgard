@@ -1,5 +1,7 @@
 # Setting up the Supabase backend
 
+The shortest path is in the [quick start](quick-start.md). This page has the details.
+
 Mesgard needs a Supabase project with the database schema, one Edge Function and a few Auth settings. A script does all of it, and you can also do each step by hand.
 
 ## What you need

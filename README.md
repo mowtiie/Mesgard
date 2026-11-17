@@ -31,6 +31,8 @@ Mesgard is an open-source, real-time messaging app for schools, universities and
 
 You need Android 8.0 (API 26) or later, and a Supabase project that is reachable over **HTTPS**: either a [Supabase Cloud](https://supabase.com) project or your own self-hosted instance.
 
+In a hurry? Follow the short [quick start](docs/quick-start.md).
+
 1. Create a project at [supabase.com](https://supabase.com) (or run your own).
 2. Install the [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) and sign in with `supabase login`. Then run the setup script, which links the project, applies the migrations, deploys the account function, sets the Auth settings, creates your first organization and its administrator, and prints the link that connects the app:
    ```
