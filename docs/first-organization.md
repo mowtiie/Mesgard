@@ -3,6 +3,8 @@
 A new server has no organizations and no people. Create the first organization and its administrator once, with the
 steps below. After that, the administrator adds everyone else from the app (Settings, Administration).
 
+The setup script does all of this for you: `node scripts/server/index.mjs setup` asks for the names and creates the login and the organization (see [supabase-setup.md](supabase-setup.md)). The steps below are the same thing by hand.
+
 ## 1. Create the administrator's login
 
 In the Supabase dashboard open **Authentication**, then **Users**, then **Add user**, and choose **Create new user**.
