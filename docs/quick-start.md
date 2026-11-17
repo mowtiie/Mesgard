@@ -6,7 +6,11 @@ Set up your own Mesgard server in four steps. You need a computer with [Node.js]
 
 1. Sign up at [supabase.com](https://supabase.com) and choose **New project**.
 2. Pick the region closest to your users, and set a **database password**. Save it in a password manager.
-3. Wait until the project is ready, then copy its **project ref**: the 20 letters in the address, `supabase.com/dashboard/project/<project ref>`.
+3. Set the API options like this:
+   - **Enable Data API**: on. The app cannot work without it.
+   - **Automatically expose new tables**: off. Mesgard's migrations grant access to their own tables.
+   - **Enable automatic RLS**: on. Mesgard's tables already have Row Level Security, so this only protects tables you add yourself.
+4. Wait until the project is ready, then copy its **project ref**: the 20 letters in the address, `supabase.com/dashboard/project/<project ref>`.
 
 ## 2. Install the tools
 
