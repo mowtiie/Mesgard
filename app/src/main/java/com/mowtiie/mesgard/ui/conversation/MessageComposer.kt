@@ -1,5 +1,6 @@
 package com.mowtiie.mesgard.ui.conversation
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -130,10 +131,10 @@ private fun PickedAttachments(attachments: List<PickedAttachment>, onRemoved: (S
 }
 
 @Composable
-internal fun ReadOnlyNotice(modifier: Modifier = Modifier) {
+internal fun ReadOnlyNotice(@StringRes message: Int, modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceContainer) {
         Text(
-            text = stringResource(R.string.announcement_read_only),
+            text = stringResource(message),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(ComposerPadding * 2),
         )

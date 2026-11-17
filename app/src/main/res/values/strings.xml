@@ -260,7 +260,7 @@
     <string name="account_change_password_help">Choose a new password. Use at least %1$d characters.</string>
     <string name="password_change_done">Password changed</string>
     <string name="tab_settings">Settings</string>
-    <string name="conversation_title_direct">Direct message</string>
+    <string name="conversation_title_former_member">Former member</string>
     <string name="conversation_title_group">Group chat</string>
     <string name="conversation_title_announcement">Announcements</string>
     <string name="conversation_no_messages">No messages yet</string>
@@ -303,6 +303,7 @@
     <string name="conversation_empty">No messages yet</string>
     <string name="conversation_empty_hint">Send the first message to start the conversation.</string>
     <string name="announcement_read_only">Only staff and administrators can post here.</string>
+    <string name="direct_read_only">This person is no longer in the organization. You cannot send messages here.</string>
     <string name="conversation_error_message_too_long">The message is too long.</string>
     <string name="conversation_error_not_signed_in">Sign in again to send messages.</string>
     <string name="conversation_error_unavailable">This conversation is no longer available.</string>

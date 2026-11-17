@@ -48,6 +48,7 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
+import com.mowtiie.mesgard.ui.common.readOnlyMessageResource
 import java.time.ZoneId
 import kotlinx.coroutines.launch
 
@@ -168,7 +169,7 @@ internal fun ConversationScreen(
                     onAttachmentRemoved = onAttachmentRemoved,
                 )
             } else {
-                ReadOnlyNotice()
+                ReadOnlyNotice(uiState.type.readOnlyMessageResource())
             }
         }
     }
