@@ -20,8 +20,8 @@ Deno.test("refuses what is not a request", () => {
 });
 
 Deno.test("normalizes a user and takes the name from the address when none is given", () => {
-  assertEquals(validateNewUser({ email: " Ana@School.Example ", role: "student" }), {
-    user: { email: "ana@school.example", displayName: "ana", role: "student" },
+  assertEquals(validateNewUser({ email: " Ana@School.Example ", role: "member" }), {
+    user: { email: "ana@school.example", displayName: "ana", role: "member" },
   });
   assertEquals(validateNewUser({ email: "ben@school.example", display_name: " Ben Cruz ", role: "staff" }), {
     user: { email: "ben@school.example", displayName: "Ben Cruz", role: "staff" },
@@ -30,9 +30,15 @@ Deno.test("normalizes a user and takes the name from the address when none is gi
 
 Deno.test("explains what is wrong with a user", () => {
   assertEquals(validateNewUser("text"), { reason: "invalid_user" });
-  assertEquals(validateNewUser({ email: "nobody", role: "student" }), { reason: "invalid_email" });
+  assertEquals(validateNewUser({ email: "nobody", role: "member" }), { reason: "invalid_email" });
   assertEquals(validateNewUser({ email: "a@b.example", role: "owner" }), { reason: "invalid_role" });
-  assertEquals(validateNewUser({ email: "a@b.example", role: "student", display_name: "x".repeat(101) }), {
+  assertEquals(validateNewUser({ email: "a@b.example", role: "member", display_name: "x".repeat(101) }), {
     reason: "invalid_display_name",
+  });
+});
+
+Deno.test("the old role name student is saved as member", () => {
+  assertEquals(validateNewUser({ email: "ana@example.org", role: "student" }), {
+    user: { email: "ana@example.org", displayName: "ana", role: "member" },
   });
 });

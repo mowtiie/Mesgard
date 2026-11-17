@@ -1,4 +1,6 @@
-export const ROLES = ["org_admin", "staff", "student"] as const;
+export const ROLES = ["org_admin", "staff", "member"] as const;
+/** The name that older apps and CSV files still send for a member. */
+const LEGACY_MEMBER_ROLE = "student";
 export type Role = typeof ROLES[number];
 
 export const MAX_USERS_PER_REQUEST = 200;
@@ -59,7 +61,7 @@ export function validateNewUser(input: unknown): UserCheck {
   if (!isRecord(input)) return { reason: "invalid_user" };
   const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
   if (email.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(email)) return { reason: "invalid_email" };
-  const role = input.role;
+  const role = input.role === LEGACY_MEMBER_ROLE ? "member" : input.role;
   if (!ROLES.includes(role as Role)) return { reason: "invalid_role" };
   const given = typeof input.display_name === "string" ? input.display_name.trim() : "";
   const displayName = given || email.split("@")[0];

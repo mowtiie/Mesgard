@@ -9,7 +9,7 @@ const MEMBER = "20000000-0000-4000-8000-000000000a04";
 const TOKEN = "admin-token";
 
 class FakeApi implements AdminApi {
-  roles = new Map<string, Role>([[ADMIN, "org_admin"], [MEMBER, "student"]]);
+  roles = new Map<string, Role>([[ADMIN, "org_admin"], [MEMBER, "member"]]);
   takenEmails = new Set<string>();
   memberships = new Map<string, number>([[MEMBER, 1]]);
   failAddingFor = new Set<string>();
@@ -169,7 +169,7 @@ Deno.test("creates users with one time passwords and never returns them in an er
     post({
       action: "create_users",
       org_id: ORG,
-      users: [{ email: "Ana@School.Example", display_name: "Ana Cruz", role: "student" }, {
+      users: [{ email: "Ana@School.Example", display_name: "Ana Cruz", role: "member" }, {
         email: "ben@school.example",
         role: "staff",
       }],
@@ -195,11 +195,11 @@ Deno.test("reports each problem row without stopping the others", async () => {
       action: "create_users",
       org_id: ORG,
       users: [
-        { email: "not an email", role: "student" },
+        { email: "not an email", role: "member" },
         { email: "x@school.example", role: "principal" },
-        { email: "taken@school.example", role: "student" },
-        { email: "ok@school.example", role: "student" },
-        { email: "OK@school.example", role: "student" },
+        { email: "taken@school.example", role: "member" },
+        { email: "ok@school.example", role: "member" },
+        { email: "OK@school.example", role: "member" },
       ],
     }),
   );
@@ -217,7 +217,7 @@ Deno.test("removes the login again when the membership cannot be added", async (
 
   const response = await handle(
     api,
-    post({ action: "create_users", org_id: ORG, users: [{ email: "ana@school.example", role: "student" }] }),
+    post({ action: "create_users", org_id: ORG, users: [{ email: "ana@school.example", role: "member" }] }),
   );
 
   const { results } = await response.json();
@@ -364,7 +364,7 @@ function returning(api: FakeApi, overrides: Partial<{ isDisabled: boolean; membe
 function addBack(api: FakeApi) {
   return handle(
     api,
-    post({ action: "create_users", org_id: ORG, users: [{ email: "back@school.example", role: "student" }] }),
+    post({ action: "create_users", org_id: ORG, users: [{ email: "back@school.example", role: "member" }] }),
   );
 }
 
@@ -378,7 +378,7 @@ Deno.test("a person who left comes back with a new temporary password", async ()
   assertEquals(results[0].user_id, RETURNING);
   assertEquals(results[0].temporary_password, "password-1");
   assertEquals(api.reactivated, [RETURNING]);
-  assertEquals(api.roles.get(RETURNING), "student");
+  assertEquals(api.roles.get(RETURNING), "member");
 });
 
 Deno.test("an email that belongs to someone active, or to another organization, stays refused", async () => {
