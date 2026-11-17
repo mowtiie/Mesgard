@@ -24,6 +24,9 @@ Options:
   --local               Use the local Supabase stack instead
   --yes                 setup: apply the Auth settings without asking
   --add-organization    setup: create another organization even when one exists
+  --skip-organization   setup: do not create an organization
+  --admin-password-env <NAME>
+                        setup: environment variable holding the first administrator's password (12+ characters)
   --org-name, --org-slug, --admin-email, --admin-name
                         setup: answers for the first organization, so nothing is asked`;
 

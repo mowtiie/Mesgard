@@ -2,6 +2,7 @@ import { findProblems, generatePassword, organizationSql, setupLink, slugFrom } 
 import { CliError } from "./supabase.mjs";
 
 const EMAIL_EXISTS_CODE = "email_exists";
+const MIN_SUPPLIED_PASSWORD_LENGTH = 12;
 
 /** Creates the administrator's login through the Auth admin API. The secret key stays in this function's memory. */
 export async function createLogin({ url, secretKey, email, password, displayName }) {
@@ -39,6 +40,9 @@ export async function runSetup({ target, options, deps, log = console.log }) {
     log("");
     log(`First administrator: ${created.email}`);
     log(`Temporary password (shown once, change it at the first sign in): ${created.password}`);
+  } else if (created?.usedSuppliedPassword) {
+    log("");
+    log(`First administrator: ${created.email}, with the password you provided (changed at the first sign in).`);
   }
   return created;
 }
@@ -68,6 +72,10 @@ async function applyAuthSettings(target, options, deps, log) {
 
 async function createFirstOrganization(target, options, deps, log) {
   const [{ organizations }] = await target.query("select count(*)::int as organizations from public.organizations");
+  if (options["skip-organization"] === true) {
+    log("Skipping the first organization.");
+    return null;
+  }
   if (organizations > 0 && options["add-organization"] !== true) {
     log(`Found ${organizations} organization(s), so no new one is created. Use --add-organization to add another.`);
     return null;
@@ -76,7 +84,8 @@ async function createFirstOrganization(target, options, deps, log) {
   const problems = findProblems(answers);
   if (problems.length > 0) throw new CliError(problems.join("\n"));
 
-  const password = generatePassword();
+  const supplied = suppliedPassword(options, deps.env);
+  const password = supplied ?? generatePassword();
   const login = await deps.createLogin({
     url: target.url,
     secretKey: deps.secretKey(),
@@ -87,15 +96,29 @@ async function createFirstOrganization(target, options, deps, log) {
   if (!login.created) log(`A login for ${answers.email} already exists. It keeps its current password.`);
   log("Creating the organization");
   deps.execute(organizationSql(answers));
-  return { email: answers.email, password: login.created ? password : null };
+  return { email: answers.email, password: login.created && !supplied ? password : null, usedSuppliedPassword: login.created && Boolean(supplied) };
 }
 
 async function collectAnswers(options, deps) {
   const name = text(options["org-name"]) ?? (await deps.ask("Organization name: "));
-  const slug = text(options["org-slug"]) ?? ((await deps.ask(`Short name [${slugFrom(name)}]: `)) || slugFrom(name));
+  const slug = text(options["org-slug"]) ?? (options.yes === true ? slugFrom(name) : (await deps.ask(`Short name [${slugFrom(name)}]: `)) || slugFrom(name));
   const email = text(options["admin-email"]) ?? (await deps.ask("Administrator email: "));
   const displayName = text(options["admin-name"]) ?? (await deps.ask("Administrator name: "));
   return { name: name.trim(), slug: slug.trim(), email: email.trim(), displayName: displayName.trim() };
+}
+
+/**
+ * A password the administrator chose, read from an environment variable so it never appears in a command line or a
+ * log. The mark that makes the app ask for a new password is set either way.
+ */
+function suppliedPassword(options, environment = {}) {
+  const name = text(options["admin-password-env"]);
+  if (name === undefined) return null;
+  const value = environment[name];
+  if (!value || value.length < MIN_SUPPLIED_PASSWORD_LENGTH) {
+    throw new CliError(`The environment variable ${name} must hold a password of at least ${MIN_SUPPLIED_PASSWORD_LENGTH} characters.`);
+  }
+  return value;
 }
 
 const text = (value) => (typeof value === "string" ? value : undefined);

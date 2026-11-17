@@ -12,6 +12,9 @@ function runVisibly(args, what) {
 }
 
 async function prompt(question) {
+  if (!process.stdin.isTTY) {
+    throw new CliError(`A question needs a terminal, so pass the answer as an option. Question: ${question.trim()}`);
+  }
   const lines = createInterface({ input: process.stdin, output: process.stdout });
   try {
     return await lines.question(question);
@@ -34,6 +37,7 @@ export function realTools(target, repositoryRoot) {
       if (result.status !== 0) throw new CliError("Applying the Auth settings failed.");
     },
     execute: (sql) => executeSql(target, sql),
+    env: process.env,
     ask: prompt,
     confirm: async (question) => /^y(es)?$/i.test((await prompt(question)).trim()),
   };

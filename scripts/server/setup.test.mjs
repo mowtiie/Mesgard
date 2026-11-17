@@ -123,6 +123,55 @@ test("the local stack skips migrations, functions and Auth settings", async () =
   assert.deepEqual(deps.calls.map(([name]) => name), ["createLogin", "execute"]);
 });
 
+test("skips the organization when asked", async () => {
+  const deps = fakeDeps();
+
+  assert.equal(await runSetup({ target: fakeTarget(), options: { "skip-organization": true }, deps, log: () => {} }), null);
+  assert.ok(!deps.calls.some(([name]) => name === "createLogin"));
+});
+
+test("uses a password from the environment and never prints it", async () => {
+  const secret = "chosen-by-the-school-1";
+  const deps = fakeDeps({ env: { ADMIN_PASSWORD: secret } });
+  const passwords = [];
+  deps.createLogin = async (input) => { passwords.push(input.password); return { created: true }; };
+  const lines = [];
+
+  const created = await runSetup({
+    target: fakeTarget(),
+    options: { ...flags, "admin-password-env": "ADMIN_PASSWORD" },
+    deps,
+    log: (line) => lines.push(line),
+  });
+
+  assert.deepEqual(passwords, [secret]);
+  assert.equal(created.password, null);
+  const output = lines.join("\n");
+  assert.ok(!output.includes(secret));
+  assert.match(output, /with the password you provided/);
+});
+
+test("refuses a missing or short password from the environment", async () => {
+  for (const env of [{}, { ADMIN_PASSWORD: "short" }]) {
+    const deps = fakeDeps({ env });
+    await assert.rejects(
+      runSetup({ target: fakeTarget(), options: { ...flags, "admin-password-env": "ADMIN_PASSWORD" }, deps, log: () => {} }),
+      /ADMIN_PASSWORD must hold a password of at least 12/,
+    );
+    assert.ok(!deps.calls.some(([name]) => name === "createLogin"));
+  }
+});
+
+test("derives the short name without asking when the answers are given with --yes", async () => {
+  const deps = fakeDeps({ ask: async () => { throw new Error("must not ask"); } });
+  const options = { yes: true, "org-name": "Rizal National High School", "admin-email": answers.email, "admin-name": "Maria" };
+
+  await runSetup({ target: fakeTarget(), options, deps, log: () => {} });
+
+  assert.ok(deps.calls.some(([name]) => name === "execute" ));
+  assert.match(deps.calls.find(([name]) => name === "execute")[1], /'rizal-national-high-school'/);
+});
+
 test("builds a slug from a name", () => {
   assert.equal(slugFrom("Rizal National High School"), "rizal-national-high-school");
   assert.equal(slugFrom("  Colegio de San José! "), "colegio-de-san-jose");
