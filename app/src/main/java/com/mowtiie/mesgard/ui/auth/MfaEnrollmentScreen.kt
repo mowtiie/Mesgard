@@ -1,7 +1,6 @@
 package com.mowtiie.mesgard.ui.auth
 
 import android.content.ActivityNotFoundException
-import android.content.Intent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,7 +28,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
@@ -195,9 +193,8 @@ private fun SetupKey(enrollment: MfaEnrollment, snackbarHostState: SnackbarHostS
     }
     OutlinedButton(
         onClick = {
-            val intent = Intent(Intent.ACTION_VIEW, enrollment.uri.toUri())
             try {
-                context.startActivity(intent)
+                context.startActivity(authenticatorIntent(enrollment.uri))
             } catch (_: ActivityNotFoundException) {
                 scope.launch { snackbarHostState.showSnackbar(noAuthenticatorMessage) }
             }
