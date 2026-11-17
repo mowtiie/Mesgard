@@ -9,6 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.domain.model.AuthState
+import com.mowtiie.mesgard.domain.model.MfaStep
+import com.mowtiie.mesgard.ui.auth.MfaCodeRoute
+import com.mowtiie.mesgard.ui.auth.MfaEnrollmentRoute
 import com.mowtiie.mesgard.ui.auth.PasswordChangeRoute
 import com.mowtiie.mesgard.ui.auth.SignInRoute
 import com.mowtiie.mesgard.ui.connectivity.ConnectivityViewModel
@@ -33,6 +36,8 @@ internal fun MesgardApp(
             AuthState.SignedOut -> SignInRoute(onChangeServer = onChangeServer)
             is AuthState.SignedIn -> when {
                 isLocked -> LockScreenRoute()
+                state.mfaStep == MfaStep.VERIFY -> MfaCodeRoute()
+                state.mfaStep == MfaStep.ENROLL -> MfaEnrollmentRoute()
                 state.mustChangePassword -> PasswordChangeRoute()
                 else -> MesgardNavHost(
                     onSignOut = viewModel::onSignOutClicked,
