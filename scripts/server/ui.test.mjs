@@ -15,7 +15,7 @@ test("prints plain words without color when nobody is watching", () => {
   ui.warn("careful");
   ui.error("broken\nTry again.");
 
-  assert.deepEqual(lines, ["[1/2] First", "  [ok] worked", "  [warn] careful", "[FAIL] broken", "  Try again."]);
+  assert.deepEqual(lines, ["[1/2] First", "  [ok]   worked", "  [warn] careful", "[FAIL] broken", "       Try again."]);
   assert.ok(!lines.join("").includes("\u001b"));
 });
 

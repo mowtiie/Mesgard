@@ -1,8 +1,10 @@
 import { randomBytes } from "node:crypto";
 import { CliError } from "./supabase.mjs";
+import { createUi } from "./ui.mjs";
 
 const HOSTS_PATTERN = /^(\*\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*(:\d{1,5})?$/i;
 const SECRET_BYTES = 32;
+const PUSH_STEPS = 3;
 const VERIFY_ATTEMPTS = 6;
 const VERIFY_DELAY_MS = 3000;
 const UNKNOWN_MESSAGE_ID = "00000000-0000-0000-0000-000000000000";
@@ -54,44 +56,53 @@ async function verifyWithRetries(options) {
   return result;
 }
 
-export async function runPush({ target, options, deps, log = console.log }) {
+export async function runPush({ target, options, deps, log = console.log, unicode = false, color = false }) {
+  const ui = createUi({ log, unicode, color });
   if (target.kind !== "hosted") {
-    log("Local stack: supabase/seed.sql already sets up push, so there is nothing to do.");
+    ui.banner("Mesgard push setup", "Local Supabase stack");
+    ui.info("supabase/seed.sql already sets up push locally, so there is nothing to do.");
     return;
   }
+  ui.banner("Mesgard push setup", `Project ${target.ref}`);
+  ui.plan(PUSH_STEPS);
   const rotate = options.rotate === true;
   const [existing] = await target.query("select function_url from private.push_settings");
   const hosts = options["push-hosts"] === undefined ? null : parseHosts(options["push-hosts"]);
 
-  log("Deploying the push function (send-push)");
+  ui.step("Deploying the push function");
   deps.deployFunction(target.ref, "send-push");
+  ui.done("send-push is deployed");
 
+  ui.step("Setting the secret");
   let secret;
   if (existing && !rotate) {
-    log("Push is already set up, so its secret stays. Use --rotate to replace it.");
+    ui.info("Push was already set up, so its secret stays. Use --rotate to replace it.");
     secret = (await target.query("select webhook_secret from private.push_settings"))[0].webhook_secret;
     if (hosts) deps.setSecrets(target.ref, { PUSH_ALLOWED_ENDPOINT_HOSTS: hosts.join(",") });
   } else {
     secret = generateWebhookSecret();
-    log("Setting the function secret and telling the database where the function is");
     const values = { PUSH_WEBHOOK_SECRET: secret };
     if (hosts) values.PUSH_ALLOWED_ENDPOINT_HOSTS = hosts.join(",");
     deps.setSecrets(target.ref, values);
     deps.execute(pushSettingsSql(functionUrlFor(target.url), secret));
+    ui.done("The function has its secret and the database knows where the function is");
   }
 
-  log("Checking that the function and the database agree");
+  ui.step("Checking that the function and the database agree");
   const result = await verifyWithRetries({
     functionUrl: functionUrlFor(target.url),
     secret,
     fetch: deps.fetch,
     wait: deps.wait,
   });
-  if (!result.ok) throw new CliError(`Push is not working yet: ${result.reason}. Run this again, or see docs/push-notifications.md.`);
-  log("Push is ready.");
-  log("");
-  log("Each person installs a push app (for example ntfy) and chooses it in Mesgard under Settings, Notifications.");
-  log(hosts?.length
-    ? `Allowed push servers: ${hosts.join(", ")}`
-    : "No push server list was given, so any public push server is accepted. Pass --push-hosts to restrict it.");
+  if (!result.ok) {
+    throw new CliError(`Push is not working yet: ${result.reason}.
+Run this command again, or see docs/push-notifications.md.`);
+  }
+  ui.done("They agree");
+
+  ui.section("Push is ready");
+  ui.list(["Each person installs a push app (for example ntfy) and chooses it in Mesgard under Settings, Notifications."]);
+  if (hosts?.length) ui.info(`Allowed push servers: ${hosts.join(", ")}`);
+  else ui.warn("Any public push server is accepted. Pass --push-hosts to restrict it to your own.");
 }

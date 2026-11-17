@@ -151,7 +151,7 @@ async function checkOrganizations({ query }) {
 }
 
 async function checkEnforcement({ query }) {
-  const label = "Two-step verification required for administrators and staff";
+  const label = TWO_STEP_LABEL;
   let row;
   try {
     [row] = await query("select enforced from private.mfa_settings");
@@ -159,9 +159,11 @@ async function checkEnforcement({ query }) {
     return result(INFO, label, "Unavailable until the database is up to date");
   }
   return row?.enforced
-    ? result(PASS, "Two-step verification required for administrators and staff")
-    : result(INFO, "Two-step verification required for administrators and staff", "Not enforced yet", "See docs/mfa.md before turning it on.");
+    ? result(PASS, label, "Required")
+    : result(INFO, label, "Off, a password alone is enough", "Turn it on with: update private.mfa_settings set enforced = true; (docs/mfa.md)");
 }
+
+const TWO_STEP_LABEL = "Two-step verification for administrators and staff";
 
 const ERASURE_MODES = {
   keep_messages: "Messages stay as Former member",
@@ -181,14 +183,14 @@ async function checkErasure({ query }) {
 }
 
 async function checkPush({ query, fetch }) {
-  const label = "Push notifications work";
+  const label = "Push notifications";
   let row;
   try {
     [row] = await query("select function_url, webhook_secret from private.push_settings");
   } catch {
     return result(INFO, label, "Unavailable until the database is up to date");
   }
-  if (!row) return result(INFO, label, "Optional, not set up", "Run the push command to set it up (docs/push-notifications.md).");
+  if (!row) return result(INFO, label, "Optional, not set up", "Set it up with: node scripts/server/index.mjs push (docs/push-notifications.md)");
   let outcome;
   try {
     outcome = await checkPushFunction({ functionUrl: row.function_url, secret: row.webhook_secret, fetch });
@@ -196,19 +198,8 @@ async function checkPush({ query, fetch }) {
     return result(WARN, label, "The push function could not be reached from here");
   }
   return outcome.ok
-    ? result(PASS, label)
+    ? result(PASS, label, "Working")
     : result(FAIL, label, outcome.reason, "Run the push command again, with --rotate if the secrets differ.");
-}
-
-const SYMBOLS = { [PASS]: "[ok]  ", [WARN]: "[warn]", [FAIL]: "[FAIL]", [INFO]: "[info]" };
-
-export function formatReport(results) {
-  const lines = results.flatMap((entry) => {
-    const detail = entry.detail ? ` (${entry.detail})` : "";
-    const hint = entry.hint && entry.status !== PASS ? [`        ${entry.hint}`] : [];
-    return [`${SYMBOLS[entry.status]} ${entry.label}${detail}`, ...hint];
-  });
-  return lines.join("\n");
 }
 
 export function hasFailure(results) {

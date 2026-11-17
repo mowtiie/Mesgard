@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { AUTH_SETTINGS_TOML, declaredChanges, describeChange } from "./auth-settings.mjs";
 import { parseArgs } from "./args.mjs";
-import { FAIL, INFO, PASS, WARN, formatReport, hasFailure, missingMigrations, requiredApiLevel, runChecks } from "./checks.mjs";
+import { printReport } from "./doctor.mjs";
+import { createUi } from "./ui.mjs";
+import { FAIL, INFO, PASS, WARN, hasFailure, missingMigrations, requiredApiLevel, runChecks } from "./checks.mjs";
 import { extractJson, rowsOf, CliError } from "./supabase.mjs";
 import { isProjectRef, publicKeyOf, secretKeyOf } from "./target.mjs";
 
@@ -42,7 +44,7 @@ test("a healthy server passes every required check", async () => {
   assert.equal(hasFailure(results), false);
   assert.equal(statusOf(results, "Server reachable"), PASS);
   assert.equal(statusOf(results, "Database is up to date"), PASS);
-  assert.equal(statusOf(results, "Two-step verification required for administrators and staff"), INFO);
+  assert.equal(statusOf(results, "Two-step verification for administrators and staff"), INFO);
 });
 
 test("missing migrations fail and say how many", async () => {
@@ -65,7 +67,7 @@ test("a server without server_info, or with a lower level, is too old for the ap
 });
 
 test("push is optional when not set up, and a mismatched secret is a failure", async () => {
-  const label = "Push notifications work";
+  const label = "Push notifications";
   assert.equal(statusOf(await runChecks(context()), label), INFO);
 
   const withRow = (status) => context({
@@ -128,7 +130,7 @@ test("enforcement is not an error on a database that predates it", async () => {
     },
   }));
 
-  assert.equal(statusOf(results, "Two-step verification required for administrators and staff"), INFO);
+  assert.equal(statusOf(results, "Two-step verification for administrators and staff"), INFO);
 });
 
 test("auth setting differences are warnings and the local stack skips them", async () => {
@@ -139,15 +141,33 @@ test("auth setting differences are warnings and the local stack skips them", asy
   assert.equal(statusOf(local, "Auth settings match"), INFO);
 });
 
+function report(results) {
+  const lines = [];
+  printReport(createUi({ log: (line) => lines.push(line) }), results);
+  return lines.join("\n");
+}
+
 test("the report lists each check and hints only when something needs doing", () => {
-  const text = formatReport([
+  const text = report([
     { status: PASS, label: "A", detail: "", hint: "ignored" },
     { status: FAIL, label: "B", detail: "broken", hint: "Fix it." },
   ]);
 
   assert.match(text, /\[ok\]\s+A$/m);
-  assert.match(text, /\[FAIL\] B \(broken\)\n\s+Fix it\./);
+  assert.match(text, /\[FAIL\] B {2}broken\n\s+Fix it\./);
   assert.ok(!text.includes("ignored"));
+});
+
+test("the report ends with a sentence that matches what was found", () => {
+  assert.match(report([{ status: PASS, label: "A", detail: "", hint: "" }]), /Everything required is working\./);
+  assert.match(report([{ status: WARN, label: "A", detail: "", hint: "" }]), /Working, with 1 warning to look at\./);
+  assert.match(report([{ status: FAIL, label: "A", detail: "", hint: "" }, { status: FAIL, label: "B", detail: "", hint: "" }]), /2 checks failed\./);
+});
+
+test("an off two-step setting names the statement that turns it on", async () => {
+  const results = await runChecks(context());
+
+  assert.match(results.find((entry) => entry.label.startsWith("Two-step")).hint, /update private\.mfa_settings set enforced = true;/);
 });
 
 test("only declared auth settings count as differences", () => {

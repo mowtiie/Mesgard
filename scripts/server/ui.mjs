@@ -1,7 +1,7 @@
 const ANSI = { bold: "\u001b[1m", dim: "\u001b[2m", red: "\u001b[31m", green: "\u001b[32m", yellow: "\u001b[33m", cyan: "\u001b[36m" };
 const RESET = "\u001b[0m";
 const UNICODE_SYMBOLS = { done: "✓", fail: "✗", warn: "!", info: "i" };
-const PLAIN_SYMBOLS = { done: "[ok]", fail: "[FAIL]", warn: "[warn]", info: "[info]" };
+const PLAIN_SYMBOLS = { done: "[ok]  ", fail: "[FAIL]", warn: "[warn]", info: "[info]" };
 
 /** Color and symbols only when a person is watching, and never when NO_COLOR is set. */
 export function detectOutput({ stream = process.stdout, env = process.env } = {}) {
@@ -16,6 +16,7 @@ export function detectOutput({ stream = process.stdout, env = process.env } = {}
 export function createUi({ log = console.log, unicode = false, color = false } = {}) {
   const paint = (style, text) => (color ? `${ANSI[style]}${text}${RESET}` : text);
   const symbols = unicode ? UNICODE_SYMBOLS : PLAIN_SYMBOLS;
+  const textIndent = " ".repeat(3 + symbols.done.length);
   const line = (style, kind, text) => log(`  ${paint(style, symbols[kind])} ${text}`);
   let total = 0;
   let current = 0;
@@ -41,7 +42,13 @@ export function createUi({ log = console.log, unicode = false, color = false } =
     done: (text) => line("green", "done", text),
     info: (text) => line("cyan", "info", text),
     warn: (text) => line("yellow", "warn", text),
-    detail: (text) => log(`      ${paint("dim", text)}`),
+    problem: (text) => line("red", "fail", text),
+    detail: (text) => log(`${textIndent}${paint("dim", text)}`),
+    /** One line of a checklist: the label, then what was found in a dimmer color. */
+    result(kind, label, found) {
+      const style = { done: "green", info: "cyan", warn: "yellow", fail: "red" }[kind];
+      log(`  ${paint(style, symbols[kind])} ${label}${found ? `  ${paint("dim", found)}` : ""}`);
+    },
     rows(entries) {
       const width = Math.max(...entries.map(([label]) => label.length));
       for (const [label, value, note] of entries) {
@@ -55,7 +62,7 @@ export function createUi({ log = console.log, unicode = false, color = false } =
     error(message) {
       const [first, ...rest] = message.split("\n");
       log(`${paint("red", symbols.fail)} ${first}`);
-      rest.forEach((text) => log(`  ${text}`));
+      rest.forEach((text) => log(text === "" ? "" : `${" ".repeat(symbols.fail.length + 1)}${text}`));
     },
   };
 }

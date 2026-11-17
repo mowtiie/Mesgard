@@ -50,16 +50,15 @@ async function main() {
     repositoryRoot,
   });
   if (command === "push") {
-    await runPush({ target, options, deps: realTools(target, repositoryRoot) });
+    await runPush({ target, options, deps: realTools(target, repositoryRoot), ...output });
     process.exitCode = 0;
   } else if (command === "setup") {
     const tools = realTools(target, repositoryRoot);
     const deps = { ...tools, createLogin, secretKey: () => target.revealSecretKey() };
     await runSetup({ target, options, deps, ...output });
-    if (options["with-push"] === true) await runPush({ target, options, deps: tools });
-    console.log("\nChecking the server");
-    process.exitCode = await runDoctor({ target, repositoryRoot });
-  } else if (command === "doctor") process.exitCode = await runDoctor({ target, repositoryRoot });
+    if (options["with-push"] === true) await runPush({ target, options, deps: tools, ...output });
+    process.exitCode = await runDoctor({ target, repositoryRoot, embedded: true, ...output });
+  } else if (command === "doctor") process.exitCode = await runDoctor({ target, repositoryRoot, ...output });
   else throw new CliError(`Unknown command: ${command}\n\n${HELP}`);
 }
 
