@@ -18,7 +18,7 @@ import io.github.jan.supabase.exceptions.RestException
 import java.io.IOException
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -32,8 +32,9 @@ internal class SupabaseAuthRepository @Inject constructor(
     private val auth: Auth,
     private val localDataEraser: LocalDataEraser,
     private val passwordSource: PasswordRemoteSource,
+    private val mfaStepResolver: MfaStepResolver,
 ) : AuthRepository {
-    override val authState: Flow<AuthState> = auth.sessionStatus.map(::toAuthState)
+    override val authState: Flow<AuthState> = auth.sessionStatus.mapLatest(::toAuthState)
 
     override val currentUserId: String?
         get() = auth.currentUserOrNull()?.id
@@ -78,19 +79,17 @@ internal class SupabaseAuthRepository @Inject constructor(
         PasswordChangeResult.Failure(PasswordChangeError.NETWORK_UNAVAILABLE)
     }
 
-    private fun toAuthState(status: SessionStatus): AuthState = when (status) {
+    private suspend fun toAuthState(status: SessionStatus): AuthState = when (status) {
         SessionStatus.Initializing -> AuthState.Loading
         is SessionStatus.Authenticated -> signedInOrSignedOut(status.session.user)
         is SessionStatus.RefreshFailure -> signedInOrSignedOut(auth.currentSessionOrNull()?.user)
         is SessionStatus.NotAuthenticated -> AuthState.SignedOut
     }
 
-    private fun signedInOrSignedOut(user: UserInfo?): AuthState = if (user ==
-        null
-    ) {
+    private suspend fun signedInOrSignedOut(user: UserInfo?): AuthState = if (user == null) {
         AuthState.SignedOut
     } else {
-        AuthState.SignedIn(user.id, user.appMetadata.requiresPasswordChange())
+        AuthState.SignedIn(user.id, user.appMetadata.requiresPasswordChange(), mfaStepResolver.resolve(user))
     }
 
     private fun toPasswordChangeError(exception: RestException): PasswordChangeError = when (exception.error) {

@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.mowtiie.mesgard.domain.lock.AppLock
 import com.mowtiie.mesgard.domain.model.AuthState
 import com.mowtiie.mesgard.domain.model.DeviceSettings
+import com.mowtiie.mesgard.domain.model.MfaStep
 import com.mowtiie.mesgard.domain.presence.PresenceTracker
 import com.mowtiie.mesgard.domain.push.PushRegistration
 import com.mowtiie.mesgard.domain.repository.AuthRepository
@@ -85,6 +86,19 @@ class AppViewModelTest {
         authStates.emit(AuthState.SignedOut)
         verify(atLeast = 1) { realtimeSync.stop() }
         verify(atLeast = 1) { presenceTracker.stop() }
+    }
+
+    @Test
+    fun `keeps realtime sync off until the second factor is verified`() = runTest {
+        viewModel()
+
+        authStates.emit(AuthState.SignedIn(USER_ID, mfaStep = MfaStep.VERIFY))
+        verify(exactly = 0) { realtimeSync.start(any()) }
+        verify(exactly = 0) { presenceTracker.start(any()) }
+        coVerify(exactly = 0) { pushRegistration.start() }
+
+        authStates.emit(AuthState.SignedIn(USER_ID, mfaStep = MfaStep.NONE))
+        verify(exactly = 1) { realtimeSync.start(any()) }
     }
 
     @Test

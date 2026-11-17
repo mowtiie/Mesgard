@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mowtiie.mesgard.domain.lock.AppLock
 import com.mowtiie.mesgard.domain.model.AuthState
+import com.mowtiie.mesgard.domain.model.MfaStep
 import com.mowtiie.mesgard.domain.presence.PresenceTracker
 import com.mowtiie.mesgard.domain.push.PushRegistration
 import com.mowtiie.mesgard.domain.repository.AuthRepository
@@ -46,7 +47,7 @@ internal class AppViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.authState.collect { state ->
                 when (state) {
-                    is AuthState.SignedIn -> startRealtime()
+                    is AuthState.SignedIn -> if (state.mfaStep == MfaStep.NONE) startRealtime() else stopRealtime()
                     AuthState.SignedOut -> stopWhenSignedOut()
                     AuthState.Loading -> Unit
                 }
@@ -60,9 +61,13 @@ internal class AppViewModel @Inject constructor(
         viewModelScope.launch { pushRegistration.start() }
     }
 
-    private fun stopWhenSignedOut() {
+    private fun stopRealtime() {
         realtimeSync.stop()
         presenceTracker.stop()
+    }
+
+    private fun stopWhenSignedOut() {
+        stopRealtime()
         appLock.unlock()
     }
 
