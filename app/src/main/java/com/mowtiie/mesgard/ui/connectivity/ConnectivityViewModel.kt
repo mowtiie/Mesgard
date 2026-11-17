@@ -7,6 +7,7 @@ import com.mowtiie.mesgard.domain.network.ConnectivityMonitor
 import com.mowtiie.mesgard.domain.sync.RealtimeSync
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,7 @@ internal class ConnectivityViewModel @Inject constructor(monitor: ConnectivityMo
      * A problem is reported only after it has lasted for a moment, so a brief network change or a reconnection
      * shows nothing. Recovery is reported at once.
      */
+    @OptIn(ExperimentalCoroutinesApi::class)
     val status: StateFlow<ConnectionStatus> = combine(monitor.isOnline, realtimeSync.isConnected) { online, connected ->
         when {
             !online -> ConnectionStatus.OFFLINE

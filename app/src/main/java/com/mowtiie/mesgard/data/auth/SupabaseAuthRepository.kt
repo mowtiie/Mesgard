@@ -17,6 +17,7 @@ import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.exceptions.RestException
 import java.io.IOException
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.serialization.json.JsonObject
@@ -34,6 +35,7 @@ internal class SupabaseAuthRepository @Inject constructor(
     private val passwordSource: PasswordRemoteSource,
     private val mfaStepResolver: MfaStepResolver,
 ) : AuthRepository {
+    @OptIn(ExperimentalCoroutinesApi::class)
     override val authState: Flow<AuthState> = auth.sessionStatus.mapLatest(::toAuthState)
 
     override val currentUserId: String?

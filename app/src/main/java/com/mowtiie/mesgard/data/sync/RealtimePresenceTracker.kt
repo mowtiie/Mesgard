@@ -9,6 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -54,6 +55,7 @@ internal class RealtimePresenceTracker @Inject constructor(
         mutableOnlineUserIds.value = emptySet()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun trackPresence() {
         val userId = authRepository.currentUserId ?: return
         flow { emit(source.fetchOrganizationIds(userId)) }
