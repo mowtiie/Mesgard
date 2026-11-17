@@ -145,7 +145,7 @@ async function checkOrganizations({ query }) {
     return result(FAIL, "Organization and administrator exist", "No organization yet", "Run setup to create the first one.");
   }
   if (counts.admins === 0) {
-    return result(FAIL, "Organization and administrator exist", "No administrator", "Add one as described in README.md, Setting up the backend by hand.");
+    return result(FAIL, "Organization and administrator exist", "No administrator", "Add one as described in README.md, For developers, Setting up the backend by hand.");
   }
   return result(PASS, "Organization and administrator exist", `${counts.organizations} organization(s), ${counts.admins} administrator(s)`);
 }
