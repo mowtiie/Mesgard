@@ -54,7 +54,7 @@ select tests.authenticate_as(tests.seed_id('20', 'a', 1), 'aal2');
 select lives_ok('select public.complete_password_change()', 'an aal2 administrator can complete a password change');
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 4), 'aal1');
-select lives_ok('select public.complete_password_change()', 'a student without a factor is not held to two-step verification');
+select lives_ok('select public.complete_password_change()', 'a member without a factor is not held to two-step verification');
 
 select * from finish();
 rollback;

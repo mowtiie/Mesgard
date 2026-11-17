@@ -1,7 +1,7 @@
 begin;
 select plan(8);
 
--- Seed: the direct conversation 40-a-01 is between staff one (a02) and student one (a04), who has written in it.
+-- Seed: the direct conversation 40-a-01 is between staff one (a02) and member one (a04), who has written in it.
 reset role;
 delete from public.org_members
 where org_id = tests.seed_id('10', 'a', 0) and user_id = tests.seed_id('20', 'a', 4);

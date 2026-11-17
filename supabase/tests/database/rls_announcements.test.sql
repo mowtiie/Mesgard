@@ -10,7 +10,7 @@ select throws_ok(
   ),
   '42501',
   null,
-  'a student cannot post in an announcement conversation'
+  'a member cannot post in an announcement conversation'
 );
 select throws_ok(
   format(
@@ -20,7 +20,7 @@ select throws_ok(
   ),
   '42501',
   null,
-  'a student cannot create an announcement conversation'
+  'a member cannot create an announcement conversation'
 );
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 2));

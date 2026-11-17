@@ -2,7 +2,7 @@ begin;
 select plan(20);
 
 
--- Message 2 is sent by staff one in a direct conversation with student one, who has a device token.
+-- Message 2 is sent by staff one in a direct conversation with member one, who has a device token.
 select tests.authenticate_as_anonymous();
 reset role;
 set local role service_role;

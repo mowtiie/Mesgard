@@ -47,7 +47,7 @@ select throws_ok(
   format('select public.create_group_conversation(%L)', tests.seed_id('30', 'a', 3)),
   '42501',
   null,
-  'a student cannot start a group conversation'
+  'a member cannot start a group conversation'
 );
 
 select tests.authenticate_as(tests.seed_id('20', 'b', 2));

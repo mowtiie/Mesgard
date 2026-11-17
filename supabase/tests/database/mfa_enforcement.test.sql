@@ -48,23 +48,23 @@ insert into auth.mfa_factors (id, user_id, factor_type, status, created_at, upda
 values (gen_random_uuid(), tests.seed_id('20', 'a', 4), 'totp', 'unverified', now(), now());
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 4), 'aal1');
-select is(pg_temp.visible_members(), 6, 'an unverified factor does not hold a student to aal2');
+select is(pg_temp.visible_members(), 6, 'an unverified factor does not hold a member to aal2');
 
 reset role;
 update auth.mfa_factors set status = 'verified' where user_id = tests.seed_id('20', 'a', 4);
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 4), 'aal1');
-select is(public.is_mfa_required(), true, 'a student with a verified factor is required to verify');
-select is(pg_temp.visible_members(), 0, 'a student with a verified factor sees nothing at aal1');
+select is(public.is_mfa_required(), true, 'a member with a verified factor is required to verify');
+select is(pg_temp.visible_members(), 0, 'a member with a verified factor sees nothing at aal1');
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 4), 'aal2');
-select is(pg_temp.visible_members(), 6, 'a student with a verified factor sees the roster at aal2');
+select is(pg_temp.visible_members(), 6, 'a member with a verified factor sees the roster at aal2');
 
 reset role;
 update private.mfa_settings set enforced = false;
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 4), 'aal1');
-select is(pg_temp.visible_members(), 0, 'a verified factor holds a student even while enforcement is off');
+select is(pg_temp.visible_members(), 0, 'a verified factor holds a member even while enforcement is off');
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 2), 'aal1');
 select is(public.is_mfa_required(), false, 'turning enforcement off releases staff without a factor');

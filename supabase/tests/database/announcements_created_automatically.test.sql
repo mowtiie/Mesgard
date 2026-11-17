@@ -29,7 +29,7 @@ select is(
 );
 
 insert into public.org_members (org_id, user_id, role)
-values ('00000000-0000-4000-8000-00000000f001', tests.seed_id('20', 'a', 4), 'student');
+values ('00000000-0000-4000-8000-00000000f001', tests.seed_id('20', 'a', 4), 'member');
 
 select is(
   (select count(*)::int from public.conversations

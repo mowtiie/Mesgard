@@ -4,7 +4,7 @@ select plan(15);
 -- A change made without a signed in user (a migration, a cascade, the service role) is not an admin action.
 reset role;
 insert into public.org_members (org_id, user_id, role)
-values (tests.seed_id('10', 'a', 0), tests.seed_id('20', 'b', 3), 'student');
+values (tests.seed_id('10', 'a', 0), tests.seed_id('20', 'b', 3), 'member');
 select is(
   (select count(*)::int from public.audit_logs where action = 'member.added'),
   0,
@@ -13,14 +13,14 @@ select is(
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 1));
 insert into public.org_members (org_id, user_id, role)
-values (tests.seed_id('10', 'a', 0), tests.seed_id('20', 'b', 4), 'student');
+values (tests.seed_id('10', 'a', 0), tests.seed_id('20', 'b', 4), 'member');
 select results_eq(
   format(
     $$select actor_id, target_id, metadata ->> 'role' from public.audit_logs
       where action = 'member.added' and target_id = %L$$,
     tests.seed_id('20', 'b', 4)
   ),
-  format($$values (%L::uuid, %L::uuid, 'student')$$, tests.seed_id('20', 'a', 1), tests.seed_id('20', 'b', 4)),
+  format($$values (%L::uuid, %L::uuid, 'member')$$, tests.seed_id('20', 'a', 1), tests.seed_id('20', 'b', 4)),
   'adding a member records who did it and the role'
 );
 
@@ -32,7 +32,7 @@ select results_eq(
       where action = 'member.role_changed' and target_id = %L$$,
     tests.seed_id('20', 'b', 4)
   ),
-  $$values ('student', 'staff')$$,
+  $$values ('member', 'staff')$$,
   'changing a role records the old and the new role'
 );
 
@@ -125,7 +125,7 @@ select is(
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 1));
 insert into public.org_members (org_id, user_id, role)
-values (tests.seed_id('10', 'a', 0), tests.seed_id('20', 'b', 5), 'student');
+values (tests.seed_id('10', 'a', 0), tests.seed_id('20', 'b', 5), 'member');
 select ok(
   exists (
     select 1 from public.conversation_participants

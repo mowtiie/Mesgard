@@ -13,9 +13,9 @@ select * from (values
   (1, 'org_admin', 'admin', 'Admin'),
   (2, 'staff', 'staff1', 'Staff One'),
   (3, 'staff', 'staff2', 'Staff Two'),
-  (4, 'student', 'student1', 'Student One'),
-  (5, 'student', 'student2', 'Student Two'),
-  (6, 'student', 'student3', 'Student Three')
+  (4, 'member', 'student1', 'Student One'),
+  (5, 'member', 'student2', 'Student Two'),
+  (6, 'member', 'student3', 'Student Three')
 ) as member (number, role, local_part, display_name);
 
 create temporary table seed_ids as

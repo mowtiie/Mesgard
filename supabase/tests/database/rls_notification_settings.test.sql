@@ -51,7 +51,7 @@ select is_empty(
     $$update public.organizations set notification_preview_default = 'hidden' where id = %L returning 1$$,
     tests.seed_id('10', 'a', 0)
   ),
-  'a student cannot change the organization default'
+  'a member cannot change the organization default'
 );
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 1));

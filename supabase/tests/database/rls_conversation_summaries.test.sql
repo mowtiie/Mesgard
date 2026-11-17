@@ -56,7 +56,7 @@ select is(
 select is(
   (select can_post from public.list_conversation_summaries() where conversation_id = tests.seed_id('40', 'a', 3)),
   false,
-  'a student cannot post in an announcement conversation'
+  'a member cannot post in an announcement conversation'
 );
 select is(
   (select can_post from public.list_conversation_summaries() where conversation_id = tests.seed_id('40', 'a', 2)),
