@@ -11,7 +11,7 @@ const LOWER = "abcdefghijkmnopqrstuvwxyz";
 const UPPER = "ABCDEFGHJKLMNPQRSTUVWXYZ";
 const DIGITS = "23456789";
 
-/** "Rizal National High School" becomes "rizal-national-high-school". */
+/** "Example Organization" becomes "example-organization". */
 export function slugFrom(name) {
   return name
     .normalize("NFKD")

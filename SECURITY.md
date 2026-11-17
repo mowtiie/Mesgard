@@ -1,6 +1,6 @@
 # Security Policy
 
-Mesgard handles messages for schools and other institutions, so security reports are taken seriously.
+Mesgard handles messages for organizations such as companies, schools and agencies, so security reports are taken seriously.
 
 ## Supported versions
 

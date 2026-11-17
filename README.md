@@ -4,9 +4,9 @@
 
 # Mesgard
 
-**Your campus. Your chat. Your server.**
+**Your team. Your chat. Your server.**
 
-A free, open-source messaging app for schools and other institutions. People chat in an Android app, and every message is stored on a server that **you** own and control.
+A free, open-source messaging app for any organization: a company, a school, a clinic, a club or an agency. People chat in an Android app, and every message is stored on a server that **you** own and control.
 
 ![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)
 
@@ -76,7 +76,7 @@ Not run on GitHub yet, so treat it as untested.
 
 People enter a 6-digit code from an authenticator app when they sign in. The server enforces it, not just the app.
 
-- **Who:** administrators and staff when it is required. Students can turn it on themselves in **Settings, Account**.
+- **Who:** administrators and staff when it is required. Everyone else can turn it on themselves in **Settings, Account**.
 - **New server:** the setup asks, and yes is the default.
 - **Existing server:** set up your own first in **Settings, Account**, then run this in the Supabase SQL Editor:
   ```sql
@@ -91,7 +91,7 @@ Run in the SQL Editor to remove their factor:
 
 ```sql
 delete from auth.mfa_factors
-where user_id = (select id from auth.users where email = 'admin@school.example');
+where user_id = (select id from auth.users where email = 'admin@example.org');
 ```
 
 To turn the requirement off for everyone for a while:
@@ -106,10 +106,10 @@ update private.mfa_settings set enforced = false;
 
 Optional. Without it, messages arrive only while the app is open.
 
-1. Run `node scripts/server/index.mjs push --project-ref <project ref>`. Add `--push-hosts ntfy.school.edu` to allow only your own push server.
+1. Run `node scripts/server/index.mjs push --project-ref <project ref>`. Add `--push-hosts ntfy.example.org` to allow only your own push server.
 2. On each phone, install a push app such as ntfy and choose it in **Settings, Notifications**.
 
-An institution can run its own push server, so notifications also work on a campus network with no internet. Each person chooses what a notification shows: sender and text, sender only (default), or nothing.
+An institution can run its own push server, so notifications also work on an internal network with no internet. Each person chooses what a notification shows: sender and text, sender only (default), or nothing.
 
 ## Removing and erasing people
 
@@ -206,13 +206,13 @@ In the dashboard under **Authentication**, keep Email on, turn public sign-ups o
 ```sql
 with new_organization as (
   insert into public.organizations (name, slug)
-  values ('Rizal National High School', 'rnhs')
+  values ('Example Organization', 'example')
   returning id
 )
 insert into public.org_members (org_id, user_id, role)
 select new_organization.id, users.id, 'org_admin'
 from new_organization, auth.users as users
-where users.email = 'admin@school.example';
+where users.email = 'admin@example.org';
 ```
 
 </details>
