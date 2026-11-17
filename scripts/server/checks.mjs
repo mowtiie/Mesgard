@@ -40,6 +40,7 @@ export async function runChecks(context) {
     () => checkAuthSettings(context),
     () => checkOrganizations(context),
     () => checkEnforcement(context),
+    () => checkErasure(context),
     () => checkPush(context),
   ];
   const results = [];
@@ -160,6 +161,23 @@ async function checkEnforcement({ query }) {
   return row?.enforced
     ? result(PASS, "Two-step verification required for administrators and staff")
     : result(INFO, "Two-step verification required for administrators and staff", "Not enforced yet", "See docs/mfa.md before turning it on.");
+}
+
+const ERASURE_MODES = {
+  keep_messages: "Messages stay as Former member",
+  blank_messages: "Messages are erased too",
+  off: "Erasing is not offered",
+};
+
+async function checkErasure({ query }) {
+  const label = "What erasing a person does on this server";
+  let row;
+  try {
+    [row] = await query("select mode from private.erasure_settings");
+  } catch {
+    return result(INFO, label, "Unavailable until the database is up to date");
+  }
+  return result(INFO, label, ERASURE_MODES[row?.mode] ?? "Unknown mode", "See docs/erasure.md to change it.");
 }
 
 async function checkPush({ query, fetch }) {

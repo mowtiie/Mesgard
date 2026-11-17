@@ -13,6 +13,7 @@ function context(overrides = {}) {
     "supabase_migrations.schema_migrations": [{ version: "20260101000000" }],
     "public.organizations": [{ organizations: 1, admins: 1 }],
     "private.mfa_settings": [{ enforced: false }],
+    "private.erasure_settings": [{ mode: "keep_messages" }],
     "private.push_settings": [],
   };
   return {
@@ -78,6 +79,20 @@ test("push is optional when not set up, and a mismatched secret is a failure", a
   assert.equal(statusOf(await runChecks(withRow(200)), label), PASS);
   assert.equal(statusOf(await runChecks(withRow(401)), label), FAIL);
   assert.equal(statusOf(await runChecks(withRow(404)), label), FAIL);
+});
+
+test("the erasure mode is shown, and a database that predates it is not an error", async () => {
+  const label = "What erasing a person does on this server";
+  const shown = await runChecks(context());
+  assert.equal(statusOf(shown, label), INFO);
+  assert.match(shown.find((entry) => entry.label === label).detail, /Former member/);
+
+  const blank = await runChecks(context({ query: async (sql) => sql.includes("erasure_settings") ? [{ mode: "blank_messages" }] : context().query(sql) }));
+  assert.match(blank.find((entry) => entry.label === label).detail, /erased too/);
+
+  const old = await runChecks(context({ query: async (sql) => { if (sql.includes("erasure_settings")) throw new Error("no table"); return context().query(sql); } }));
+  assert.equal(statusOf(old, label), INFO);
+  assert.match(old.find((entry) => entry.label === label).detail, /Unavailable/);
 });
 
 test("an undeployed function fails and a protected one passes", async () => {
