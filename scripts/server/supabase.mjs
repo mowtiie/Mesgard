@@ -18,12 +18,20 @@ export function runSupabase(args, { workdir, inherit = false } = {}) {
   return { status: result.status ?? 1, stdout: result.stdout ?? "", stderr: result.stderr ?? "" };
 }
 
-/** The CLI prints a target line and update notices around its JSON, so the object is cut out of the text. */
+/** The CLI prints a target line and update notices around its JSON, so the object or array is cut out of the text. */
 export function extractJson(text) {
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
+  const objectStart = text.indexOf("{");
+  const arrayStart = text.indexOf("[");
+  const isArray = arrayStart !== -1 && (objectStart === -1 || arrayStart < objectStart);
+  const start = isArray ? arrayStart : objectStart;
+  const end = text.lastIndexOf(isArray ? "]" : "}");
   if (start === -1 || end < start) throw new CliError("The Supabase CLI did not return JSON.");
   return JSON.parse(text.slice(start, end + 1));
+}
+
+/** A query answers with an object that has `rows` when an agent runs it and with the bare array otherwise. */
+export function rowsOf(json) {
+  return Array.isArray(json) ? json : json.rows;
 }
 
 export function runSupabaseJson(args, options) {

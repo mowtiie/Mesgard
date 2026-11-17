@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { CliError, runSupabaseJson } from "./supabase.mjs";
+import { CliError, rowsOf, runSupabaseJson } from "./supabase.mjs";
 
 const PROJECT_REF_PATTERN = /^[a-z]{20}$/;
 
@@ -40,7 +40,7 @@ export function resolveTarget({ local, projectRef, repositoryRoot }) {
     url: `https://${ref}.supabase.co`,
     publicKey: () => publicKeyOf(keys()),
     revealSecretKey: () => secretKeyOf(runSupabaseJson(["projects", "api-keys", remote, "--reveal"]).keys),
-    query: (sql) => runSupabaseJson(["db", "query", remote, "--read-only", sql]).rows,
+    query: (sql) => rowsOf(runSupabaseJson(["db", "query", remote, "--read-only", sql])),
     remoteFlag: remote,
   };
 }
@@ -53,7 +53,7 @@ function localTarget() {
     url: status().API_URL,
     publicKey: () => status().PUBLISHABLE_KEY ?? status().ANON_KEY,
     revealSecretKey: () => status().SECRET_KEY ?? status().SERVICE_ROLE_KEY,
-    query: (sql) => runSupabaseJson(["db", "query", "--read-only", sql]).rows,
+    query: (sql) => rowsOf(runSupabaseJson(["db", "query", "--read-only", sql])),
     remoteFlag: null,
   };
 }

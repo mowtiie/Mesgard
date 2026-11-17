@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { AUTH_SETTINGS_TOML, declaredChanges, describeChange } from "./auth-settings.mjs";
 import { parseArgs } from "./args.mjs";
 import { FAIL, INFO, PASS, WARN, formatReport, hasFailure, missingMigrations, requiredApiLevel, runChecks } from "./checks.mjs";
-import { extractJson, CliError } from "./supabase.mjs";
+import { extractJson, rowsOf, CliError } from "./supabase.mjs";
 import { isProjectRef, publicKeyOf, secretKeyOf } from "./target.mjs";
 
 const healthySettings = { external: { email: true }, disable_signup: true };
@@ -163,6 +163,13 @@ test("only declared auth settings count as differences", () => {
 test("reads the JSON the CLI prints between its notices", () => {
   assert.deepEqual(extractJson('Target: project x\n{\n "rows": [{"a": 1}]\n}\nA new version is available'), { rows: [{ a: 1 }] });
   assert.throws(() => extractJson("nothing here"), CliError);
+});
+
+test("reads query rows whether the CLI prints an object with rows or a bare array", () => {
+  const agentOutput = 'Target: project x\n{\n "rows": [{"organizations": 0}],\n "warning": "untrusted [data]"\n}\n';
+  const personOutput = 'Target: project x\n[\n {"organizations": 0}\n]\nA new version is available';
+  assert.deepEqual(rowsOf(extractJson(agentOutput)), [{ organizations: 0 }]);
+  assert.deepEqual(rowsOf(extractJson(personOutput)), [{ organizations: 0 }]);
 });
 
 test("picks the public and the secret key and validates a project ref", () => {
