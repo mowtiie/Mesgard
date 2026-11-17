@@ -62,7 +62,7 @@ This workflow has not been run on GitHub yet. The script it runs is tested, and 
 node scripts/server/index.mjs doctor
 ```
 
-It only reads. It reports whether the server is reachable over HTTPS, public sign-ups are off, the migrations are all applied, `admin-users` is deployed, the Auth settings match, an organization and an administrator exist, and whether two-step verification enforcement and push notifications are set up. Each line that needs attention says what to do. Add `--project-ref <ref>` for a project other than the linked one, or `--local` for the local stack.
+It only reads. It reports whether the server is reachable over HTTPS, public sign-ups are off, the migrations are all applied, the server is new enough for the app, `admin-users` is deployed, the Auth settings match, an organization and an administrator exist, and whether two-step verification enforcement and push notifications are set up. Each line that needs attention says what to do. Add `--project-ref <ref>` for a project other than the linked one, or `--local` for the local stack.
 
 ## Updating
 

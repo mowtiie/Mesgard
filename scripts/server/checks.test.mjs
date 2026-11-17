@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { AUTH_SETTINGS_TOML, declaredChanges, describeChange } from "./auth-settings.mjs";
 import { parseArgs } from "./args.mjs";
-import { FAIL, INFO, PASS, WARN, formatReport, hasFailure, missingMigrations, runChecks } from "./checks.mjs";
+import { FAIL, INFO, PASS, WARN, formatReport, hasFailure, missingMigrations, requiredApiLevel, runChecks } from "./checks.mjs";
 import { extractJson, CliError } from "./supabase.mjs";
 import { isProjectRef, publicKeyOf, secretKeyOf } from "./target.mjs";
 
@@ -20,12 +20,15 @@ function context(overrides = {}) {
     isLocal: false,
     publicKey: "sb_publishable_x",
     localVersions: ["20260101000000"],
+    requiredApiLevel: 1,
     readAuthDifferences: async () => [],
     query: async (sql) => answers[Object.keys(answers).find((key) => sql.includes(key))],
     fetch: async (address) =>
       address.endsWith("/settings")
         ? { ok: true, status: 200, json: async () => healthySettings }
-        : { ok: true, status: 401 },
+        : address.endsWith("/server_info")
+          ? { ok: true, status: 200, json: async () => ({ api_level: 1 }) }
+          : { ok: true, status: 401 },
     ...overrides,
   };
 }
@@ -46,6 +49,18 @@ test("missing migrations fail and say how many", async () => {
 
   assert.equal(statusOf(results, "Database is up to date"), FAIL);
   assert.deepEqual(missingMigrations(["1", "2", "3"], ["2"]), ["1", "3"]);
+});
+
+test("a server without server_info, or with a lower level, is too old for the app", async () => {
+  const older = (status, level) => async (address) => {
+    if (address.endsWith("/settings")) return { ok: true, status: 200, json: async () => healthySettings };
+    if (address.endsWith("/server_info")) return { ok: status === 200, status, json: async () => ({ api_level: level }) };
+    return { ok: true, status: 401 };
+  };
+
+  assert.equal(statusOf(await runChecks(context({ fetch: older(404) })), "Server is new enough for the app"), FAIL);
+  assert.equal(statusOf(await runChecks(context({ fetch: older(200, 0), requiredApiLevel: 1 })), "Server is new enough for the app"), FAIL);
+  assert.equal(statusOf(await runChecks(context({ fetch: older(200, 2), requiredApiLevel: 1 })), "Server is new enough for the app"), PASS);
 });
 
 test("an undeployed function fails and a protected one passes", async () => {
@@ -135,4 +150,7 @@ test("picks the public and the secret key and validates a project ref", () => {
 test("reads commands and options", () => {
   assert.deepEqual(parseArgs(["doctor", "--local", "--project-ref", "abc"]), { command: "doctor", options: { local: true, "project-ref": "abc" } });
   assert.throws(() => parseArgs(["doctor", "stray"]));
+});
+test("reads the API level the app needs from its source", () => {
+  assert.ok(requiredApiLevel(new URL("../..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")) >= 1);
 });

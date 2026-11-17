@@ -1,4 +1,4 @@
-import { formatReport, hasFailure, localMigrationVersions, runChecks } from "./checks.mjs";
+import { formatReport, hasFailure, localMigrationVersions, requiredApiLevel, runChecks } from "./checks.mjs";
 import { describeChange, readAuthSettingDifferences } from "./auth-settings.mjs";
 
 /** Reads the state of a server and prints a checklist. Nothing is changed. Returns the exit code. */
@@ -10,6 +10,7 @@ export async function runDoctor({ target, repositoryRoot, log = console.log }) {
     fetch,
     query: target.query,
     localVersions: localMigrationVersions(repositoryRoot),
+    requiredApiLevel: requiredApiLevel(repositoryRoot),
     readAuthDifferences: target.kind === "hosted"
       ? () => readAuthSettingDifferences(target.ref).map(describeChange)
       : null,

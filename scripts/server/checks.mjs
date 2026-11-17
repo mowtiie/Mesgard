@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const MIGRATION_VERSION = /^(\d{14})_.+\.sql$/;
@@ -33,6 +33,7 @@ export async function runChecks(context) {
     () => checkReachable(context, settings),
     () => checkSignups(settings),
     () => checkMigrations(context),
+    () => checkApiLevel(context),
     () => checkFunction(context),
     () => checkAuthSettings(context),
     () => checkOrganizations(context),
@@ -89,6 +90,28 @@ async function checkMigrations(context) {
   return missing.length === 0
     ? result(PASS, "Database is up to date", `${context.localVersions.length} migrations applied`)
     : result(FAIL, "Database is up to date", `${missing.length} migration(s) missing`, "Run setup to apply them.");
+}
+
+/** The level the app needs is read from the app's source, so the check and the app cannot disagree. */
+export function requiredApiLevel(repositoryRoot) {
+  const source = readFileSync(join(repositoryRoot, "app", "src", "main", "java", "com", "mowtiie", "mesgard", "domain", "server", "ServerCompatibility.kt"), "utf8");
+  return Number(/REQUIRED_API_LEVEL = (\d+)/.exec(source)?.[1]);
+}
+
+async function checkApiLevel({ url, publicKey, fetch, requiredApiLevel: required }) {
+  const label = "Server is new enough for the app";
+  const response = await fetch(`${url}/rest/v1/rpc/server_info`, {
+    method: "POST",
+    headers: { apikey: publicKey, "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (response.status === 404) {
+    return result(FAIL, label, "The server has no server_info function", "Run setup to update the server.");
+  }
+  const level = (await response.json())?.api_level;
+  return level >= required
+    ? result(PASS, label, `API level ${level}`)
+    : result(FAIL, label, `API level ${level}, the app needs ${required}`, "Run setup to update the server.");
 }
 
 async function checkFunction({ url, publicKey, fetch }) {
