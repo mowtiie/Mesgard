@@ -80,6 +80,17 @@ class RemoteAdminRepositoryTest {
     }
 
     @Test
+    fun `a person who returns gets a temporary password like a new login`() {
+        val returned = MemberCreationDto("back@school.example", "returned", userId = "u9", temporaryPassword = "pw9")
+
+        assertEquals(MemberCreation.Created("back@school.example", "u9", "pw9"), returned.toCreation())
+        assertEquals(
+            MemberCreation.Skipped("back@school.example", SkipReason.FAILED),
+            MemberCreationDto("back@school.example", "returned").toCreation(),
+        )
+    }
+
+    @Test
     fun `refuses a role that a member cannot have`() = runTest {
         val result = repository.createMembers(ORG, listOf(NewMember("a@b.example", "A", OrgRole.OTHER)))
 

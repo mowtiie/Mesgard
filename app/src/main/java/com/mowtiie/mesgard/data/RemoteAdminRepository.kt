@@ -82,8 +82,9 @@ private fun OrgRole.wireName(): String = when (this) {
     OrgRole.OTHER -> throw IllegalArgumentException("A member needs the role admin, staff or student")
 }
 
+/** A person who left and comes back is reported as returned, with a new temporary password like a new login. */
 internal fun MemberCreationDto.toCreation(): MemberCreation = when (status) {
-    "created" -> if (userId != null && temporaryPassword != null) {
+    "created", "returned" -> if (userId != null && temporaryPassword != null) {
         MemberCreation.Created(email, userId, temporaryPassword)
     } else {
         MemberCreation.Skipped(email, SkipReason.FAILED)

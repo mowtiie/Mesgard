@@ -231,7 +231,7 @@
     <string name="members_password_copy">Copy</string>
     <string name="members_password_done">Done</string>
     <string name="members_error_email_invalid">Enter a valid email address.</string>
-    <string name="members_error_email_taken">This email address already has an account.</string>
+    <string name="members_error_email_taken">This email address belongs to an active account, possibly in another organization.</string>
     <string name="members_error_name_invalid">The name is too long.</string>
     <string name="admin_error_network_unavailable">Unable to reach the server. Check your connection.</string>
     <string name="admin_error_not_allowed">You do not have permission to do this.</string>
