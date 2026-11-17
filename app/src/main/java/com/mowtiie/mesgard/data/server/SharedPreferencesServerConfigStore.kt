@@ -1,5 +1,6 @@
 package com.mowtiie.mesgard.data.server
 
+import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import com.mowtiie.mesgard.domain.server.ServerConfig
 import com.mowtiie.mesgard.domain.server.ServerConfigStore
@@ -20,6 +21,8 @@ internal class SharedPreferencesServerConfigStore(
             return if (url != null && key != null) ServerConfig(url, key) else default
         }
 
+    // commit, not apply: the app kills its own process right after saving, and an asynchronous write could be lost.
+    @SuppressLint("ApplySharedPref")
     override fun save(config: ServerConfig) {
         preferences.edit().putString(KEY_URL, config.url).putString(KEY_ANON_KEY, config.anonKey).commit()
     }
