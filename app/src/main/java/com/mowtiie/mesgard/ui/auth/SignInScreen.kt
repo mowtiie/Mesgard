@@ -47,6 +47,7 @@ import com.mowtiie.mesgard.ui.common.CenteredForm
 import com.mowtiie.mesgard.ui.common.ServerCard
 import com.mowtiie.mesgard.ui.connectivity.ConnectionBanner
 import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
+import com.mowtiie.mesgard.ui.server.ServerStatusNotice
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val FieldSpacing = 16.dp
@@ -153,6 +154,7 @@ private fun ColumnScope.SignInForm(
         if (fieldError != null && !uiState.isSubmitting) passwordFocus.requestFocus()
     }
     AuthHeader(R.string.sign_in_title)
+    ServerStatusNotice(forAdministrator = false)
     if (uiState.serverHost.isNotBlank()) {
         ServerCard(uiState.serverHost, onChangeServerClicked, enabled = !uiState.isSubmitting)
     }

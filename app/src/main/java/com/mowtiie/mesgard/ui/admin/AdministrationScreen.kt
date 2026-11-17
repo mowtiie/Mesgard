@@ -21,10 +21,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.common.TitledScreen
+import com.mowtiie.mesgard.ui.server.ServerStatusNotice
 
 @Composable
 internal fun AdministrationScreenRoute(
@@ -89,6 +91,7 @@ internal fun AdministrationScreen(
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
             Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                ServerStatusNotice(forAdministrator = true, modifier = Modifier.padding(16.dp))
                 QuickActions(navigation)
                 ManageSection(uiState, navigation)
                 RecentActivitySection(uiState, navigation.onOpenAuditLog)

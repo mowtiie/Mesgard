@@ -2,10 +2,14 @@ package com.mowtiie.mesgard.di
 
 import android.content.Context
 import com.mowtiie.mesgard.BuildConfig
+import com.mowtiie.mesgard.data.remote.ServerInfoRemoteSource
+import com.mowtiie.mesgard.data.remote.SupabaseServerInfoRemoteSource
 import com.mowtiie.mesgard.data.server.HttpServerChecker
 import com.mowtiie.mesgard.data.server.ProcessAppRestarter
 import com.mowtiie.mesgard.data.server.SERVER_CONFIG_FILE
 import com.mowtiie.mesgard.data.server.SharedPreferencesServerConfigStore
+import com.mowtiie.mesgard.data.server.SupabaseServerStatusRepository
+import com.mowtiie.mesgard.domain.repository.ServerStatusRepository
 import com.mowtiie.mesgard.domain.server.AppRestarter
 import com.mowtiie.mesgard.domain.server.ServerChecker
 import com.mowtiie.mesgard.domain.server.ServerConfig
@@ -26,6 +30,12 @@ internal interface ServerBindingModule {
 
     @Binds
     fun bindAppRestarter(restarter: ProcessAppRestarter): AppRestarter
+
+    @Binds
+    fun bindServerInfoRemoteSource(source: SupabaseServerInfoRemoteSource): ServerInfoRemoteSource
+
+    @Binds
+    fun bindServerStatusRepository(repository: SupabaseServerStatusRepository): ServerStatusRepository
 }
 
 @Module

@@ -18,6 +18,8 @@ import com.mowtiie.mesgard.ui.connectivity.ConnectivityViewModel
 import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.lock.LockScreenRoute
 import com.mowtiie.mesgard.ui.navigation.MesgardNavHost
+import com.mowtiie.mesgard.ui.server.LocalServerStatus
+import com.mowtiie.mesgard.ui.server.ServerStatusViewModel
 
 @Composable
 internal fun MesgardApp(
@@ -26,11 +28,16 @@ internal fun MesgardApp(
     onChangeServer: () -> Unit,
     viewModel: AppViewModel = hiltViewModel(),
     connectivityViewModel: ConnectivityViewModel = hiltViewModel(),
+    serverStatusViewModel: ServerStatusViewModel = hiltViewModel(),
 ) {
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val isLocked by viewModel.isLocked.collectAsStateWithLifecycle()
     val connectionStatus by connectivityViewModel.status.collectAsStateWithLifecycle()
-    CompositionLocalProvider(LocalConnectionStatus provides connectionStatus) {
+    val serverStatus by serverStatusViewModel.status.collectAsStateWithLifecycle()
+    CompositionLocalProvider(
+        LocalConnectionStatus provides connectionStatus,
+        LocalServerStatus provides serverStatus,
+    ) {
         when (val state = authState) {
             AuthState.Loading -> Surface(modifier = Modifier.fillMaxSize()) {}
             AuthState.SignedOut -> SignInRoute(onChangeServer = onChangeServer)

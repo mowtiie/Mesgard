@@ -37,7 +37,9 @@ import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.mowtiie.mesgard.BuildConfig
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.domain.model.ServerStatus
 import com.mowtiie.mesgard.ui.common.TitledScreen
+import com.mowtiie.mesgard.ui.server.LocalServerStatus
 import kotlinx.coroutines.launch
 
 private const val REPOSITORY_URL = "https://github.com/mowtiie/Mesgard"
@@ -84,7 +86,7 @@ internal fun AboutScreenRoute(
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
             AboutHeader()
-            AppSection(viewModel.serverHost, fingerprint, ::copyFingerprint)
+            AppSection(viewModel.serverHost, LocalServerStatus.current, fingerprint, ::copyFingerprint)
             ProjectSection(onOpenLink = ::openLink, onOpenLicenses = onOpenLicenses)
             DataSection()
         }
@@ -108,7 +110,12 @@ private fun AboutHeader() {
 }
 
 @Composable
-private fun AppSection(serverHost: String?, fingerprint: String?, onCopyFingerprint: (String) -> Unit) {
+private fun AppSection(
+    serverHost: String?,
+    serverStatus: ServerStatus,
+    fingerprint: String?,
+    onCopyFingerprint: (String) -> Unit,
+) {
     AboutHeading(R.string.about_section_app)
     ListItem(
         headlineContent = { Text(stringResource(R.string.about_version)) },
@@ -118,7 +125,17 @@ private fun AppSection(serverHost: String?, fingerprint: String?, onCopyFingerpr
     )
     ListItem(
         headlineContent = { Text(stringResource(R.string.about_server)) },
-        supportingContent = { Text(serverHost ?: stringResource(R.string.about_server_not_set)) },
+        supportingContent = {
+            Column {
+                Text(serverHost ?: stringResource(R.string.about_server_not_set))
+                if (serverStatus == ServerStatus.OUTDATED) {
+                    Text(
+                        text = stringResource(R.string.about_server_outdated),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        },
     )
     ListItem(
         modifier = fingerprint?.let {

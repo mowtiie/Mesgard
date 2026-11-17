@@ -51,6 +51,10 @@
     <string name="sign_in_error_network_unavailable">Unable to reach the server. Check your connection.</string>
     <string name="sign_in_error_unknown">Unable to sign in. Try again later.</string>
     <string name="sign_out_button">Sign out</string>
+    <string name="server_outdated_title">This server needs an update</string>
+    <string name="server_outdated_user">Some features may not work with this version of Mesgard. Ask the administrator of your school to update the server.</string>
+    <string name="server_outdated_admin">Some features will not work with this version of Mesgard. Update the server by running the setup again (see the Upgrading guide), or ask whoever hosts it.</string>
+    <string name="about_server_outdated">Needs an update</string>
     <string name="mfa_code_title">Two-step verification</string>
     <string name="mfa_code_help">Enter the 6 digit code from your authenticator app.</string>
     <string name="mfa_code_label">Verification code</string>
