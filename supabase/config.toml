@@ -31,6 +31,10 @@ enabled = true
 site_url = "http://127.0.0.1:3000"
 jwt_expiry = 3600
 
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
 [functions.send-push]
 verify_jwt = false
 

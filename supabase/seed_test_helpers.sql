@@ -19,6 +19,22 @@ begin
 end;
 $$;
 
+create function tests.authenticate_as(user_id uuid, assurance_level text)
+returns void
+language plpgsql
+as $$
+begin
+  execute 'reset role';
+  perform set_config('request.jwt.claim.sub', user_id::text, true);
+  perform set_config(
+    'request.jwt.claims',
+    json_build_object('sub', user_id, 'role', 'authenticated', 'aal', assurance_level)::text,
+    true
+  );
+  execute 'set local role authenticated';
+end;
+$$;
+
 create function tests.authenticate_as_anonymous()
 returns void
 language plpgsql
