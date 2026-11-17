@@ -13,7 +13,7 @@ function context(overrides = {}) {
     "supabase_migrations.schema_migrations": [{ version: "20260101000000" }],
     "public.organizations": [{ organizations: 1, admins: 1 }],
     "private.mfa_settings": [{ enforced: false }],
-    "private.push_settings": [{ configured: 0 }],
+    "private.push_settings": [],
   };
   return {
     url: "https://abcdefghijklmnopqrst.supabase.co",
@@ -61,6 +61,23 @@ test("a server without server_info, or with a lower level, is too old for the ap
   assert.equal(statusOf(await runChecks(context({ fetch: older(404) })), "Server is new enough for the app"), FAIL);
   assert.equal(statusOf(await runChecks(context({ fetch: older(200, 0), requiredApiLevel: 1 })), "Server is new enough for the app"), FAIL);
   assert.equal(statusOf(await runChecks(context({ fetch: older(200, 2), requiredApiLevel: 1 })), "Server is new enough for the app"), PASS);
+});
+
+test("push is optional when not set up, and a mismatched secret is a failure", async () => {
+  const label = "Push notifications work";
+  assert.equal(statusOf(await runChecks(context()), label), INFO);
+
+  const withRow = (status) => context({
+    query: async (sql) => sql.includes("push_settings")
+      ? [{ function_url: "https://x/functions/v1/send-push", webhook_secret: "secret-0123456789abc" }]
+      : context().query(sql),
+    fetch: async (address) => address.endsWith("/send-push")
+      ? { ok: status < 300, status }
+      : context().fetch(address),
+  });
+  assert.equal(statusOf(await runChecks(withRow(200)), label), PASS);
+  assert.equal(statusOf(await runChecks(withRow(401)), label), FAIL);
+  assert.equal(statusOf(await runChecks(withRow(404)), label), FAIL);
 });
 
 test("an undeployed function fails and a protected one passes", async () => {

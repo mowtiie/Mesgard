@@ -1,6 +1,8 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
+import { checkPushFunction } from "./push.mjs";
+
 const MIGRATION_VERSION = /^(\d{14})_.+\.sql$/;
 const ALLOWED_FUNCTION_ANSWERS = [400, 401, 403];
 
@@ -160,11 +162,24 @@ async function checkEnforcement({ query }) {
     : result(INFO, "Two-step verification required for administrators and staff", "Not enforced yet", "See docs/mfa.md before turning it on.");
 }
 
-async function checkPush({ query }) {
-  const [row] = await query("select count(*)::int as configured from private.push_settings");
-  return row?.configured > 0
-    ? result(PASS, "Push notifications configured")
-    : result(INFO, "Push notifications configured", "Optional, not set up", "See docs/push-notifications.md.");
+async function checkPush({ query, fetch }) {
+  const label = "Push notifications work";
+  let row;
+  try {
+    [row] = await query("select function_url, webhook_secret from private.push_settings");
+  } catch {
+    return result(INFO, label, "Unavailable until the database is up to date");
+  }
+  if (!row) return result(INFO, label, "Optional, not set up", "Run the push command to set it up (docs/push-notifications.md).");
+  let outcome;
+  try {
+    outcome = await checkPushFunction({ functionUrl: row.function_url, secret: row.webhook_secret, fetch });
+  } catch {
+    return result(WARN, label, "The push function could not be reached from here");
+  }
+  return outcome.ok
+    ? result(PASS, label)
+    : result(FAIL, label, outcome.reason, "Run the push command again, with --rotate if the secrets differ.");
 }
 
 const SYMBOLS = { [PASS]: "[ok]  ", [WARN]: "[warn]", [FAIL]: "[FAIL]", [INFO]: "[info]" };

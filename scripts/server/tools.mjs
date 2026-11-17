@@ -29,8 +29,11 @@ export function realTools(target, repositoryRoot) {
     linkedRef: () => readLinkedRef(repositoryRoot),
     link: (ref) => runVisibly(["link", "--project-ref", ref], "Linking the project"),
     pushMigrations: (ref) => runVisibly(["db", "push", `--remote=${ref}`, "--yes"], "Applying the migrations"),
-    deployFunction: (ref) =>
-      runVisibly(["functions", "deploy", "admin-users", `--remote=${ref}`, "--use-api", "--yes"], "Deploying admin-users"),
+    deployFunction: (ref, name = "admin-users") =>
+      runVisibly(["functions", "deploy", name, `--remote=${ref}`, "--use-api", "--yes"], `Deploying ${name}`),
+    setSecrets: (ref, values) => setSecrets(ref, values),
+    fetch,
+    wait: (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
     authDifferences: (ref) => readAuthSettingDifferences(ref).map(describeChange),
     applyAuthSettings: (ref) => {
       const result = applyAuthSettings(ref);
@@ -41,6 +44,19 @@ export function realTools(target, repositoryRoot) {
     ask: prompt,
     confirm: async (question) => /^y(es)?$/i.test((await prompt(question)).trim()),
   };
+}
+
+/** Function secrets go through a file that only the owner can read, so they never appear in a command line. */
+function setSecrets(ref, values) {
+  const folder = mkdtempSync(join(tmpdir(), "mesgard-secrets-"));
+  try {
+    const file = join(folder, "secrets.env");
+    writeFileSync(file, Object.entries(values).map(([name, value]) => `${name}=${value}`).join("\n") + "\n", { mode: 0o600 });
+    const result = runSupabase(["secrets", "set", `--remote=${ref}`, "--env-file", file, "--yes"]);
+    if (result.status !== 0) throw new CliError("Setting the function secrets failed.");
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
 }
 
 /** Runs a statement that writes. It goes through a file, so quotes in the text never reach a shell. */

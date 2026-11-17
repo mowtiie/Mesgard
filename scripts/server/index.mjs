@@ -3,6 +3,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "./args.mjs";
 import { runDoctor } from "./doctor.mjs";
+import { runPush } from "./push.mjs";
 import { createLogin, runSetup } from "./setup.mjs";
 import { CliError } from "./supabase.mjs";
 import { realTools } from "./tools.mjs";
@@ -17,6 +18,8 @@ Usage: node scripts/server/index.mjs <command> [options]
 Commands:
   setup     Apply migrations, deploy the account function, set the Auth settings, create the first
             organization and its administrator, then print the link that connects the app.
+  push      Set up push notifications: deploy the push function, create its secret, tell the database and
+            check that they agree. Run it again with --rotate to replace the secret.
   doctor    Check a server and print what is missing. Changes nothing.
 
 Options:
@@ -27,6 +30,9 @@ Options:
   --skip-organization   setup: do not create an organization
   --admin-password-env <NAME>
                         setup: environment variable holding the first administrator's password (12+ characters)
+  --with-push           setup: also set up push notifications
+  --push-hosts <list>   push: comma separated hosts of your own push server (default: any public push server)
+  --rotate              push: replace the secret even when push is already set up
   --org-name, --org-slug, --admin-email, --admin-name
                         setup: answers for the first organization, so nothing is asked`;
 
@@ -38,10 +44,14 @@ async function main() {
     projectRef: typeof options["project-ref"] === "string" ? options["project-ref"] : null,
     repositoryRoot,
   });
-  if (command === "setup") {
+  if (command === "push") {
+    await runPush({ target, options, deps: realTools(target, repositoryRoot) });
+    process.exitCode = 0;
+  } else if (command === "setup") {
     const tools = realTools(target, repositoryRoot);
     const deps = { ...tools, createLogin, secretKey: () => target.revealSecretKey() };
     await runSetup({ target, options, deps });
+    if (options["with-push"] === true) await runPush({ target, options, deps: tools });
     console.log("\nChecking the server");
     process.exitCode = await runDoctor({ target, repositoryRoot });
   } else if (command === "doctor") process.exitCode = await runDoctor({ target, repositoryRoot });
