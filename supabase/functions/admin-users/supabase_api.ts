@@ -2,6 +2,8 @@ import type { AdminApi } from "./handler.ts";
 import type { Role } from "./validation.ts";
 
 const LOGIN_DISABLED_DURATION = "876000h";
+const ATTACHMENTS_BUCKET = "message-attachments";
+const STORAGE_DELETE_BATCH = 100;
 
 export interface SupabaseApiSettings {
   url: string;
@@ -216,6 +218,31 @@ export function createSupabaseApi({ url, anonKey, serviceRoleKey }: SupabaseApiS
         "Reading the audit log",
       );
       return (await response.json()).length > 0;
+    },
+
+    async listAttachmentPaths(userId) {
+      const response = await expectOk(
+        await fetch(`${url}/rest/v1/rpc/list_user_attachment_paths`, {
+          method: "POST",
+          headers: asService,
+          body: JSON.stringify({ target_user_id: userId }),
+        }),
+        "Listing the files of a person",
+      );
+      return await response.json();
+    },
+
+    async removeAttachmentFiles(paths) {
+      for (let start = 0; start < paths.length; start += STORAGE_DELETE_BATCH) {
+        await expectOk(
+          await fetch(`${url}/storage/v1/object/${ATTACHMENTS_BUCKET}`, {
+            method: "DELETE",
+            headers: asService,
+            body: JSON.stringify({ prefixes: paths.slice(start, start + STORAGE_DELETE_BATCH) }),
+          }),
+          "Deleting files",
+        );
+      }
     },
 
     async eraseUserData(userId, oldEmail) {

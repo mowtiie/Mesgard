@@ -33,6 +33,10 @@ export interface AdminApi {
   getLoginEmail(userId: string): Promise<string | null>;
   /** True when the audit log shows that this organization removed the person. */
   wasRemovedFrom(token: string, orgId: string, userId: string): Promise<boolean>;
+  /** The storage paths of every file the person uploaded, attached to a message or not. */
+  listAttachmentPaths(userId: string): Promise<string[]>;
+  /** Deletes files from Storage, which SQL cannot do. Files that are already gone are not an error. */
+  removeAttachmentFiles(paths: string[]): Promise<void>;
   /** Scrubs the database side of a person who is in no organization. */
   eraseUserData(userId: string, oldEmail: string): Promise<void>;
   /** Replaces the email of a login with a placeholder and keeps the login disabled. */
@@ -249,6 +253,8 @@ async function eraseMember(
 
   const email = await api.getLoginEmail(request.userId);
   if (email !== null && !isErasedEmail(email)) {
+    // The files go first: the database still knows where they are, so a failure here can be repeated.
+    if (policy === "blank_messages") await api.removeAttachmentFiles(await api.listAttachmentPaths(request.userId));
     await api.eraseUserData(request.userId, email);
     await api.replaceEmail(request.userId, placeholderEmail(request.userId));
     await api.recordAudit(token, request.orgId, "member.erased", request.userId);

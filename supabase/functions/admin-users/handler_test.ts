@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert@1";
+import { assertEquals, assertRejects } from "jsr:@std/assert@1";
 import { placeholderEmail } from "./erasure.ts";
 import { type AdminApi, handleAdminRequest } from "./handler.ts";
 import type { Role } from "./validation.ts";
@@ -25,6 +25,8 @@ class FakeApi implements AdminApi {
   emails = new Map<string, string>([[MEMBER, "ana@school.example"]]);
   removedRecords = new Set<string>();
   order: string[] = [];
+  files = new Map<string, string[]>();
+  failRemovingFiles = false;
   private nextId = 1;
 
   getUserId(token: string) {
@@ -81,6 +83,14 @@ class FakeApi implements AdminApi {
   }
   wasRemovedFrom(_token: string, _orgId: string, userId: string) {
     return Promise.resolve(this.removedRecords.has(userId));
+  }
+  listAttachmentPaths(userId: string) {
+    return Promise.resolve(this.files.get(userId) ?? []);
+  }
+  removeAttachmentFiles(paths: string[]) {
+    if (this.failRemovingFiles) return Promise.reject(new Error("storage is down"));
+    this.order.push(`files ${paths.join(",")}`);
+    return Promise.resolve();
   }
   eraseUserData(_userId: string, oldEmail: string) {
     this.order.push(`scrub ${oldEmail}`);
@@ -484,4 +494,45 @@ Deno.test("erasing someone who is already erased changes nothing", async () => {
   assertEquals(response.status, 200);
   assertEquals(api.order, []);
   assertEquals(api.audits, []);
+});
+
+Deno.test("a server that blanks messages removes the files of the person before it scrubs the database", async () => {
+  const api = new FakeApi();
+  api.policy = "blank_messages";
+  api.files.set(MEMBER, ["conversation/message/report", "conversation/message/photo"]);
+
+  const response = await erase(api);
+
+  assertEquals(response.status, 200);
+  assertEquals(api.order, [
+    "remove",
+    "files conversation/message/report,conversation/message/photo",
+    "scrub ana@school.example",
+    `email ${placeholderEmail(MEMBER)}`,
+  ]);
+});
+
+Deno.test("a server that keeps messages leaves the files alone", async () => {
+  const api = new FakeApi();
+  api.files.set(MEMBER, ["conversation/message/report"]);
+
+  await erase(api);
+
+  assertEquals(api.order.some((step) => step.startsWith("files")), false);
+});
+
+Deno.test("when the files cannot be deleted nothing else is scrubbed, so it can be run again", async () => {
+  const api = new FakeApi();
+  api.policy = "blank_messages";
+  api.failRemovingFiles = true;
+
+  await assertRejects(() => erase(api));
+
+  assertEquals(api.order, ["remove"]);
+  api.failRemovingFiles = false;
+  api.roles.delete(MEMBER);
+  api.memberships.set(MEMBER, 0);
+  api.removedRecords.add(MEMBER);
+  assertEquals((await erase(api)).status, 200);
+  assertEquals(api.order.at(-1), `email ${placeholderEmail(MEMBER)}`);
 });
