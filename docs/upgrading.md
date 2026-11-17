@@ -40,6 +40,7 @@ so applying them in order is safe to repeat.
 | Without migration `20261116000100` | The banner "Unable to reach the server" stays on and new messages do not arrive live, because the private Realtime channel for message changes is refused. |
 | Without migration `20261116000200` | An organization without an announcement conversation has no way to create one, because the app no longer has the button that did it. |
 | Without migration `20261117000300` | The app shows "This server needs an update". |
+| Without migration `20261117000400` | After someone is removed from an organization, a direct conversation with them still accepts messages that nobody receives, and their old messages lose the sender name on phones that have not stored it. |
 
 ## For developers
 
