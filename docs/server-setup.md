@@ -5,6 +5,8 @@ address and the access key. Nothing about a school is built into the app.
 
 ## What the administrator hands out
 
+The setup script prints the address, the key and a ready made link at the end, so there is nothing to look up.
+
 | Item | What it is |
 |---|---|
 | Server address | The HTTPS address of the Supabase API, for example `https://chat.school.example` |

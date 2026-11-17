@@ -25,7 +25,7 @@ Set up your own Mesgard server in four steps. You need a computer with [Node.js]
 node scripts/server/index.mjs setup --project-ref <project ref>
 ```
 
-It asks for your database password once, then asks for:
+The CLI may ask for your database password. The setup then asks for:
 
 - the name of your school or organization,
 - a short name for it (press Enter to accept the suggestion),
@@ -49,5 +49,5 @@ You are done. From **Settings**, **Administration**, add the other people in you
 ## More
 
 - Add two-step verification for administrators and staff: [`mfa.md`](mfa.md)
-- Push notifications, in one command: [`push-notifications.md`](push-notifications.md)
+- Push notifications, in one command (`node scripts/server/index.mjs push`): [`push-notifications.md`](push-notifications.md)
 - The same setup without installing anything, or step by step by hand: [`supabase-setup.md`](supabase-setup.md)

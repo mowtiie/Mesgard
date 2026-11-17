@@ -1,9 +1,8 @@
-# Creating the first organization
+# Creating the first organization by hand
 
-A new server has no organizations and no people. Create the first organization and its administrator once, with the
-steps below. After that, the administrator adds everyone else from the app (Settings, Administration).
-
-The setup script does all of this for you: `node scripts/server/index.mjs setup` asks for the names and creates the login and the organization (see [supabase-setup.md](supabase-setup.md)). The steps below are the same thing by hand.
+You normally do not need this page. The setup script asks for the names and creates the first organization and its
+administrator (see the [quick start](quick-start.md)). Use these steps only when you set up the server without the
+script. After that, the administrator adds everyone else from the app (Settings, Administration).
 
 ## 1. Create the administrator's login
 

@@ -11,18 +11,9 @@ Mesgard needs a Supabase project with the database schema, one Edge Function and
 - [Node.js](https://nodejs.org) 18 or later, only for the script.
 - A copy of this repository. Docker is not needed.
 
-## The quick way
+## What the setup does
 
-1. Create a project in the Supabase dashboard. Pick the region closest to your users and keep the database password somewhere safe.
-2. In the repository, run:
-
-   ```
-   node scripts/server/index.mjs setup --project-ref <your-project-ref>
-   ```
-
-   The project ref is the 20 letter code in the project URL. The first run links the project, and the CLI may ask for the database password.
-
-The script then does these things in order, and tells you what it is doing:
+Run it with `node scripts/server/index.mjs setup --project-ref <your-project-ref>` (the steps are in the [quick start](quick-start.md)). It does these things in order, and tells you what it is doing:
 
 | Step | What happens |
 |---|---|
@@ -51,7 +42,7 @@ If you would rather not install the CLI or Node, a workflow in this repository d
    | `SUPABASE_DB_PASSWORD` | The database password you chose for the project |
    | `MESGARD_ADMIN_PASSWORD` | A password of 12 or more characters for the first administrator. Only needed when you create the first organization. |
 
-3. Open the **Actions** tab, choose **Deploy backend**, and select **Run workflow**. Enter the project ref. To create the first organization, also enter its name, the administrator's email and name, and optionally a short name. Leave those empty to only deploy.
+3. Open the **Actions** tab, choose **Deploy backend**, and select **Run workflow**. Enter the project ref. To create the first organization, also enter its name, the administrator's email and name, and optionally a short name. Leave those empty to only deploy. Tick **enable_push** to set up push notifications as well.
 4. When the run finishes, its log ends with the connect link and the checklist.
 
 The administrator signs in with `MESGARD_ADMIN_PASSWORD` and is asked to choose their own password right away. That password is never printed. The log only contains public values (the project address and the public key), but anyone who can read your copy's Actions logs can see them, so keep the copy private if you can. To update later, bring your copy up to date with this repository and run the workflow again with the organization fields empty.
@@ -82,15 +73,12 @@ supabase functions deploy admin-users
 
 Then in the dashboard, under **Authentication**, keep **Email** on, turn public sign-ups off, and enable TOTP multi-factor. Create the first organization as described in [`first-organization.md`](first-organization.md), and copy the **Project URL** and the publishable (anon) key from the **Connect** dialog into the app.
 
-## Optional
-
-- **Push notifications:** run `node scripts/server/index.mjs push` (or add `--with-push` to `setup`). It deploys the push function, creates and shares the secret, and checks that it works. Details in [`push-notifications.md`](push-notifications.md).
-- **Two-step verification for administrators and staff:** [`mfa.md`](mfa.md). Setup turns TOTP on but leaves enforcement off.
-
 ## Problems
 
 - **"The Supabase CLI was not found":** install it and open a new terminal, so that `supabase` runs there.
 - **"No project selected":** pass `--project-ref`, or run `supabase link --project-ref <ref>` first.
+- **Push notifications:** add `--with-push` to the setup, or run `node scripts/server/index.mjs push` later. See [`push-notifications.md`](push-notifications.md).
+- **Two-step verification:** the setup turns TOTP on but leaves enforcement off. See [`mfa.md`](mfa.md).
 - **A step failed:** fix the cause shown above it and run `setup` again. Every step can be repeated.
 - **Setup stopped after creating the login:** run it again with the same email. It reuses the existing login and finishes the organization, but the original temporary password stays unknown, so reset it from the dashboard.
 - **The administrator forgot the temporary password:** set a new one in the dashboard under Authentication, Users. The mark that asks for a new password stays until they choose their own, so they are still asked to at the first sign in.

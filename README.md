@@ -29,21 +29,23 @@ Mesgard is an open-source, real-time messaging app for schools, universities and
 
 ## Getting Started
 
-You need Android 8.0 (API 26) or later, and a Supabase project that is reachable over **HTTPS**: either a [Supabase Cloud](https://supabase.com) project or your own self-hosted instance.
+You need an Android 8.0 (API 26) or later phone and a [Supabase](https://supabase.com) project (Cloud or self-hosted) that is reachable over **HTTPS**.
 
-In a hurry? Follow the short [quick start](docs/quick-start.md).
+1. Create a Supabase project and note its **project ref**.
+2. Set up the server. This applies the database, deploys what Mesgard needs, creates your first administrator and prints a link for the app:
+   ```
+   git clone https://github.com/mowtiie/Mesgard.git
+   cd Mesgard
+   supabase login
+   node scripts/server/index.mjs setup --project-ref <project ref>
+   ```
+3. Open the printed link on your phone and sign in with the temporary password. You choose your own right away.
 
-1. Create a project at [supabase.com](https://supabase.com) (or run your own).
-2. Install the [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) and sign in with `supabase login`. Then run the setup script, which links the project, applies the migrations, deploys the account function, sets the Auth settings, creates your first organization and its administrator, and prints the link that connects the app:
-   ```
-   node scripts/server/index.mjs setup --project-ref <your-project-ref>
-   ```
-   It needs [Node.js](https://nodejs.org) 18 or later, and no Docker. The details, a checklist command (`doctor`) and the same steps by hand are in [`docs/supabase-setup.md`](docs/supabase-setup.md). You can also run the setup from the **Actions** tab of your own copy of the repository, with nothing installed. Push notifications are optional: see [`docs/push-notifications.md`](docs/push-notifications.md).
-3. Open Mesgard on your phone, open the link the script printed (or enter the **Project URL** and **anon (publishable) key** from the project's **Connect** dialog), and sign in with the administrator's email and the temporary password. You are asked to choose your own. After that, the administrator adds everyone else from the app.
+The [quick start](docs/quick-start.md) walks through it, and the [setup guide](docs/supabase-setup.md) covers the options, running it from GitHub without installing anything, and the manual route.
 
 **Only use the anon (publishable) key.** Never paste a secret or `service_role` key into the app: it bypasses Row Level Security. The app refuses both.
 
-To use another server later, tap **Change server** on the Sign in screen. More details are in [`docs/server-setup.md`](docs/server-setup.md). When you update Mesgard later, update the server first: see [`docs/upgrading.md`](docs/upgrading.md). To require two-step verification for administrators and staff, follow [`docs/mfa.md`](docs/mfa.md).
+More: [connect the app to a server](docs/server-setup.md), [upgrade](docs/upgrading.md), [two-step verification](docs/mfa.md), [push notifications](docs/push-notifications.md).
 
 ## Verification
 
