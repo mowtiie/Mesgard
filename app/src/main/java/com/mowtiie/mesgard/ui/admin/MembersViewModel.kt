@@ -70,6 +70,7 @@ internal class MembersViewModel @Inject constructor(
             dialog = when (action) {
                 MemberAction.CHANGE_ROLE -> MembersDialog.ChangeRole(member, selected = member.role)
                 MemberAction.RESET_PASSWORD -> MembersDialog.ConfirmResetPassword(member)
+                MemberAction.RESET_MFA -> MembersDialog.ConfirmResetMfa(member)
                 MemberAction.REMOVE -> MembersDialog.ConfirmRemove(member)
             },
         )
@@ -103,6 +104,8 @@ internal class MembersViewModel @Inject constructor(
             adminRepository.resetPassword(organizationId, dialog.member.userId).toOutcome { password ->
                 MembersDialog.TemporaryPassword(dialog.member.displayName, password)
             }
+        is MembersDialog.ConfirmResetMfa ->
+            adminRepository.resetMfa(organizationId, dialog.member.userId).toOutcome { null }
         is MembersDialog.ConfirmRemove ->
             adminRepository.removeMember(organizationId, dialog.member.userId).toOutcome { null }
         is MembersDialog.TemporaryPassword -> Outcome()

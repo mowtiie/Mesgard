@@ -62,6 +62,14 @@ class AuditMessageTest {
     }
 
     @Test
+    fun `describes a reset of two-step verification`() {
+        val message = describe("member.mfa_reset")
+
+        assertEquals(R.string.audit_mfa_reset, message.resource)
+        assertEquals(listOf("Admin Cruz", "Ana Reyes"), message.arguments)
+    }
+
+    @Test
     fun `shows an action it does not know instead of hiding it`() {
         val message = describe("something.new", null)
 

@@ -39,6 +39,10 @@ internal class RemoteAdminRepository @Inject constructor(private val remote: Adm
         RemovedMember(loginDisabled = remote.removeMember(orgId, userId).loginDisabled)
     }
 
+    override suspend fun resetMfa(orgId: String, userId: String): AdminResult<Unit> = attemptAdmin<Unit> {
+        remote.resetMfa(orgId, userId)
+    }
+
     override suspend fun changeRole(orgId: String, userId: String, role: OrgRole): AdminResult<Unit> = attemptAdmin {
         check(remote.changeRole(orgId, userId, role.wireName())) { "No member was changed" }
     }

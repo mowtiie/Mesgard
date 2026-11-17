@@ -113,6 +113,32 @@ class MembersViewModelTest {
     }
 
     @Test
+    fun `resets the two-step verification after the dialog is confirmed`() = runTest {
+        coEvery { adminRepository.resetMfa(ORG, "u1") } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+
+        viewModel.onMemberAction(contacts.value[0], MemberAction.RESET_MFA)
+        viewModel.uiState.test {
+            assertEquals(MembersDialog.ConfirmResetMfa(contacts.value[0]), expectMostRecentItem().dialog)
+        }
+        viewModel.onDialogConfirmed()
+
+        coVerify { adminRepository.resetMfa(ORG, "u1") }
+        viewModel.uiState.test { assertNull(expectMostRecentItem().dialog) }
+    }
+
+    @Test
+    fun `keeps the dialog and shows the error when the reset is refused`() = runTest {
+        coEvery { adminRepository.resetMfa(ORG, "u1") } returns AdminResult.Failure(AdminError.NOT_ALLOWED)
+        val viewModel = viewModel()
+
+        viewModel.onMemberAction(contacts.value[0], MemberAction.RESET_MFA)
+        viewModel.onDialogConfirmed()
+
+        viewModel.uiState.test { assertEquals(MembersError.NOT_ALLOWED, expectMostRecentItem().error) }
+    }
+
+    @Test
     fun `removes a member after the dialog is confirmed`() = runTest {
         coEvery { adminRepository.removeMember(ORG, "u2") } returns AdminResult.Success(RemovedMember(true))
         val viewModel = viewModel()

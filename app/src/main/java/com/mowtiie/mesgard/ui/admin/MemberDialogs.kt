@@ -42,6 +42,14 @@ internal fun MembersDialogs(
             onConfirm = onConfirm,
             onDismiss = onDismiss,
         )
+        is MembersDialog.ConfirmResetMfa -> ConfirmDialog(
+            title = R.string.members_reset_mfa_title,
+            message = stringResource(R.string.members_reset_mfa_message, dialog.member.displayName),
+            confirmLabel = R.string.members_reset_mfa_confirm,
+            isWorking = isWorking,
+            onConfirm = onConfirm,
+            onDismiss = onDismiss,
+        )
         is MembersDialog.ConfirmRemove -> ConfirmDialog(
             title = R.string.members_remove_title,
             message = stringResource(R.string.members_remove_message, dialog.member.displayName),

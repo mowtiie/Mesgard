@@ -15,5 +15,8 @@ internal interface AdminRepository {
 
     suspend fun removeMember(orgId: String, userId: String): AdminResult<RemovedMember>
 
+    /** Removes every second factor of the person, so they set one up again at the next sign in. */
+    suspend fun resetMfa(orgId: String, userId: String): AdminResult<Unit>
+
     suspend fun changeRole(orgId: String, userId: String, role: OrgRole): AdminResult<Unit>
 }

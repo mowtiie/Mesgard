@@ -188,6 +188,10 @@ private fun MemberMenu(member: Contact, onMemberAction: (Contact, MemberAction) 
             dismiss()
             onMemberAction(member, MemberAction.RESET_PASSWORD)
         }
+        MemberMenuItem(R.string.members_reset_mfa) {
+            dismiss()
+            onMemberAction(member, MemberAction.RESET_MFA)
+        }
         MemberMenuItem(R.string.members_remove) {
             dismiss()
             onMemberAction(member, MemberAction.REMOVE)

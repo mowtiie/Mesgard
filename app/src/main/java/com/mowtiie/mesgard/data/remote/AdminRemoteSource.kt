@@ -33,6 +33,9 @@ internal data class MemberCreationDto(
 internal data class PasswordResetDto(@SerialName("temporary_password") val temporaryPassword: String)
 
 @Serializable
+internal data class MfaResetDto(@SerialName("factors_removed") val factorsRemoved: Int)
+
+@Serializable
 internal data class RemovedMemberDto(val removed: Boolean, @SerialName("login_disabled") val loginDisabled: Boolean)
 
 @Serializable
@@ -46,6 +49,8 @@ internal interface AdminRemoteSource {
     suspend fun resetPassword(orgId: String, userId: String): PasswordResetDto
 
     suspend fun removeMember(orgId: String, userId: String): RemovedMemberDto
+
+    suspend fun resetMfa(orgId: String, userId: String): MfaResetDto
 
     /** Returns true when a row was changed; Row Level Security hides rows the caller may not change. */
     suspend fun changeRole(orgId: String, userId: String, role: String): Boolean
@@ -67,6 +72,9 @@ internal class SupabaseAdminRemoteSource @Inject constructor(private val client:
 
     override suspend fun removeMember(orgId: String, userId: String): RemovedMemberDto =
         invoke(targetRequest("remove_member", orgId, userId))
+
+    override suspend fun resetMfa(orgId: String, userId: String): MfaResetDto =
+        invoke(targetRequest("reset_mfa", orgId, userId))
 
     override suspend fun changeRole(orgId: String, userId: String, role: String): Boolean =
         client.from(MEMBERS_TABLE).update({ set("role", role) }) {

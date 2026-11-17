@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.data
 import com.mowtiie.mesgard.data.remote.AdminRemoteSource
 import com.mowtiie.mesgard.data.remote.CreatedMembersDto
 import com.mowtiie.mesgard.data.remote.MemberCreationDto
+import com.mowtiie.mesgard.data.remote.MfaResetDto
 import com.mowtiie.mesgard.data.remote.PasswordResetDto
 import com.mowtiie.mesgard.data.remote.RemovedMemberDto
 import com.mowtiie.mesgard.domain.model.AdminError
@@ -90,6 +91,13 @@ class RemoteAdminRepositoryTest {
         coEvery { remote.resetPassword(ORG, USER) } returns PasswordResetDto("temp")
 
         assertEquals(AdminResult.Success("temp"), repository.resetPassword(ORG, USER))
+    }
+
+    @Test
+    fun `resets the two-step verification of a member`() = runTest {
+        coEvery { remote.resetMfa(ORG, USER) } returns MfaResetDto(factorsRemoved = 1)
+
+        assertEquals(AdminResult.Success(Unit), repository.resetMfa(ORG, USER))
     }
 
     @Test

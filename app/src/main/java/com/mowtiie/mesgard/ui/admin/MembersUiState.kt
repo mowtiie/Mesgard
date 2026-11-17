@@ -6,6 +6,7 @@ import com.mowtiie.mesgard.domain.model.OrgRole
 internal enum class MemberAction {
     CHANGE_ROLE,
     RESET_PASSWORD,
+    RESET_MFA,
     REMOVE,
 }
 
@@ -13,6 +14,8 @@ internal sealed interface MembersDialog {
     data class ChangeRole(val member: Contact, val selected: OrgRole) : MembersDialog
 
     data class ConfirmResetPassword(val member: Contact) : MembersDialog
+
+    data class ConfirmResetMfa(val member: Contact) : MembersDialog
 
     data class ConfirmRemove(val member: Contact) : MembersDialog
 
