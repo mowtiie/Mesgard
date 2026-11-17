@@ -22,6 +22,7 @@ Mesgard is an open-source, real-time messaging app for schools, universities and
 * **Works offline:** Your conversations are saved on the device (encrypted), so the list opens instantly. You can write without a connection, and messages send when you are back online. A message that fails to send can be retried or discarded.
 * **Notifications without Google:** Push uses [UnifiedPush](https://unifiedpush.org) with a distributor app such as ntfy. There is no Firebase and no Google services, and an institution can run its own push server. Choose how much a notification shows: sender and text, sender only, or nothing.
 * **Administration:** Administrators get an Administration page in Settings with quick actions, counts and the latest changes. They add members, import a roster from a CSV file, reset passwords, change roles, manage groups and read an audit log of every change. New accounts get a temporary password and must choose their own at first sign in. Anyone can change their own password later from their Account.
+* **Two-step verification:** Administrators and staff can be required to enter a one-time code from an authenticator app when they sign in, and students can turn it on. The database enforces it, a lost phone is reset by an administrator, and there is no SMS. See [`docs/mfa.md`](docs/mfa.md).
 * **Themes and privacy:** Light and dark themes, three contrast levels, dynamic colors, an optional app lock and an optional screen privacy mode that blocks screenshots.
 
 **Not end-to-end encrypted.** Messages are protected in transit (TLS) and on the device, and your server can read them. This is by design, so that your institution can search, audit and keep its own records.
@@ -47,7 +48,7 @@ You need Android 8.0 (API 26) or later, and a Supabase project that is reachable
 
 **Only use the anon (publishable) key.** Never paste a secret or `service_role` key into the app: it bypasses Row Level Security. The app refuses both.
 
-To use another server later, tap **Change server** on the Sign in screen. More details are in [`docs/server-setup.md`](docs/server-setup.md). When you update Mesgard later, update the server first: see [`docs/upgrading.md`](docs/upgrading.md).
+To use another server later, tap **Change server** on the Sign in screen. More details are in [`docs/server-setup.md`](docs/server-setup.md). When you update Mesgard later, update the server first: see [`docs/upgrading.md`](docs/upgrading.md). To require two-step verification for administrators and staff, follow [`docs/mfa.md`](docs/mfa.md).
 
 ## Verification
 
