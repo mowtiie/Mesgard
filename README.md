@@ -68,7 +68,7 @@ Not run on GitHub yet, so treat it as untested.
 ## After setup
 
 - **Connect more phones:** share the setup link, a QR code of it, or the server address and public key. The app only accepts `https` addresses.
-- **Add people:** **Settings, Administration, Members**. Add one by one or import a CSV file (an email column is required). Each person gets a temporary password, shown once, and chooses their own at first sign in.
+- **Add people:** **Settings, Administration, Members**. Add one by one or import a CSV file (an email column is required, and an optional role column can say `member`, `staff` or `admin`; no role means member). Each person gets a temporary password, shown once, and chooses their own at first sign in.
 - **Groups and audit log:** also under **Administration**.
 - **Change server:** tap **Change server** on the Sign in screen (not while signed in).
 
@@ -76,7 +76,7 @@ Not run on GitHub yet, so treat it as untested.
 
 People enter a 6-digit code from an authenticator app when they sign in. The server enforces it, not just the app.
 
-- **Who:** administrators and staff when it is required. Everyone else can turn it on themselves in **Settings, Account**.
+- **Who:** administrators and staff when it is required. Members can turn it on themselves in **Settings, Account**.
 - **New server:** the setup asks, and yes is the default.
 - **Existing server:** set up your own first in **Settings, Account**, then run this in the Supabase SQL Editor:
   ```sql
@@ -136,7 +136,7 @@ Backups and Supabase's own logs are not erased. Ask your data protection officer
 Update the server first, then the app.
 
 1. Back up the database.
-2. Run `git pull`, then the same setup command again. It only applies what is new and creates nothing twice.
+2. Run `git pull`, then the same setup command again. It only applies what is new and creates nothing twice. A server from before the role rename keeps working: the update changes the old `student` role to `member` for everyone.
 3. Install the new app.
 
 Check a server at any time with `node scripts/server/index.mjs doctor`. It only reads, and tells you what to fix. If the server is older than the app, the app shows "This server needs an update".
