@@ -2,12 +2,14 @@ package com.mowtiie.mesgard.data
 
 import com.mowtiie.mesgard.data.remote.AdminRemoteSource
 import com.mowtiie.mesgard.data.remote.CreatedMembersDto
+import com.mowtiie.mesgard.data.remote.ErasedMemberDto
 import com.mowtiie.mesgard.data.remote.MemberCreationDto
 import com.mowtiie.mesgard.data.remote.MfaResetDto
 import com.mowtiie.mesgard.data.remote.PasswordResetDto
 import com.mowtiie.mesgard.data.remote.RemovedMemberDto
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminResult
+import com.mowtiie.mesgard.domain.model.ErasureMode
 import com.mowtiie.mesgard.domain.model.MemberCreation
 import com.mowtiie.mesgard.domain.model.NewMember
 import com.mowtiie.mesgard.domain.model.OrgRole
@@ -88,6 +90,30 @@ class RemoteAdminRepositoryTest {
             MemberCreation.Skipped("back@school.example", SkipReason.FAILED),
             MemberCreationDto("back@school.example", "returned").toCreation(),
         )
+    }
+
+    @Test
+    fun `reads the erasure mode of the server and treats anything unknown as off`() = runTest {
+        coEvery { remote.erasurePolicy() } returnsMany listOf("keep_messages", "blank_messages", "off", "something new")
+
+        assertEquals(AdminResult.Success(ErasureMode.KEEP_MESSAGES), repository.erasureMode())
+        assertEquals(AdminResult.Success(ErasureMode.BLANK_MESSAGES), repository.erasureMode())
+        assertEquals(AdminResult.Success(ErasureMode.OFF), repository.erasureMode())
+        assertEquals(AdminResult.Success(ErasureMode.OFF), repository.erasureMode())
+    }
+
+    @Test
+    fun `erases a member`() = runTest {
+        coEvery { remote.eraseMember(ORG, USER) } returns ErasedMemberDto(erased = true, messages = "kept")
+
+        assertEquals(AdminResult.Success(Unit), repository.eraseMember(ORG, USER))
+    }
+
+    @Test
+    fun `a conflict means different things for removing and for erasing`() {
+        assertEquals(AdminError.LAST_ADMIN, adminErrorFor(409))
+        assertEquals(AdminError.NOT_ERASABLE, adminErrorFor(409, AdminError.NOT_ERASABLE))
+        assertEquals(AdminError.NOT_ALLOWED, adminErrorFor(403, AdminError.NOT_ERASABLE))
     }
 
     @Test

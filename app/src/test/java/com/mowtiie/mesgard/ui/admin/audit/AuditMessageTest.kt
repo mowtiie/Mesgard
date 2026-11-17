@@ -70,6 +70,14 @@ class AuditMessageTest {
     }
 
     @Test
+    fun `describes the erasure of a person who is no longer in the roster`() {
+        val message = describe("member.erased", target = "gone")
+
+        assertEquals(R.string.audit_member_erased, message.resource)
+        assertEquals(listOf("Admin Cruz", "a former member"), message.arguments)
+    }
+
+    @Test
     fun `shows an action it does not know instead of hiding it`() {
         val message = describe("something.new", null)
 

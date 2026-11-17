@@ -120,6 +120,10 @@
     <string name="members_remove_title">Remove member?</string>
     <string name="members_remove_message">%1$s leaves this organization and cannot sign in anymore unless they belong to another organization. Their messages stay.</string>
     <string name="members_remove_confirm">Remove</string>
+    <string name="members_remove_erase">Also erase their personal data</string>
+    <string name="members_erase_help_keep">Their name, email and sign in details are erased and cannot be recovered. Their messages stay and show Former member. This only works for someone who belongs to no other organization.</string>
+    <string name="members_erase_help_blank">Their name, email and sign in details are erased and cannot be recovered, and their messages are erased too. This only works for someone who belongs to no other organization.</string>
+    <string name="members_erase_confirm">Remove and erase</string>
     <string name="settings_groups_summary">Create groups and manage who is in them.</string>
     <string name="settings_audit_summary">See who changed what.</string>
     <string name="audit_title">Audit log</string>
@@ -130,6 +134,7 @@
     <string name="audit_member_removed">%1$s removed %2$s from the organization</string>
     <string name="audit_member_role_changed">%1$s changed the role of %2$s from %3$s to %4$s</string>
     <string name="audit_password_reset">%1$s reset the password of %2$s</string>
+    <string name="audit_member_erased">%1$s erased the personal data of %2$s</string>
     <string name="audit_mfa_reset">%1$s reset the two-step verification of %2$s</string>
     <string name="audit_login_disabled">%1$s disabled the login of %2$s</string>
     <string name="audit_group_created">%1$s created the group %2$s</string>
@@ -236,6 +241,7 @@
     <string name="admin_error_network_unavailable">Unable to reach the server. Check your connection.</string>
     <string name="admin_error_not_allowed">You do not have permission to do this.</string>
     <string name="admin_error_not_a_member">This person is no longer a member.</string>
+    <string name="admin_error_not_erasable">This person cannot be erased. They may belong to another organization, or this server does not allow it.</string>
     <string name="admin_error_last_admin">An organization needs at least one administrator.</string>
     <string name="admin_error_unknown">Something went wrong. Try again later.</string>
     <string name="close">Close</string>

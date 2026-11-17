@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.data.remote
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.functions.functions
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.ktor.client.statement.bodyAsText
 import javax.inject.Inject
 import kotlinx.serialization.SerialName
@@ -16,6 +17,7 @@ import kotlinx.serialization.json.put
 
 private const val ADMIN_FUNCTION = "admin-users"
 private const val MEMBERS_TABLE = "org_members"
+private const val ERASURE_POLICY_FUNCTION = "erasure_policy"
 
 @Serializable
 internal data class CreatedMembersDto(val results: List<MemberCreationDto>)
@@ -36,6 +38,9 @@ internal data class PasswordResetDto(@SerialName("temporary_password") val tempo
 internal data class MfaResetDto(@SerialName("factors_removed") val factorsRemoved: Int)
 
 @Serializable
+internal data class ErasedMemberDto(val erased: Boolean, val messages: String? = null)
+
+@Serializable
 internal data class RemovedMemberDto(val removed: Boolean, @SerialName("login_disabled") val loginDisabled: Boolean)
 
 @Serializable
@@ -51,6 +56,11 @@ internal interface AdminRemoteSource {
     suspend fun removeMember(orgId: String, userId: String): RemovedMemberDto
 
     suspend fun resetMfa(orgId: String, userId: String): MfaResetDto
+
+    /** The server's erasure mode as the database spells it: off, keep_messages or blank_messages. */
+    suspend fun erasurePolicy(): String
+
+    suspend fun eraseMember(orgId: String, userId: String): ErasedMemberDto
 
     /** Returns true when a row was changed; Row Level Security hides rows the caller may not change. */
     suspend fun changeRole(orgId: String, userId: String, role: String): Boolean
@@ -75,6 +85,11 @@ internal class SupabaseAdminRemoteSource @Inject constructor(private val client:
 
     override suspend fun resetMfa(orgId: String, userId: String): MfaResetDto =
         invoke(targetRequest("reset_mfa", orgId, userId))
+
+    override suspend fun erasurePolicy(): String = client.postgrest.rpc(ERASURE_POLICY_FUNCTION).decodeAs<String>()
+
+    override suspend fun eraseMember(orgId: String, userId: String): ErasedMemberDto =
+        invoke(targetRequest("erase_member", orgId, userId))
 
     override suspend fun changeRole(orgId: String, userId: String, role: String): Boolean =
         client.from(MEMBERS_TABLE).update({ set("role", role) }) {

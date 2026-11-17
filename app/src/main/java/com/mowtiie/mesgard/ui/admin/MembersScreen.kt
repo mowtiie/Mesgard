@@ -65,6 +65,7 @@ internal fun MembersScreenRoute(
         onQueryChanged = viewModel::onQueryChanged,
         onMemberAction = viewModel::onMemberAction,
         onRoleSelected = viewModel::onRoleSelected,
+        onEraseToggled = viewModel::onEraseToggled,
         onDialogConfirmed = viewModel::onDialogConfirmed,
         onDialogDismissed = viewModel::onDialogDismissed,
         onErrorShown = viewModel::onErrorShown,
@@ -83,6 +84,7 @@ internal fun MembersScreen(
     onQueryChanged: (String) -> Unit,
     onMemberAction: (Contact, MemberAction) -> Unit,
     onRoleSelected: (OrgRole) -> Unit,
+    onEraseToggled: (Boolean) -> Unit,
     onDialogConfirmed: () -> Unit,
     onDialogDismissed: () -> Unit,
     onErrorShown: () -> Unit,
@@ -155,7 +157,15 @@ internal fun MembersScreen(
             }
         }
     }
-    MembersDialogs(uiState.dialog, uiState.isWorking, onRoleSelected, onDialogConfirmed, onDialogDismissed)
+    MembersDialogs(
+        dialog = uiState.dialog,
+        isWorking = uiState.isWorking,
+        erasureMode = uiState.erasureMode,
+        onRoleSelected = onRoleSelected,
+        onEraseToggled = onEraseToggled,
+        onConfirm = onDialogConfirmed,
+        onDismiss = onDialogDismissed,
+    )
 }
 
 @Composable
@@ -212,5 +222,6 @@ private fun MembersError.messageResource(): Int = when (this) {
     MembersError.NOT_ALLOWED -> R.string.admin_error_not_allowed
     MembersError.NOT_A_MEMBER -> R.string.admin_error_not_a_member
     MembersError.LAST_ADMIN -> R.string.admin_error_last_admin
+    MembersError.NOT_ERASABLE -> R.string.admin_error_not_erasable
     MembersError.UNKNOWN -> R.string.admin_error_unknown
 }

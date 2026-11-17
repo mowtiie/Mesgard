@@ -6,6 +6,7 @@ import com.mowtiie.mesgard.domain.admin.ObserveAdminOrganization
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.ErasureMode
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
@@ -47,12 +48,17 @@ internal class MembersViewModel @Inject constructor(
             isRefreshing = local.isRefreshing,
             isWorking = local.isWorking,
             dialog = local.dialog,
+            erasureMode = local.erasureMode,
             error = local.error,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), MembersUiState())
 
     init {
         onRefresh()
+        viewModelScope.launch {
+            val mode = (adminRepository.erasureMode() as? AdminResult.Success)?.value ?: ErasureMode.OFF
+            localState.update { it.copy(erasureMode = mode) }
+        }
     }
 
     fun onRefresh() {
@@ -81,6 +87,11 @@ internal class MembersViewModel @Inject constructor(
         state.copy(dialog = dialog?.copy(selected = role) ?: state.dialog)
     }
 
+    fun onEraseToggled(erase: Boolean) = localState.update { state ->
+        val dialog = state.dialog as? MembersDialog.ConfirmRemove
+        state.copy(dialog = dialog?.copy(erase = erase) ?: state.dialog)
+    }
+
     fun onDialogDismissed() = localState.update { it.copy(dialog = null) }
 
     fun onErrorShown() = localState.update { it.copy(error = null) }
@@ -106,8 +117,11 @@ internal class MembersViewModel @Inject constructor(
             }
         is MembersDialog.ConfirmResetMfa ->
             adminRepository.resetMfa(organizationId, dialog.member.userId).toOutcome { null }
-        is MembersDialog.ConfirmRemove ->
+        is MembersDialog.ConfirmRemove -> if (dialog.erase) {
+            adminRepository.eraseMember(organizationId, dialog.member.userId).toOutcome { null }
+        } else {
             adminRepository.removeMember(organizationId, dialog.member.userId).toOutcome { null }
+        }
         is MembersDialog.TemporaryPassword -> Outcome()
     }
 
@@ -118,6 +132,7 @@ internal class MembersViewModel @Inject constructor(
         val isRefreshing: Boolean = false,
         val isWorking: Boolean = false,
         val dialog: MembersDialog? = null,
+        val erasureMode: ErasureMode = ErasureMode.OFF,
         val error: MembersError? = null,
     )
 
@@ -137,5 +152,6 @@ internal fun AdminError.toMembersError() = when (this) {
     AdminError.NOT_ALLOWED -> MembersError.NOT_ALLOWED
     AdminError.NOT_A_MEMBER -> MembersError.NOT_A_MEMBER
     AdminError.LAST_ADMIN -> MembersError.LAST_ADMIN
+    AdminError.NOT_ERASABLE -> MembersError.NOT_ERASABLE
     AdminError.UNKNOWN -> MembersError.UNKNOWN
 }

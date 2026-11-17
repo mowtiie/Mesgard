@@ -27,7 +27,15 @@ internal enum class AdminError {
     NOT_ALLOWED,
     NOT_A_MEMBER,
     LAST_ADMIN,
+    NOT_ERASABLE,
     UNKNOWN,
+}
+
+/** What this server does when someone is erased. OFF hides the choice altogether. */
+internal enum class ErasureMode {
+    OFF,
+    KEEP_MESSAGES,
+    BLANK_MESSAGES,
 }
 
 internal sealed interface AdminResult<out T> {

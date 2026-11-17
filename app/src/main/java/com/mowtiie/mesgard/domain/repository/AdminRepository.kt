@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.domain.repository
 
 import com.mowtiie.mesgard.domain.model.AdminResult
+import com.mowtiie.mesgard.domain.model.ErasureMode
 import com.mowtiie.mesgard.domain.model.MemberCreation
 import com.mowtiie.mesgard.domain.model.NewMember
 import com.mowtiie.mesgard.domain.model.OrgRole
@@ -17,6 +18,12 @@ internal interface AdminRepository {
 
     /** Removes every second factor of the person, so they set one up again at the next sign in. */
     suspend fun resetMfa(orgId: String, userId: String): AdminResult<Unit>
+
+    /** What the server does when someone is erased. A server that cannot say is treated as not offering it. */
+    suspend fun erasureMode(): AdminResult<ErasureMode>
+
+    /** Removes the person and erases their personal data. It cannot be undone. */
+    suspend fun eraseMember(orgId: String, userId: String): AdminResult<Unit>
 
     suspend fun changeRole(orgId: String, userId: String, role: OrgRole): AdminResult<Unit>
 }

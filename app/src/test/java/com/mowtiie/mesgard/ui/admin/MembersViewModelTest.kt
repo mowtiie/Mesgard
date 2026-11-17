@@ -7,6 +7,7 @@ import com.mowtiie.mesgard.domain.model.AccountMembership
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.ErasureMode
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
@@ -45,7 +46,9 @@ class MembersViewModelTest {
         every { observeContacts() } returns contacts
         coEvery { refresh() } returns RefreshResult.Success
     }
-    private val adminRepository = mockk<AdminRepository>()
+    private val adminRepository = mockk<AdminRepository> {
+        coEvery { erasureMode() } returns AdminResult.Success(ErasureMode.KEEP_MESSAGES)
+    }
 
     private fun viewModel() =
         MembersViewModel(ObserveAdminOrganization(accountRepository), contactRepository, adminRepository)
@@ -136,6 +139,46 @@ class MembersViewModelTest {
         viewModel.onDialogConfirmed()
 
         viewModel.uiState.test { assertEquals(MembersError.NOT_ALLOWED, expectMostRecentItem().error) }
+    }
+
+    @Test
+    fun `offers erasing only when the server allows it`() = runTest {
+        viewModel().uiState.test { assertEquals(ErasureMode.KEEP_MESSAGES, expectMostRecentItem().erasureMode) }
+
+        coEvery { adminRepository.erasureMode() } returns AdminResult.Failure(AdminError.NOT_A_MEMBER)
+        viewModel().uiState.test { assertEquals(ErasureMode.OFF, expectMostRecentItem().erasureMode) }
+    }
+
+    @Test
+    fun `erases instead of only removing when the box is ticked`() = runTest {
+        coEvery { adminRepository.eraseMember(ORG, "u2") } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+
+        viewModel.onMemberAction(contacts.value[1], MemberAction.REMOVE)
+        viewModel.uiState.test {
+            assertEquals(MembersDialog.ConfirmRemove(contacts.value[1], erase = false), expectMostRecentItem().dialog)
+        }
+        viewModel.onEraseToggled(true)
+        viewModel.uiState.test {
+            assertEquals(MembersDialog.ConfirmRemove(contacts.value[1], erase = true), expectMostRecentItem().dialog)
+        }
+        viewModel.onDialogConfirmed()
+
+        coVerify(exactly = 1) { adminRepository.eraseMember(ORG, "u2") }
+        coVerify(exactly = 0) { adminRepository.removeMember(any(), any()) }
+        viewModel.uiState.test { assertNull(expectMostRecentItem().dialog) }
+    }
+
+    @Test
+    fun `says so when the person cannot be erased`() = runTest {
+        coEvery { adminRepository.eraseMember(ORG, "u1") } returns AdminResult.Failure(AdminError.NOT_ERASABLE)
+        val viewModel = viewModel()
+
+        viewModel.onMemberAction(contacts.value[0], MemberAction.REMOVE)
+        viewModel.onEraseToggled(true)
+        viewModel.onDialogConfirmed()
+
+        viewModel.uiState.test { assertEquals(MembersError.NOT_ERASABLE, expectMostRecentItem().error) }
     }
 
     @Test

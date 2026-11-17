@@ -31,6 +31,7 @@ private val Templates = mapOf(
     "member.role_changed" to
         Template(R.string.audit_member_role_changed, listOf(Slot.ACTOR, Slot.PERSON, Slot.FROM_ROLE, Slot.TO_ROLE)),
     "member.password_reset" to Template(R.string.audit_password_reset, listOf(Slot.ACTOR, Slot.PERSON)),
+    "member.erased" to Template(R.string.audit_member_erased, listOf(Slot.ACTOR, Slot.PERSON)),
     "member.mfa_reset" to Template(R.string.audit_mfa_reset, listOf(Slot.ACTOR, Slot.PERSON)),
     "member.login_disabled" to Template(R.string.audit_login_disabled, listOf(Slot.ACTOR, Slot.PERSON)),
     "group.created" to Template(R.string.audit_group_created, listOf(Slot.ACTOR, Slot.NAME)),

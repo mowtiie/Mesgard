@@ -6,6 +6,7 @@ import com.mowtiie.mesgard.data.remote.MemberCreationDto
 import com.mowtiie.mesgard.data.remote.NewMemberRequest
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminResult
+import com.mowtiie.mesgard.domain.model.ErasureMode
 import com.mowtiie.mesgard.domain.model.MemberCreation
 import com.mowtiie.mesgard.domain.model.NewMember
 import com.mowtiie.mesgard.domain.model.OrgRole
@@ -43,12 +44,23 @@ internal class RemoteAdminRepository @Inject constructor(private val remote: Adm
         remote.resetMfa(orgId, userId)
     }
 
+    override suspend fun erasureMode(): AdminResult<ErasureMode> = attemptAdmin {
+        erasureModeOf(remote.erasurePolicy())
+    }
+
+    override suspend fun eraseMember(orgId: String, userId: String): AdminResult<Unit> =
+        attemptAdmin<Unit>(conflict = AdminError.NOT_ERASABLE) { remote.eraseMember(orgId, userId) }
+
     override suspend fun changeRole(orgId: String, userId: String, role: OrgRole): AdminResult<Unit> = attemptAdmin {
         check(remote.changeRole(orgId, userId, role.wireName())) { "No member was changed" }
     }
 }
 
-internal suspend fun <T> attemptAdmin(block: suspend () -> T): AdminResult<T> = try {
+/** [conflict] is what a 409 means here: the last admin cannot be removed, a person elsewhere cannot be erased. */
+internal suspend fun <T> attemptAdmin(
+    conflict: AdminError = AdminError.LAST_ADMIN,
+    block: suspend () -> T,
+): AdminResult<T> = try {
     AdminResult.Success(block())
 } catch (exception: HttpRequestException) {
     Log.i(TAG, "The server could not be reached", exception)
@@ -58,7 +70,7 @@ internal suspend fun <T> attemptAdmin(block: suspend () -> T): AdminResult<T> = 
     AdminResult.Failure(AdminError.NETWORK_UNAVAILABLE)
 } catch (exception: RestException) {
     Log.w(TAG, "The server refused the request", exception)
-    AdminResult.Failure(adminErrorFor(exception.statusCode))
+    AdminResult.Failure(adminErrorFor(exception.statusCode, conflict))
 } catch (exception: IllegalArgumentException) {
     Log.w(TAG, "The request or the answer is not valid", exception)
     AdminResult.Failure(AdminError.UNKNOWN)
@@ -67,13 +79,14 @@ internal suspend fun <T> attemptAdmin(block: suspend () -> T): AdminResult<T> = 
     AdminResult.Failure(AdminError.NOT_ALLOWED)
 }
 
-internal fun adminErrorFor(statusCode: Int): AdminError = when (statusCode) {
-    HTTP_UNAUTHORIZED, HTTP_FORBIDDEN -> AdminError.NOT_ALLOWED
-    HTTP_NOT_FOUND -> AdminError.NOT_A_MEMBER
-    HTTP_CONFLICT -> AdminError.LAST_ADMIN
-    HTTP_BAD_REQUEST -> AdminError.UNKNOWN
-    else -> AdminError.UNKNOWN
-}
+internal fun adminErrorFor(statusCode: Int, conflict: AdminError = AdminError.LAST_ADMIN): AdminError =
+    when (statusCode) {
+        HTTP_UNAUTHORIZED, HTTP_FORBIDDEN -> AdminError.NOT_ALLOWED
+        HTTP_NOT_FOUND -> AdminError.NOT_A_MEMBER
+        HTTP_CONFLICT -> conflict
+        HTTP_BAD_REQUEST -> AdminError.UNKNOWN
+        else -> AdminError.UNKNOWN
+    }
 
 private fun OrgRole.wireName(): String = when (this) {
     OrgRole.ORG_ADMIN -> "org_admin"
@@ -100,4 +113,11 @@ private fun invalidReason(reason: String?): SkipReason = when (reason) {
     "invalid_role" -> SkipReason.INVALID_ROLE
     "invalid_display_name" -> SkipReason.INVALID_NAME
     else -> SkipReason.FAILED
+}
+
+/** Anything the app does not know counts as off, so the choice is never offered on a guess. */
+internal fun erasureModeOf(wireName: String): ErasureMode = when (wireName) {
+    "keep_messages" -> ErasureMode.KEEP_MESSAGES
+    "blank_messages" -> ErasureMode.BLANK_MESSAGES
+    else -> ErasureMode.OFF
 }
