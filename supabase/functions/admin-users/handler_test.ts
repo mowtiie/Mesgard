@@ -15,10 +15,13 @@ class FakeApi implements AdminApi {
   calls: string[] = [];
   audits: string[] = [];
   passwords = new Map<string, string>();
+  validTokens = new Set([TOKEN]);
+  mfaRequired = false;
+  factors = new Map<string, number>();
   private nextId = 1;
 
   getUserId(token: string) {
-    return Promise.resolve(token === TOKEN ? ADMIN : null);
+    return Promise.resolve(this.validTokens.has(token) ? ADMIN : null);
   }
   getMemberRole(_token: string, _orgId: string, userId: string) {
     return Promise.resolve(this.roles.get(userId) ?? null);
@@ -57,6 +60,14 @@ class FakeApi implements AdminApi {
   disableLogin(userId: string) {
     this.calls.push(`disable ${userId}`);
     return Promise.resolve();
+  }
+  isMfaRequired() {
+    return Promise.resolve(this.mfaRequired);
+  }
+  deleteFactors(userId: string) {
+    const count = this.factors.get(userId) ?? 0;
+    this.factors.delete(userId);
+    return Promise.resolve(count);
   }
   recordAudit(_token: string, _orgId: string, action: string, targetUserId: string) {
     this.audits.push(`${action} ${targetUserId}`);
@@ -235,4 +246,66 @@ Deno.test("refuses to remove an admin when no other admin would be left", async 
 
   assertEquals(response.status, 409);
   assertEquals(api.roles.get(otherAdmin), "org_admin");
+});
+
+function tokenAt(level: string): string {
+  const encode = (value: unknown) => btoa(JSON.stringify(value)).replace(/=+$/, "");
+  return `${encode({ alg: "HS256" })}.${encode({ aal: level })}.signature`;
+}
+
+Deno.test("an account that must verify a second factor needs an aal2 session", async () => {
+  const api = new FakeApi();
+  api.mfaRequired = true;
+  api.validTokens.add(tokenAt("aal1")).add(tokenAt("aal2"));
+  const request = { action: "reset_password", org_id: ORG, user_id: MEMBER };
+
+  const first = await handle(api, post(request, tokenAt("aal1")));
+  assertEquals(first.status, 403);
+  assertEquals((await first.json()).error, "mfa_required");
+  assertEquals(api.passwords.size, 0);
+
+  assertEquals((await handle(api, post(request, tokenAt("aal2")))).status, 200);
+});
+
+Deno.test("an administrator without a required second factor works at aal1", async () => {
+  const api = new FakeApi();
+  api.validTokens.add(tokenAt("aal1"));
+
+  const response = await handle(api, post({ action: "reset_password", org_id: ORG, user_id: MEMBER }, tokenAt("aal1")));
+
+  assertEquals(response.status, 200);
+});
+
+Deno.test("resets the two-step verification of a member and records it", async () => {
+  const api = new FakeApi();
+  api.factors.set(MEMBER, 1);
+
+  const response = await handle(api, post({ action: "reset_mfa", org_id: ORG, user_id: MEMBER }));
+
+  assertEquals(response.status, 200);
+  assertEquals((await response.json()).factors_removed, 1);
+  assertEquals(api.factors.has(MEMBER), false);
+  assertEquals(api.audits, [`member.mfa_reset ${MEMBER}`]);
+});
+
+Deno.test("an administrator cannot reset their own two-step verification", async () => {
+  const api = new FakeApi();
+  api.factors.set(ADMIN, 1);
+
+  const response = await handle(api, post({ action: "reset_mfa", org_id: ORG, user_id: ADMIN }));
+
+  assertEquals(response.status, 400);
+  assertEquals(api.factors.get(ADMIN), 1);
+  assertEquals(api.audits, []);
+});
+
+Deno.test("resetting the two-step verification of a non member is refused", async () => {
+  const api = new FakeApi();
+
+  const response = await handle(
+    api,
+    post({ action: "reset_mfa", org_id: ORG, user_id: "20000000-0000-4000-8000-000000000b01" }),
+  );
+
+  assertEquals(response.status, 404);
 });

@@ -16,7 +16,8 @@ export interface NewUser {
 export type AdminRequest =
   | { action: "create_users"; orgId: string; users: unknown[] }
   | { action: "reset_password"; orgId: string; userId: string }
-  | { action: "remove_member"; orgId: string; userId: string };
+  | { action: "remove_member"; orgId: string; userId: string }
+  | { action: "reset_mfa"; orgId: string; userId: string };
 
 export type ParseResult = { request: AdminRequest } | { error: string };
 
@@ -42,6 +43,7 @@ export function parseRequest(body: unknown): ParseResult {
       return { request: { action: "create_users", orgId, users: body.users } };
     case "reset_password":
     case "remove_member":
+    case "reset_mfa":
       if (!isUuid(body.user_id)) return { error: "user_id must be a UUID" };
       return { request: { action: body.action, orgId, userId: body.user_id } };
     default:

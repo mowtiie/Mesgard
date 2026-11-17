@@ -137,6 +137,32 @@ export function createSupabaseApi({ url, anonKey, serviceRoleKey }: SupabaseApiS
       );
     },
 
+    async isMfaRequired(token) {
+      const response = await expectOk(
+        await fetch(`${url}/rest/v1/rpc/is_mfa_required`, { method: "POST", headers: asUser(token), body: "{}" }),
+        "Reading the two-step verification status",
+      );
+      return (await response.json()) === true;
+    },
+
+    async deleteFactors(userId) {
+      const listed = await expectOk(
+        await fetch(`${url}/auth/v1/admin/users/${userId}/factors`, { headers: asService }),
+        "Listing factors",
+      );
+      const factors: { id: string }[] = await listed.json();
+      for (const factor of factors) {
+        await expectOk(
+          await fetch(`${url}/auth/v1/admin/users/${userId}/factors/${factor.id}`, {
+            method: "DELETE",
+            headers: asService,
+          }),
+          "Deleting a factor",
+        );
+      }
+      return factors.length;
+    },
+
     async recordAudit(token, orgId, action, targetUserId) {
       await expectOk(
         await fetch(`${url}/rest/v1/audit_logs`, {

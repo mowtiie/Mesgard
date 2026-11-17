@@ -1,3 +1,4 @@
+import { assuranceLevel } from "./assurance.ts";
 import { generateTemporaryPassword } from "./passwords.ts";
 import { type AdminRequest, parseRequest, type Role, validateNewUser } from "./validation.ts";
 
@@ -17,6 +18,10 @@ export interface AdminApi {
   setTemporaryPassword(userId: string, password: string): Promise<void>;
   disableLogin(userId: string): Promise<void>;
   recordAudit(token: string, orgId: string, action: string, targetUserId: string): Promise<void>;
+  /** Whether the account of the token must verify a second factor, answered by the database with the caller's token. */
+  isMfaRequired(token: string): Promise<boolean>;
+  /** Removes every factor of a login and returns how many there were. Auth ends the sessions of a verified factor. */
+  deleteFactors(userId: string): Promise<number>;
 }
 
 export interface HandlerDependencies {
@@ -53,6 +58,9 @@ export async function handleAdminRequest(request: Request, dependencies: Handler
   const { api } = dependencies;
   const callerId = await api.getUserId(token);
   if (!callerId) return json({ error: "unauthorized" }, 401);
+  if (await api.isMfaRequired(token) && assuranceLevel(token) !== "aal2") {
+    return json({ error: "mfa_required" }, 403);
+  }
   if (await api.getMemberRole(token, parsed.request.orgId, callerId) !== "org_admin") {
     return json({ error: "forbidden" }, 403);
   }
@@ -73,6 +81,8 @@ function dispatch(
       return resetPassword(request, token, callerId, dependencies.api, generatePassword);
     case "remove_member":
       return removeMember(request, token, callerId, dependencies.api);
+    case "reset_mfa":
+      return resetMfa(request, token, callerId, dependencies.api);
   }
 }
 
@@ -164,4 +174,19 @@ async function removeMember(
     await api.recordAudit(token, request.orgId, "member.login_disabled", request.userId);
   }
   return json({ removed: true, login_disabled: loginDisabled });
+}
+
+async function resetMfa(
+  request: Extract<AdminRequest, { action: "reset_mfa" }>,
+  token: string,
+  callerId: string,
+  api: AdminApi,
+): Promise<Response> {
+  if (request.userId === callerId) return json({ error: "cannot_reset_own_mfa" }, 400);
+  if (await api.getMemberRole(token, request.orgId, request.userId) === null) {
+    return json({ error: "not_a_member" }, 404);
+  }
+  const removed = await api.deleteFactors(request.userId);
+  await api.recordAudit(token, request.orgId, "member.mfa_reset", request.userId);
+  return json({ factors_removed: removed });
 }
