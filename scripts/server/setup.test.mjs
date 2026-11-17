@@ -111,7 +111,7 @@ test("asks for what the flags do not give, and proposes a short name", async () 
 
   await runSetup({ target: fakeTarget(), options: {}, deps, log: () => {} });
 
-  assert.ok(asked.some((question) => question.includes("[some-name]")));
+  assert.ok(asked.some((question) => question.includes("(some-name)")));
   assert.ok(deps.calls.some(([name, email]) => name === "createLogin" && email === answers.email));
 });
 
@@ -179,6 +179,42 @@ test("never changes the setting when no organization is created", async () => {
   assert.ok(!deps.calls.some(([name]) => name === "execute"));
 });
 
+test("asks again after an answer that cannot be used, and gives up after three", async () => {
+  const replies = ["", "Some School", "", "not an email", "maria@school.example", "Maria Santos", "n"];
+  const warnings = [];
+  const deps = fakeDeps({ ask: async () => replies.shift() });
+
+  await runSetup({ target: fakeTarget(), options: {}, deps, log: (line) => warnings.push(line) });
+
+  assert.ok(warnings.some((line) => line.includes("organization name must be")));
+  assert.ok(warnings.some((line) => line.includes("email is not valid")));
+  assert.ok(deps.calls.some(([name, email]) => name === "createLogin" && email === "maria@school.example"));
+
+  const stubborn = fakeDeps({ ask: async () => "not an email" });
+  await assert.rejects(runSetup({ target: fakeTarget(), options: { ...flags, "admin-email": undefined }, deps: stubborn, log: () => {} }), /email is not valid/);
+});
+
+test("numbers the steps and ends with the next steps, including the authenticator", async () => {
+  const lines = [];
+
+  await runSetup({ target: fakeTarget(), options: flags, deps: fakeDeps(), log: (line) => lines.push(line) });
+
+  const output = lines.join("\n");
+  for (const title of ["[1/5] Linking", "[2/5] Applying", "[3/5] Deploying", "[4/5] Checking", "[5/5] Creating"]) {
+    assert.ok(output.includes(title), title);
+  }
+  assert.match(output, /Next steps\n {2}1\. Install Mesgard/);
+  assert.match(output, /Set up the authenticator app/);
+});
+
+test("leaves the authenticator out of the next steps when it is not required", async () => {
+  const lines = [];
+
+  await runSetup({ target: fakeTarget(), options: { ...flags, "no-require-mfa": true }, deps: fakeDeps(), log: (line) => lines.push(line) });
+
+  assert.ok(!lines.join("\n").includes("authenticator"));
+});
+
 test("the local stack skips migrations, functions and Auth settings", async () => {
   const deps = fakeDeps();
 
@@ -212,7 +248,7 @@ test("uses a password from the environment and never prints it", async () => {
   assert.equal(created.password, null);
   const output = lines.join("\n");
   assert.ok(!output.includes(secret));
-  assert.match(output, /with the password you provided/);
+  assert.match(output, /the one you provided/);
 });
 
 test("refuses a missing or short password from the environment", async () => {

@@ -8,6 +8,7 @@ import { createLogin, runSetup } from "./setup.mjs";
 import { CliError } from "./supabase.mjs";
 import { realTools } from "./tools.mjs";
 import { resolveTarget } from "./target.mjs";
+import { createUi, detectOutput } from "./ui.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -40,6 +41,7 @@ Options:
                         setup: answers for the first organization, so nothing is asked`;
 
 async function main() {
+  const output = detectOutput();
   const { command, options } = parseArgs(process.argv.slice(2));
   if (command === "help" || options.help) return console.log(HELP);
   const target = resolveTarget({
@@ -53,7 +55,7 @@ async function main() {
   } else if (command === "setup") {
     const tools = realTools(target, repositoryRoot);
     const deps = { ...tools, createLogin, secretKey: () => target.revealSecretKey() };
-    await runSetup({ target, options, deps });
+    await runSetup({ target, options, deps, ...output });
     if (options["with-push"] === true) await runPush({ target, options, deps: tools });
     console.log("\nChecking the server");
     process.exitCode = await runDoctor({ target, repositoryRoot });
@@ -62,6 +64,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error instanceof CliError || error instanceof Error ? error.message : error);
+  const message = error instanceof Error ? error.message : String(error);
+  createUi({ log: console.error, ...detectOutput({ stream: process.stderr }) }).error(message);
   process.exitCode = 1;
 });

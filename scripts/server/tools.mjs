@@ -11,6 +11,14 @@ function runVisibly(args, what) {
   if (result.status !== 0) throw new CliError(`${what} failed. Fix the problem above and run setup again.`);
 }
 
+/** For steps that never ask anything: the CLI's progress is hidden and shown only when the step fails. */
+function runQuietly(args, what) {
+  const result = runSupabase(args);
+  if (result.status === 0) return;
+  process.stderr.write(`${(result.stderr || result.stdout).trim()}\n`);
+  throw new CliError(`${what} failed. Fix the problem above and run setup again.`);
+}
+
 async function prompt(question) {
   if (!process.stdin.isTTY) {
     throw new CliError(`A question needs a terminal, so pass the answer as an option. Question: ${question.trim()}`);
@@ -30,7 +38,7 @@ export function realTools(target, repositoryRoot) {
     link: (ref) => runVisibly(["link", "--project-ref", ref], "Linking the project"),
     pushMigrations: (ref) => runVisibly(["db", "push", `--remote=${ref}`, "--yes"], "Applying the migrations"),
     deployFunction: (ref, name = "admin-users") =>
-      runVisibly(["functions", "deploy", name, `--remote=${ref}`, "--use-api", "--yes"], `Deploying ${name}`),
+      runQuietly(["functions", "deploy", name, `--remote=${ref}`, "--use-api", "--yes"], `Deploying ${name}`),
     setSecrets: (ref, values) => setSecrets(ref, values),
     fetch,
     wait: (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
@@ -42,7 +50,7 @@ export function realTools(target, repositoryRoot) {
     execute: (sql) => executeSql(target, sql),
     env: process.env,
     ask: prompt,
-    confirm: async (question) => /^y(es)?$/i.test((await prompt(question)).trim()),
+    confirm: async (question) => !/^n(o)?$/i.test((await prompt(question)).trim()),
   };
 }
 

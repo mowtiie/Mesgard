@@ -23,20 +23,21 @@ export function slugFrom(name) {
     .replace(/-+$/g, "");
 }
 
-/** Returns the problems of the answers, one sentence each. Nothing that passes can break out of an SQL string. */
+const isBadText = (text, limit) => !text || text.length > limit || CONTROL_CHARACTERS.test(text);
+
+/** One sentence for an answer that cannot be used, or null. Nothing that passes can break out of an SQL string. */
+export const fieldProblem = {
+  name: (name) => (isBadText(name, MAX_NAME_LENGTH) ? `The organization name must be 1 to ${MAX_NAME_LENGTH} characters.` : null),
+  slug: (slug) => (SLUG_PATTERN.test(slug ?? "") ? null : "The short name may only use lowercase letters, digits and single hyphens."),
+  email: (email) => (EMAIL_PATTERN.test(email ?? "") ? null : "The administrator email is not valid."),
+  displayName: (displayName) =>
+    isBadText(displayName, MAX_DISPLAY_NAME_LENGTH) ? `The administrator name must be 1 to ${MAX_DISPLAY_NAME_LENGTH} characters.` : null,
+};
+
+/** Returns the problems of the answers, one sentence each. */
 export function findProblems({ name, slug, email, displayName }) {
-  const problems = [];
-  if (!name || name.length > MAX_NAME_LENGTH || CONTROL_CHARACTERS.test(name)) {
-    problems.push(`The organization name must be 1 to ${MAX_NAME_LENGTH} characters.`);
-  }
-  if (!SLUG_PATTERN.test(slug ?? "")) {
-    problems.push("The short name may only use lowercase letters, digits and single hyphens.");
-  }
-  if (!EMAIL_PATTERN.test(email ?? "")) problems.push("The administrator email is not valid.");
-  if (!displayName || displayName.length > MAX_DISPLAY_NAME_LENGTH || CONTROL_CHARACTERS.test(displayName)) {
-    problems.push(`The administrator name must be 1 to ${MAX_DISPLAY_NAME_LENGTH} characters.`);
-  }
-  return problems;
+  return [fieldProblem.name(name), fieldProblem.slug(slug), fieldProblem.email(email), fieldProblem.displayName(displayName)]
+    .filter(Boolean);
 }
 
 const quote = (text) => `'${text.replaceAll("'", "''")}'`;

@@ -1,15 +1,11 @@
-import {
-  findProblems,
-  generatePassword,
-  organizationSql,
-  REQUIRE_TWO_STEP_SQL,
-  setupLink,
-  slugFrom,
-} from "./organization.mjs";
+import { createFirstOrganization } from "./first-organization.mjs";
+import { setupLink } from "./organization.mjs";
 import { CliError } from "./supabase.mjs";
+import { createUi } from "./ui.mjs";
 
 const EMAIL_EXISTS_CODE = "email_exists";
-const MIN_SUPPLIED_PASSWORD_LENGTH = 12;
+const HOSTED_STEPS = 5;
+const LOCAL_STEPS = 1;
 
 /** Creates the administrator's login through the Auth admin API. The secret key stays in this function's memory. */
 export async function createLogin({ url, secretKey, email, password, displayName }) {
@@ -32,121 +28,79 @@ export async function createLogin({ url, secretKey, email, password, displayName
   throw new CliError(`Creating the login failed (${response.status}): ${body.msg ?? body.message ?? "no details"}`);
 }
 
-export async function runSetup({ target, options, deps, log = console.log }) {
-  if (target.kind === "hosted") await prepareHostedProject(target, options, deps, log);
-  else log("Local stack: the database comes from `supabase db reset`, so migrations and functions are skipped.");
+export async function runSetup({ target, options, deps, log = console.log, unicode = false, color = false }) {
+  const ui = createUi({ log, unicode, color });
+  const hosted = target.kind === "hosted";
+  ui.banner(
+    "Mesgard setup",
+    hosted ? `Project ${target.ref}` : "Local Supabase stack (the database comes from supabase db reset)",
+  );
+  ui.plan(hosted ? HOSTED_STEPS : LOCAL_STEPS);
+  if (hosted) await prepareHostedProject(target, options, deps, ui);
 
-  const created = await createFirstOrganization(target, options, deps, log);
-  const publicKey = target.publicKey();
-  log("");
-  log("Connect the app");
-  log(`  Server: ${target.url}`);
-  log(`  Key:    ${publicKey}  (public key, safe to share)`);
-  log(`  Link:   ${setupLink(target.url, publicKey)}`);
-  if (created?.password) {
-    log("");
-    log(`First administrator: ${created.email}`);
-    log(`Temporary password (shown once, change it at the first sign in): ${created.password}`);
-  } else if (created?.usedSuppliedPassword) {
-    log("");
-    log(`First administrator: ${created.email}, with the password you provided (changed at the first sign in).`);
-  }
+  const created = await createFirstOrganization(target, options, deps, ui);
+  summarize(ui, target, created);
   return created;
 }
 
-async function prepareHostedProject(target, options, deps, log) {
-  if (deps.linkedRef() !== target.ref) {
-    log("Linking the project");
+async function prepareHostedProject(target, options, deps, ui) {
+  ui.step("Linking the project");
+  if (deps.linkedRef() === target.ref) {
+    ui.done("Already linked");
+  } else {
     deps.link(target.ref);
+    ui.done(`Linked ${target.ref}`);
   }
-  log("Applying database migrations");
+
+  ui.step("Applying database migrations");
+  ui.info("This can take a minute. If the Supabase CLI asks for the database password, enter the one you set for the project.");
   deps.pushMigrations(target.ref);
-  log("Deploying the account function (admin-users)");
+  ui.done("The database is up to date");
+
+  ui.step("Deploying the account function");
   deps.deployFunction(target.ref);
-  await applyAuthSettings(target, options, deps, log);
+  ui.done("admin-users is deployed");
+
+  await applyAuthSettings(target, options, deps, ui);
 }
 
-async function applyAuthSettings(target, options, deps, log) {
+async function applyAuthSettings(target, options, deps, ui) {
+  ui.step("Checking the sign-in settings");
   const differences = deps.authDifferences(target.ref);
-  if (differences.length === 0) return log("Auth settings are already right (sign-ups off, TOTP enabled)");
-  log("Auth settings to change:");
-  differences.forEach((line) => log(`  ${line}`));
-  const approved = options.yes === true || (await deps.confirm("Apply these Auth settings? [y/N] "));
-  if (!approved) return log("Skipped the Auth settings. Change them in the dashboard or run setup again.");
+  if (differences.length === 0) return ui.done("Sign-ups are off and two-step verification (TOTP) is enabled");
+  ui.info("Mesgard needs these Auth settings. Nothing else is changed.");
+  differences.forEach((difference) => ui.detail(difference));
+  const approved = options.yes === true || (await deps.confirm("Apply these Auth settings? [Y/n]: "));
+  if (!approved) return ui.warn("Skipped. Change them in the dashboard or run setup again.");
   deps.applyAuthSettings(target.ref);
-  log("Auth settings applied");
+  return ui.done("Auth settings applied");
 }
 
-async function createFirstOrganization(target, options, deps, log) {
-  const [{ organizations }] = await target.query("select count(*)::int as organizations from public.organizations");
-  if (options["skip-organization"] === true) {
-    log("Skipping the first organization.");
-    return null;
-  }
-  if (organizations > 0 && options["add-organization"] !== true) {
-    log(`Found ${organizations} organization(s), so no new one is created. Use --add-organization to add another.`);
-    return null;
-  }
-  const answers = await collectAnswers(options, deps);
-  const problems = findProblems(answers);
-  if (problems.length > 0) throw new CliError(problems.join("\n"));
+function summarize(ui, target, created) {
+  const publicKey = target.publicKey();
+  ui.section("Connect the app");
+  ui.rows([
+    ["Server", target.url],
+    ["Key", publicKey, "public key, safe to share"],
+    ["Link", setupLink(target.url, publicKey)],
+  ]);
+  if (!created) return;
 
-  const requireTwoStep = await decideTwoStep(target, options, deps, log);
-  const supplied = suppliedPassword(options, deps.env);
-  const password = supplied ?? generatePassword();
-  const login = await deps.createLogin({
-    url: target.url,
-    secretKey: deps.secretKey(),
-    email: answers.email,
-    password,
-    displayName: answers.displayName,
-  });
-  if (!login.created) log(`A login for ${answers.email} already exists. It keeps its current password.`);
-  log("Creating the organization");
-  deps.execute(requireTwoStep ? `${organizationSql(answers)}\n${REQUIRE_TWO_STEP_SQL}` : organizationSql(answers));
-  if (requireTwoStep) log("Two-step verification is now required for administrators and staff");
-  return { email: answers.email, password: login.created && !supplied ? password : null, usedSuppliedPassword: login.created && Boolean(supplied) };
+  ui.section("First administrator");
+  const hasTemporaryPassword = Boolean(created.password) || created.usedSuppliedPassword;
+  ui.rows([
+    ["Email", created.email],
+    ...(created.password
+      ? [["Password", created.password, "temporary, shown once"]]
+      : [["Password", created.usedSuppliedPassword ? "the one you provided" : "unchanged, the login already existed"]]),
+  ]);
+
+  ui.section("Next steps");
+  ui.list([
+    "Install Mesgard on the phone, then open the link above. You can also type the server address and key.",
+    `Sign in with ${created.email}${created.password ? " and the password above" : created.usedSuppliedPassword ? " and the password you provided" : ""}.`,
+    ...(created.requiredTwoStep ? ["Set up the authenticator app when Mesgard asks."] : []),
+    ...(hasTemporaryPassword ? ["Choose your own password when Mesgard asks."] : []),
+    "Add the other people under Settings, Administration.",
+  ]);
 }
-
-/**
- * Asked with the other answers, before anything is created. A server that already requires it is left as it is, and
- * a server that does not is never changed without a yes, so an upgrade through the workflow cannot switch it on.
- */
-async function decideTwoStep(target, options, deps, log) {
-  if (options["require-mfa"] === true && options["no-require-mfa"] === true) {
-    throw new CliError("Use either --require-mfa or --no-require-mfa, not both.");
-  }
-  const [settings] = await target.query("select enforced from private.mfa_settings");
-  if (settings?.enforced === true) {
-    log("Two-step verification is already required for administrators and staff");
-    return false;
-  }
-  if (options["no-require-mfa"] === true) return false;
-  if (options["require-mfa"] === true || options.yes === true) return true;
-  const answer = await deps.ask("Require two-step verification for administrators and staff? [Y/n]: ");
-  return !/^n(o)?$/i.test(answer.trim());
-}
-
-async function collectAnswers(options, deps) {
-  const name = text(options["org-name"]) ?? (await deps.ask("Organization name: "));
-  const slug = text(options["org-slug"]) ?? (options.yes === true ? slugFrom(name) : (await deps.ask(`Short name [${slugFrom(name)}]: `)) || slugFrom(name));
-  const email = text(options["admin-email"]) ?? (await deps.ask("Administrator email: "));
-  const displayName = text(options["admin-name"]) ?? (await deps.ask("Administrator name: "));
-  return { name: name.trim(), slug: slug.trim(), email: email.trim(), displayName: displayName.trim() };
-}
-
-/**
- * A password the administrator chose, read from an environment variable so it never appears in a command line or a
- * log. The mark that makes the app ask for a new password is set either way.
- */
-function suppliedPassword(options, environment = {}) {
-  const name = text(options["admin-password-env"]);
-  if (name === undefined) return null;
-  const value = environment[name];
-  if (!value || value.length < MIN_SUPPLIED_PASSWORD_LENGTH) {
-    throw new CliError(`The environment variable ${name} must hold a password of at least ${MIN_SUPPLIED_PASSWORD_LENGTH} characters.`);
-  }
-  return value;
-}
-
-const text = (value) => (typeof value === "string" ? value : undefined);
