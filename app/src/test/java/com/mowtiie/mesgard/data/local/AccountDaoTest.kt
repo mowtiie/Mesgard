@@ -40,7 +40,7 @@ class AccountDaoTest {
     fun `lists memberships alphabetically ignoring case`() = runTest {
         accountDao.upsertMemberships(
             listOf(
-                AccountMembershipEntity("o1", "bravo school", "student"),
+                AccountMembershipEntity("o1", "bravo school", "member"),
                 AccountMembershipEntity("o2", "Alpha school", "staff"),
             ),
         )

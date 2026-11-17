@@ -91,8 +91,8 @@ internal fun adminErrorFor(statusCode: Int, conflict: AdminError = AdminError.LA
 private fun OrgRole.wireName(): String = when (this) {
     OrgRole.ORG_ADMIN -> "org_admin"
     OrgRole.STAFF -> "staff"
-    OrgRole.STUDENT -> "student"
-    OrgRole.OTHER -> throw IllegalArgumentException("A member needs the role admin, staff or student")
+    OrgRole.MEMBER -> "member"
+    OrgRole.OTHER -> throw IllegalArgumentException("A member needs the role admin, staff or member")
 }
 
 /** A person who left and comes back is reported as returned, with a new temporary password like a new login. */

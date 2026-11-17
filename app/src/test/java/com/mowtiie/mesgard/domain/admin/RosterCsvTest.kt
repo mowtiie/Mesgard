@@ -21,7 +21,7 @@ class RosterCsvTest {
 
         assertEquals(
             listOf(
-                Triple("ana@school.example", "Ana Cruz", OrgRole.STUDENT),
+                Triple("ana@school.example", "Ana Cruz", OrgRole.MEMBER),
                 Triple("ben@school.example", "Ben Reyes", OrgRole.STAFF),
                 Triple("cy@school.example", "Cy Diaz", OrgRole.ORG_ADMIN),
             ),
@@ -32,12 +32,21 @@ class RosterCsvTest {
     }
 
     @Test
-    fun `only the email column is required and a missing role means student`() {
+    fun `member, members, student and pupil all mean member`() {
+        val words = listOf("member", "Members", "student", "pupil")
+        val rows = words.mapIndexed { index, word -> "p$index@x.example,$word" }
+        val entries = parsed((listOf("email,role") + rows).joinToString("\n"))
+
+        assertEquals(List(4) { OrgRole.MEMBER }, entries.map { it.role })
+    }
+
+    @Test
+    fun `only the email column is required and a missing role means member`() {
         val entries = parsed("Email\nAna@School.Example\n")
 
         assertEquals("ana@school.example", entries.single().email)
         assertEquals("ana", entries.single().displayName)
-        assertEquals(OrgRole.STUDENT, entries.single().role)
+        assertEquals(OrgRole.MEMBER, entries.single().role)
     }
 
     @Test

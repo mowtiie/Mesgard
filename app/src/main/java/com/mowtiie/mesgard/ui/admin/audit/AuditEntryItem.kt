@@ -20,9 +20,9 @@ internal fun rememberAuditLabels(): AuditLabels = AuditLabels(
     roleLabels = mapOf(
         "org_admin" to stringResource(R.string.role_org_admin),
         "staff" to stringResource(R.string.role_staff),
-        "student" to stringResource(R.string.role_student),
+        "student" to stringResource(R.string.role_member),
         "moderator" to stringResource(R.string.group_role_moderator),
-        "member" to stringResource(R.string.group_role_member),
+        "member" to stringResource(R.string.role_member),
     ),
     formerMember = stringResource(R.string.audit_former_member),
 )

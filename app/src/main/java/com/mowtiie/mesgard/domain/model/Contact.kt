@@ -3,7 +3,7 @@ package com.mowtiie.mesgard.domain.model
 internal enum class OrgRole {
     ORG_ADMIN,
     STAFF,
-    STUDENT,
+    MEMBER,
     OTHER,
 }
 

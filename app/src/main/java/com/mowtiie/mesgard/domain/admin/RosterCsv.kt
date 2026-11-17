@@ -81,7 +81,7 @@ private fun entriesOf(rows: List<CsvRow>, columns: RosterColumns): List<RosterEn
             line = row.line,
             email = email,
             displayName = name,
-            role = role ?: OrgRole.STUDENT,
+            role = role ?: OrgRole.MEMBER,
             problem = problemOf(email, name, role, isNewEmail = seen.add(email)),
         )
     }
@@ -95,9 +95,9 @@ private fun problemOf(email: String, name: String, role: OrgRole?, isNewEmail: B
     else -> null
 }
 
-/** The role named in a file, student when the cell is empty, or null when it is not a role Mesgard knows. */
+/** The role named in a file, member when the cell is empty, or null when it is not a role Mesgard knows. */
 private fun roleOf(cell: String): OrgRole? = when (cell.trim().lowercase()) {
-    "", "student", "students", "pupil" -> OrgRole.STUDENT
+    "", "member", "members", "student", "students", "pupil" -> OrgRole.MEMBER
     "staff", "teacher", "faculty", "employee" -> OrgRole.STAFF
     "admin", "administrator", "org_admin" -> OrgRole.ORG_ADMIN
     else -> null

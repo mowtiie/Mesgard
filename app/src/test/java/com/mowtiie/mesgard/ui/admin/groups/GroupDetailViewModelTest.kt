@@ -35,7 +35,7 @@ class GroupDetailViewModelTest {
 
     private val contacts = MutableStateFlow(
         listOf(
-            Contact("org", "u1", "Ana Cruz", OrgRole.STUDENT),
+            Contact("org", "u1", "Ana Cruz", OrgRole.MEMBER),
             Contact("org", "u2", "Ben Reyes", OrgRole.STAFF),
         ),
     )

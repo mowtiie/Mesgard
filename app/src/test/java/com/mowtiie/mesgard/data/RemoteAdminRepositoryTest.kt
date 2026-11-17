@@ -44,7 +44,7 @@ class RemoteAdminRepositoryTest {
         val result = repository.createMembers(
             ORG,
             listOf(
-                NewMember("ana@school.example", "Ana", OrgRole.STUDENT),
+                NewMember("ana@school.example", "Ana", OrgRole.MEMBER),
                 NewMember("ben@school.example", "Ben", OrgRole.STAFF),
                 NewMember("x", "X", OrgRole.ORG_ADMIN),
             ),
@@ -63,7 +63,7 @@ class RemoteAdminRepositoryTest {
         coVerify {
             remote.createMembers(
                 ORG,
-                match { requests -> requests.map { it.role } == listOf("student", "staff", "org_admin") },
+                match { requests -> requests.map { it.role } == listOf("member", "staff", "org_admin") },
             )
         }
     }
@@ -147,10 +147,10 @@ class RemoteAdminRepositoryTest {
     @Test
     fun `changing a role that no row accepts is not allowed`() = runTest {
         coEvery { remote.changeRole(ORG, USER, "staff") } returns false
-        coEvery { remote.changeRole(ORG, USER, "student") } returns true
+        coEvery { remote.changeRole(ORG, USER, "member") } returns true
 
         assertEquals(AdminResult.Failure(AdminError.NOT_ALLOWED), repository.changeRole(ORG, USER, OrgRole.STAFF))
-        assertEquals(AdminResult.Success(Unit), repository.changeRole(ORG, USER, OrgRole.STUDENT))
+        assertEquals(AdminResult.Success(Unit), repository.changeRole(ORG, USER, OrgRole.MEMBER))
     }
 
     @Test

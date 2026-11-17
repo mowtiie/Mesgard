@@ -17,10 +17,11 @@ class ContactMapperTest {
     }
 
     @Test
-    fun `maps the known roles`() {
-        val roles = listOf("org_admin", "staff", "student").map { contactEntity("u", role = it).toContact().role }
+    fun `maps the known roles and reads the old name student as member`() {
+        val roles = listOf("org_admin", "staff", "member", "student")
+            .map { contactEntity("u", role = it).toContact().role }
 
-        assertEquals(listOf(OrgRole.ORG_ADMIN, OrgRole.STAFF, OrgRole.STUDENT), roles)
+        assertEquals(listOf(OrgRole.ORG_ADMIN, OrgRole.STAFF, OrgRole.MEMBER, OrgRole.MEMBER), roles)
     }
 
     @Test

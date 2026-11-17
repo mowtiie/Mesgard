@@ -185,7 +185,7 @@
     <string name="members_import">Import from CSV</string>
     <string name="import_title">Import members</string>
     <string name="import_help">Add many people at once from a CSV file, such as an export from a spreadsheet. Each person gets a temporary password.</string>
-    <string name="import_help_columns">The file needs a header row with an email column. A name column and a role column (student, staff or admin) are optional. A missing role means student.</string>
+    <string name="import_help_columns">The file needs a header row with an email column. A name column and a role column (member, staff or admin) are optional. A missing role means member.</string>
     <string name="import_choose_file">Choose file</string>
     <string name="import_save_template">Save template</string>
     <string name="import_choose_another">Choose another file</string>
@@ -345,7 +345,6 @@
     <string name="contact_online">Online</string>
     <string name="role_org_admin">Administrator</string>
     <string name="role_staff">Staff</string>
-    <string name="role_student">Student</string>
     <string name="role_member">Member</string>
     <string name="start_conversation_error_network_unavailable">Unable to start the conversation. Check your connection.</string>
     <string name="start_conversation_error_unknown">Unable to start the conversation. Try again later.</string>

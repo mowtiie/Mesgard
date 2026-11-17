@@ -63,7 +63,7 @@ class OfflineFirstAccountRepositoryTest {
     fun `refresh replaces memberships the user no longer has`() = runTest {
         databaseRule.database.accountDao().upsertAccount(AccountEntity("me", "Ana", null))
         databaseRule.database.accountDao().upsertMemberships(
-            listOf(AccountMembershipEntity("old", "Old school", "student")),
+            listOf(AccountMembershipEntity("old", "Old school", "member")),
         )
         coEvery { remoteSource.fetchDisplayName(any()) } returns "Ana"
         coEvery { remoteSource.fetchMemberships(any()) } returns

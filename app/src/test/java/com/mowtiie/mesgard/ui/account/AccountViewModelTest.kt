@@ -97,7 +97,7 @@ class AccountViewModelTest {
 
     @Test
     fun `shows two-step verification as off until a factor is confirmed`() = runTest {
-        account.value = accountWith(OrgRole.STUDENT)
+        account.value = accountWith(OrgRole.MEMBER)
 
         AccountViewModel(repository, mfaRepository).uiState.test {
             assertEquals(MfaRowState.OFF, expectMostRecentItem().mfa)

@@ -39,7 +39,7 @@ class AuditLogViewModelTest {
             MutableStateFlow(account)
     }
     private val contactRepository = mockk<ContactRepository> {
-        every { observeContacts() } returns MutableStateFlow(listOf(Contact(ORG, "u1", "Ana Reyes", OrgRole.STUDENT)))
+        every { observeContacts() } returns MutableStateFlow(listOf(Contact(ORG, "u1", "Ana Reyes", OrgRole.MEMBER)))
     }
     private val authRepository = mockk<AuthRepository> { every { currentUserId } returns "me" }
     private val auditLogRepository = mockk<AuditLogRepository>()

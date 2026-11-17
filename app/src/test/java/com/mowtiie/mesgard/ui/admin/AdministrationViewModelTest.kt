@@ -37,7 +37,7 @@ class AdministrationViewModelTest {
 
     private val adminAccount = Account("Admin Cruz", null, listOf(AccountMembership(ORG, "Rizal", OrgRole.ORG_ADMIN)))
     private val account = MutableStateFlow<Account?>(adminAccount)
-    private val contacts = MutableStateFlow(listOf(Contact(ORG, "u1", "Ana Reyes", OrgRole.STUDENT)))
+    private val contacts = MutableStateFlow(listOf(Contact(ORG, "u1", "Ana Reyes", OrgRole.MEMBER)))
     private val accountRepository = mockk<AccountRepository> { every { observeAccount() } returns account }
     private val contactRepository = mockk<ContactRepository> {
         every { observeContacts() } returns contacts
@@ -95,9 +95,9 @@ class AdministrationViewModelTest {
     @Test
     fun `counts only the people of the administered organization`() = runTest {
         contacts.value = listOf(
-            Contact(ORG, "u1", "Ana Reyes", OrgRole.STUDENT),
+            Contact(ORG, "u1", "Ana Reyes", OrgRole.MEMBER),
             Contact(ORG, "u2", "Ben Cruz", OrgRole.STAFF),
-            Contact("other", "u3", "Cy Lim", OrgRole.STUDENT),
+            Contact("other", "u3", "Cy Lim", OrgRole.MEMBER),
         )
 
         viewModel().uiState.test { assertEquals(2, expectMostRecentItem().memberCount) }
@@ -105,7 +105,7 @@ class AdministrationViewModelTest {
 
     @Test
     fun `marks a member count that reaches the roster limit as a minimum`() = runTest {
-        contacts.value = (1..ROSTER_LIMIT).map { Contact(ORG, "u$it", "Person $it", OrgRole.STUDENT) }
+        contacts.value = (1..ROSTER_LIMIT).map { Contact(ORG, "u$it", "Person $it", OrgRole.MEMBER) }
 
         viewModel().uiState.test { assertTrue(expectMostRecentItem().isMemberCountAtLeast) }
     }

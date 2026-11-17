@@ -36,9 +36,9 @@ class MembersViewModelTest {
     )
     private val contacts = MutableStateFlow(
         listOf(
-            Contact(ORG, "u1", "Ana Cruz", OrgRole.STUDENT),
+            Contact(ORG, "u1", "Ana Cruz", OrgRole.MEMBER),
             Contact(ORG, "u2", "Ben Reyes", OrgRole.STAFF),
-            Contact("other-org", "u3", "Carl Diaz", OrgRole.STUDENT),
+            Contact("other-org", "u3", "Carl Diaz", OrgRole.MEMBER),
         ),
     )
     private val accountRepository = mockk<AccountRepository> { every { observeAccount() } returns account }
@@ -213,7 +213,7 @@ class MembersViewModelTest {
 
     @Test
     fun `a person who is not an admin cannot confirm an action`() = runTest {
-        account.value = Account("Ana", null, listOf(AccountMembership(ORG, "Rizal National", OrgRole.STUDENT)))
+        account.value = Account("Ana", null, listOf(AccountMembership(ORG, "Rizal National", OrgRole.MEMBER)))
         val viewModel = viewModel()
 
         viewModel.onMemberAction(contacts.value[0], MemberAction.REMOVE)

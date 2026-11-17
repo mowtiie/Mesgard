@@ -8,6 +8,5 @@ import com.mowtiie.mesgard.domain.model.OrgRole
 internal fun OrgRole.labelResource(): Int = when (this) {
     OrgRole.ORG_ADMIN -> R.string.role_org_admin
     OrgRole.STAFF -> R.string.role_staff
-    OrgRole.STUDENT -> R.string.role_student
-    OrgRole.OTHER -> R.string.role_member
+    OrgRole.MEMBER, OrgRole.OTHER -> R.string.role_member
 }

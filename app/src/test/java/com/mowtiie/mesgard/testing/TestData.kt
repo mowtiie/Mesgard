@@ -86,14 +86,14 @@ internal fun messageDto(
     sender = senderName?.let { SenderDto(id = senderId, displayName = it) },
 )
 
-internal fun contactDto(userId: String, name: String = "Name $userId", role: String = "student") = ContactDto(
+internal fun contactDto(userId: String, name: String = "Name $userId", role: String = "member") = ContactDto(
     orgId = TEST_ORG_ID,
     userId = userId,
     role = role,
     user = SenderDto(id = userId, displayName = name),
 )
 
-internal fun contactEntity(userId: String, name: String = "Name $userId", role: String = "student") = ContactEntity(
+internal fun contactEntity(userId: String, name: String = "Name $userId", role: String = "member") = ContactEntity(
     orgId = TEST_ORG_ID,
     userId = userId,
     displayName = name,

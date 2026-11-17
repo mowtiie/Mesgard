@@ -56,7 +56,7 @@ class OfflineFirstGroupRepositoryTest {
     fun `staff and admins can start group conversations but students cannot`() = runTest {
         coEvery { remoteSource.fetchGroups() } returns listOf(groupDto("a"))
 
-        coEvery { remoteSource.fetchMemberships(CURRENT_USER_ID) } returns listOf(MembershipDto(TEST_ORG_ID, "student"))
+        coEvery { remoteSource.fetchMemberships(CURRENT_USER_ID) } returns listOf(MembershipDto(TEST_ORG_ID, "member"))
         repository.refresh()
         repository.observeGroups().test {
             assertEquals(listOf(false), awaitItem().map { it.canStartConversation })

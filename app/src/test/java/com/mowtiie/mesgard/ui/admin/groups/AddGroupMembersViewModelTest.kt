@@ -44,10 +44,10 @@ class AddGroupMembersViewModelTest {
     private val contactRepository = mockk<ContactRepository> {
         every { observeContacts() } returns MutableStateFlow(
             listOf(
-                Contact(ORG, "u1", "Ana Cruz", OrgRole.STUDENT),
+                Contact(ORG, "u1", "Ana Cruz", OrgRole.MEMBER),
                 Contact(ORG, "u2", "Ben Reyes", OrgRole.STAFF),
-                Contact(ORG, "u3", "Cy Diaz", OrgRole.STUDENT),
-                Contact("other-org", "u4", "Dee Lim", OrgRole.STUDENT),
+                Contact(ORG, "u3", "Cy Diaz", OrgRole.MEMBER),
+                Contact("other-org", "u4", "Dee Lim", OrgRole.MEMBER),
             ),
         )
     }

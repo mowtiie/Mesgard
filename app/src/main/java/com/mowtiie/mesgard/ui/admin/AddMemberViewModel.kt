@@ -35,7 +35,7 @@ internal data class CreatedLogin(val displayName: String, val temporaryPassword:
 internal data class AddMemberUiState(
     val email: String = "",
     val displayName: String = "",
-    val role: OrgRole = OrgRole.STUDENT,
+    val role: OrgRole = OrgRole.MEMBER,
     val isSaving: Boolean = false,
     val created: CreatedLogin? = null,
     val error: AddMemberError? = null,

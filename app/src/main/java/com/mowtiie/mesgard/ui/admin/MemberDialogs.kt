@@ -29,7 +29,7 @@ import com.mowtiie.mesgard.ui.settings.RadioGroup
 import com.mowtiie.mesgard.ui.settings.RadioLabel
 import kotlinx.coroutines.launch
 
-internal val AssignableRoles = listOf(OrgRole.STUDENT, OrgRole.STAFF, OrgRole.ORG_ADMIN)
+internal val AssignableRoles = listOf(OrgRole.MEMBER, OrgRole.STAFF, OrgRole.ORG_ADMIN)
 
 @Composable
 internal fun MembersDialogs(

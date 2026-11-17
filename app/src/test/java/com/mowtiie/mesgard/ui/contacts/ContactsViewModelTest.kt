@@ -225,7 +225,7 @@ class ContactsViewModelTest {
 
     @Test
     fun `filters the roster by the search query ignoring case`() = runTest {
-        contacts.value = listOf(ana, Contact("org", "ben", "Ben Cruz", OrgRole.STUDENT))
+        contacts.value = listOf(ana, Contact("org", "ben", "Ben Cruz", OrgRole.MEMBER))
         val viewModel = viewModel()
 
         viewModel.uiState.test {
