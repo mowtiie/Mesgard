@@ -1,4 +1,5 @@
 import { assuranceLevel } from "./assurance.ts";
+import { isErasedEmail, placeholderEmail } from "./erasure.ts";
 import { generateTemporaryPassword } from "./passwords.ts";
 import { type AdminRequest, parseRequest, type Role, validateNewUser } from "./validation.ts";
 
@@ -22,6 +23,20 @@ export interface AdminApi {
   isMfaRequired(token: string): Promise<boolean>;
   /** Removes every factor of a login and returns how many there were. Auth ends the sessions of a verified factor. */
   deleteFactors(userId: string): Promise<number>;
+  /** A login by its email, or null. Used to recognise a person who left and comes back. */
+  findLogin(email: string): Promise<{ userId: string; isDisabled: boolean; membershipCount: number } | null>;
+  /** Turns a disabled login on again with a new temporary password the person must replace. */
+  reactivateLogin(userId: string, password: string): Promise<void>;
+  /** What this server does when someone is erased: "off", "keep_messages" or "blank_messages". */
+  erasurePolicy(token: string): Promise<string>;
+  /** The email of a login, read with the service role. */
+  getLoginEmail(userId: string): Promise<string | null>;
+  /** True when the audit log shows that this organization removed the person. */
+  wasRemovedFrom(token: string, orgId: string, userId: string): Promise<boolean>;
+  /** Scrubs the database side of a person who is in no organization. */
+  eraseUserData(userId: string, oldEmail: string): Promise<void>;
+  /** Replaces the email of a login with a placeholder and keeps the login disabled. */
+  replaceEmail(userId: string, placeholder: string): Promise<void>;
 }
 
 export interface HandlerDependencies {
@@ -30,7 +45,7 @@ export interface HandlerDependencies {
 }
 
 type UserResult =
-  | { email: string; status: "created"; user_id: string; temporary_password: string }
+  | { email: string; status: "created" | "returned"; user_id: string; temporary_password: string }
   | { email: string; status: "email_taken" | "duplicate" | "failed" }
   | { email: string; status: "invalid"; reason: string };
 
@@ -83,6 +98,8 @@ function dispatch(
       return removeMember(request, token, callerId, dependencies.api);
     case "reset_mfa":
       return resetMfa(request, token, callerId, dependencies.api);
+    case "erase_member":
+      return eraseMember(request, token, callerId, dependencies.api);
   }
 }
 
@@ -125,7 +142,7 @@ async function createUser(
 ): Promise<UserResult> {
   try {
     const created = await api.createAuthUser({ email: user.email, password, displayName: user.displayName });
-    if (created === "email_taken") return { email: user.email, status: "email_taken" };
+    if (created === "email_taken") return await returningPerson(user, orgId, token, api, password);
     if (await api.addMember(token, orgId, created, user.role)) {
       return { email: user.email, status: "created", user_id: created, temporary_password: password };
     }
@@ -133,6 +150,27 @@ async function createUser(
   } catch (error) {
     console.error("Creating a user failed", error instanceof Error ? error.message : "unknown error");
   }
+  return { email: user.email, status: "failed" };
+}
+
+/**
+ * A person who was removed and comes back has a disabled login and no organization. They get it back with a new
+ * temporary password. An email that belongs to someone active somewhere else stays refused.
+ */
+async function returningPerson(
+  user: { email: string; role: Role },
+  orgId: string,
+  token: string,
+  api: AdminApi,
+  password: string,
+): Promise<UserResult> {
+  const login = await api.findLogin(user.email);
+  if (!login || !login.isDisabled || login.membershipCount > 0) return { email: user.email, status: "email_taken" };
+  await api.reactivateLogin(login.userId, password);
+  if (await api.addMember(token, orgId, login.userId, user.role)) {
+    return { email: user.email, status: "returned", user_id: login.userId, temporary_password: password };
+  }
+  await api.disableLogin(login.userId);
   return { email: user.email, status: "failed" };
 }
 
@@ -189,4 +227,49 @@ async function resetMfa(
   const removed = await api.deleteFactors(request.userId);
   await api.recordAudit(token, request.orgId, "member.mfa_reset", request.userId);
   return json({ factors_removed: removed });
+}
+
+/**
+ * Removes the person from the organization when they are still in it, erases what the database holds about them, and
+ * replaces the email of the login. Every step can be repeated, and a person this organization already removed can be
+ * erased later, so a failure halfway is finished by running it again.
+ */
+async function eraseMember(
+  request: Extract<AdminRequest, { action: "erase_member" }>,
+  token: string,
+  callerId: string,
+  api: AdminApi,
+): Promise<Response> {
+  const policy = await api.erasurePolicy(token);
+  if (policy === "off") return json({ error: "erasure_off" }, 409);
+  if (request.userId === callerId) return json({ error: "cannot_erase_self" }, 400);
+
+  const refusal = await removeBeforeErasing(request, token, api);
+  if (refusal) return refusal;
+
+  const email = await api.getLoginEmail(request.userId);
+  if (email !== null && !isErasedEmail(email)) {
+    await api.eraseUserData(request.userId, email);
+    await api.replaceEmail(request.userId, placeholderEmail(request.userId));
+    await api.recordAudit(token, request.orgId, "member.erased", request.userId);
+  }
+  return json({ erased: true, messages: policy === "blank_messages" ? "blanked" : "kept" });
+}
+
+async function removeBeforeErasing(
+  request: Extract<AdminRequest, { action: "erase_member" }>,
+  token: string,
+  api: AdminApi,
+): Promise<Response | null> {
+  const role = await api.getMemberRole(token, request.orgId, request.userId);
+  if (role === null) {
+    const isFormerMember = await api.countMemberships(request.userId) === 0 &&
+      await api.wasRemovedFrom(token, request.orgId, request.userId);
+    return isFormerMember ? null : json({ error: "not_a_member" }, 404);
+  }
+  if (role === "org_admin" && await api.countAdmins(token, request.orgId) <= 1) {
+    return json({ error: "last_admin" }, 409);
+  }
+  if (await api.countMemberships(request.userId) > 1) return json({ error: "member_of_other_organizations" }, 409);
+  return await api.removeMember(token, request.orgId, request.userId) ? null : json({ error: "failed" }, 500);
 }

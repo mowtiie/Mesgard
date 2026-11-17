@@ -163,6 +163,83 @@ export function createSupabaseApi({ url, anonKey, serviceRoleKey }: SupabaseApiS
       return factors.length;
     },
 
+    async findLogin(email) {
+      const response = await expectOk(
+        await fetch(`${url}/rest/v1/rpc/find_login_by_email`, {
+          method: "POST",
+          headers: asService,
+          body: JSON.stringify({ login_email: email }),
+        }),
+        "Looking up a login",
+      );
+      const rows: { user_id: string; is_disabled: boolean; membership_count: number }[] = await response.json();
+      const row = rows[0];
+      return row ? { userId: row.user_id, isDisabled: row.is_disabled, membershipCount: row.membership_count } : null;
+    },
+
+    async reactivateLogin(userId, password) {
+      await expectOk(
+        await fetch(`${url}/auth/v1/admin/users/${userId}`, {
+          method: "PUT",
+          headers: asService,
+          body: JSON.stringify({ password, ban_duration: "none", app_metadata: { must_change_password: true } }),
+        }),
+        "Turning a login on again",
+      );
+    },
+
+    async erasurePolicy(token) {
+      const response = await expectOk(
+        await fetch(`${url}/rest/v1/rpc/erasure_policy`, { method: "POST", headers: asUser(token), body: "{}" }),
+        "Reading the erasure policy",
+      );
+      return await response.json();
+    },
+
+    async getLoginEmail(userId) {
+      const response = await expectOk(
+        await fetch(`${url}/auth/v1/admin/users/${userId}`, { headers: asService }),
+        "Reading a login",
+      );
+      return (await response.json()).email ?? null;
+    },
+
+    async wasRemovedFrom(token, orgId, userId) {
+      const response = await expectOk(
+        await fetch(
+          `${url}/rest/v1/audit_logs?org_id=eq.${encodeURIComponent(orgId)}&target_id=eq.${
+            encodeURIComponent(userId)
+          }` +
+            "&action=eq.member.removed&select=id&limit=1",
+          { headers: asUser(token) },
+        ),
+        "Reading the audit log",
+      );
+      return (await response.json()).length > 0;
+    },
+
+    async eraseUserData(userId, oldEmail) {
+      await expectOk(
+        await fetch(`${url}/rest/v1/rpc/erase_user_data`, {
+          method: "POST",
+          headers: asService,
+          body: JSON.stringify({ target_user_id: userId, old_email: oldEmail }),
+        }),
+        "Erasing a person",
+      );
+    },
+
+    async replaceEmail(userId, placeholder) {
+      await expectOk(
+        await fetch(`${url}/auth/v1/admin/users/${userId}`, {
+          method: "PUT",
+          headers: asService,
+          body: JSON.stringify({ email: placeholder, email_confirm: true, ban_duration: LOGIN_DISABLED_DURATION }),
+        }),
+        "Replacing an email",
+      );
+    },
+
     async recordAudit(token, orgId, action, targetUserId) {
       await expectOk(
         await fetch(`${url}/rest/v1/audit_logs`, {

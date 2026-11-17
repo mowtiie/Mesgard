@@ -1,4 +1,5 @@
 import { assertEquals } from "jsr:@std/assert@1";
+import { placeholderEmail } from "./erasure.ts";
 import { type AdminApi, handleAdminRequest } from "./handler.ts";
 import type { Role } from "./validation.ts";
 
@@ -18,6 +19,12 @@ class FakeApi implements AdminApi {
   validTokens = new Set([TOKEN]);
   mfaRequired = false;
   factors = new Map<string, number>();
+  logins = new Map<string, { userId: string; isDisabled: boolean; membershipCount: number }>();
+  reactivated: string[] = [];
+  policy = "keep_messages";
+  emails = new Map<string, string>([[MEMBER, "ana@school.example"]]);
+  removedRecords = new Set<string>();
+  order: string[] = [];
   private nextId = 1;
 
   getUserId(token: string) {
@@ -47,6 +54,7 @@ class FakeApi implements AdminApi {
   }
   removeMember(_token: string, _orgId: string, userId: string) {
     const removed = this.roles.delete(userId);
+    this.order.push("remove");
     this.memberships.set(userId, Math.max(0, (this.memberships.get(userId) ?? 1) - 1));
     return Promise.resolve(removed);
   }
@@ -55,6 +63,32 @@ class FakeApi implements AdminApi {
   }
   setTemporaryPassword(userId: string, password: string) {
     this.passwords.set(userId, password);
+    return Promise.resolve();
+  }
+  findLogin(email: string) {
+    return Promise.resolve(this.logins.get(email) ?? null);
+  }
+  reactivateLogin(userId: string, password: string) {
+    this.reactivated.push(userId);
+    this.passwords.set(userId, password);
+    return Promise.resolve();
+  }
+  erasurePolicy() {
+    return Promise.resolve(this.policy);
+  }
+  getLoginEmail(userId: string) {
+    return Promise.resolve(this.emails.get(userId) ?? null);
+  }
+  wasRemovedFrom(_token: string, _orgId: string, userId: string) {
+    return Promise.resolve(this.removedRecords.has(userId));
+  }
+  eraseUserData(_userId: string, oldEmail: string) {
+    this.order.push(`scrub ${oldEmail}`);
+    return Promise.resolve();
+  }
+  replaceEmail(userId: string, placeholder: string) {
+    this.order.push(`email ${placeholder}`);
+    this.emails.set(userId, placeholder);
     return Promise.resolve();
   }
   disableLogin(userId: string) {
@@ -308,4 +342,146 @@ Deno.test("resetting the two-step verification of a non member is refused", asyn
   );
 
   assertEquals(response.status, 404);
+});
+
+const RETURNING = "20000000-0000-4000-8000-000000000a07";
+
+function returning(api: FakeApi, overrides: Partial<{ isDisabled: boolean; membershipCount: number }> = {}) {
+  api.takenEmails.add("back@school.example");
+  api.logins.set("back@school.example", { userId: RETURNING, isDisabled: true, membershipCount: 0, ...overrides });
+}
+
+function addBack(api: FakeApi) {
+  return handle(
+    api,
+    post({ action: "create_users", org_id: ORG, users: [{ email: "back@school.example", role: "student" }] }),
+  );
+}
+
+Deno.test("a person who left comes back with a new temporary password", async () => {
+  const api = new FakeApi();
+  returning(api);
+
+  const { results } = await (await addBack(api)).json();
+
+  assertEquals(results[0].status, "returned");
+  assertEquals(results[0].user_id, RETURNING);
+  assertEquals(results[0].temporary_password, "password-1");
+  assertEquals(api.reactivated, [RETURNING]);
+  assertEquals(api.roles.get(RETURNING), "student");
+});
+
+Deno.test("an email that belongs to someone active, or to another organization, stays refused", async () => {
+  for (const overrides of [{ isDisabled: false }, { membershipCount: 1 }]) {
+    const api = new FakeApi();
+    returning(api, overrides);
+
+    const { results } = await (await addBack(api)).json();
+
+    assertEquals(results[0].status, "email_taken");
+    assertEquals(api.reactivated, []);
+  }
+  const unknown = new FakeApi();
+  unknown.takenEmails.add("back@school.example");
+  assertEquals((await (await addBack(unknown)).json()).results[0].status, "email_taken");
+});
+
+Deno.test("a returning person is disabled again when adding them fails", async () => {
+  const api = new FakeApi();
+  returning(api);
+  api.failAddingFor.add(RETURNING);
+
+  const { results } = await (await addBack(api)).json();
+
+  assertEquals(results[0].status, "failed");
+  assertEquals(api.calls.includes(`disable ${RETURNING}`), true);
+});
+
+function erase(api: FakeApi, userId = MEMBER) {
+  return handle(api, post({ action: "erase_member", org_id: ORG, user_id: userId }));
+}
+
+Deno.test("erasing removes the member, scrubs the database, then replaces the email, in that order", async () => {
+  const api = new FakeApi();
+
+  const response = await erase(api);
+
+  assertEquals(response.status, 200);
+  assertEquals(await response.json(), { erased: true, messages: "kept" });
+  assertEquals(api.order, ["remove", "scrub ana@school.example", `email ${placeholderEmail(MEMBER)}`]);
+  assertEquals(api.audits.includes(`member.erased ${MEMBER}`), true);
+});
+
+Deno.test("a server that blanks messages says so", async () => {
+  const api = new FakeApi();
+  api.policy = "blank_messages";
+
+  assertEquals((await (await erase(api)).json()).messages, "blanked");
+});
+
+Deno.test("nothing is erased when the server turned erasure off", async () => {
+  const api = new FakeApi();
+  api.policy = "off";
+
+  const response = await erase(api);
+
+  assertEquals(response.status, 409);
+  assertEquals((await response.json()).error, "erasure_off");
+  assertEquals(api.order, []);
+});
+
+Deno.test("an administrator cannot erase themselves", async () => {
+  const api = new FakeApi();
+
+  const response = await erase(api, ADMIN);
+
+  assertEquals(response.status, 400);
+  assertEquals((await response.json()).error, "cannot_erase_self");
+  assertEquals(api.order, []);
+});
+
+Deno.test("a person who belongs to another organization is only removed, never erased", async () => {
+  const api = new FakeApi();
+  api.memberships.set(MEMBER, 2);
+
+  const response = await erase(api);
+
+  assertEquals(response.status, 409);
+  assertEquals((await response.json()).error, "member_of_other_organizations");
+  assertEquals(api.order, []);
+});
+
+Deno.test("someone who was never in the organization cannot be erased", async () => {
+  const api = new FakeApi();
+  const stranger = "20000000-0000-4000-8000-000000000b01";
+  api.emails.set(stranger, "stranger@other.example");
+
+  assertEquals((await erase(api, stranger)).status, 404);
+  assertEquals(api.order, []);
+});
+
+Deno.test("a person removed earlier can be erased later, and a half finished erase can be finished", async () => {
+  const api = new FakeApi();
+  api.roles.delete(MEMBER);
+  api.memberships.set(MEMBER, 0);
+  api.removedRecords.add(MEMBER);
+
+  const response = await erase(api);
+
+  assertEquals(response.status, 200);
+  assertEquals(api.order, ["scrub ana@school.example", `email ${placeholderEmail(MEMBER)}`]);
+});
+
+Deno.test("erasing someone who is already erased changes nothing", async () => {
+  const api = new FakeApi();
+  api.roles.delete(MEMBER);
+  api.memberships.set(MEMBER, 0);
+  api.removedRecords.add(MEMBER);
+  api.emails.set(MEMBER, placeholderEmail(MEMBER));
+
+  const response = await erase(api);
+
+  assertEquals(response.status, 200);
+  assertEquals(api.order, []);
+  assertEquals(api.audits, []);
 });

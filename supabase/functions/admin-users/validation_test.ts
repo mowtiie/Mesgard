@@ -8,6 +8,7 @@ Deno.test("accepts the three actions", () => {
   assertEquals("request" in parseRequest({ action: "create_users", org_id: ORG, users: [{}] }), true);
   assertEquals("request" in parseRequest({ action: "reset_password", org_id: ORG, user_id: USER }), true);
   assertEquals("request" in parseRequest({ action: "remove_member", org_id: ORG, user_id: USER }), true);
+  assertEquals("request" in parseRequest({ action: "erase_member", org_id: ORG, user_id: USER }), true);
 });
 
 Deno.test("refuses what is not a request", () => {
