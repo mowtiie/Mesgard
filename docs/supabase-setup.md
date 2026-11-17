@@ -84,7 +84,7 @@ Then in the dashboard, under **Authentication**, keep **Email** on, turn public 
 
 ## Optional
 
-- **Push notifications:** [`push-notifications.md`](push-notifications.md).
+- **Push notifications:** run `node scripts/server/index.mjs push` (or add `--with-push` to `setup`). It deploys the push function, creates and shares the secret, and checks that it works. Details in [`push-notifications.md`](push-notifications.md).
 - **Two-step verification for administrators and staff:** [`mfa.md`](mfa.md). Setup turns TOTP on but leaves enforcement off.
 
 ## Problems

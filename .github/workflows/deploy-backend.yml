@@ -26,6 +26,15 @@ on:
         description: Name of the first administrator
         required: false
         type: string
+      enable_push:
+        description: Also set up push notifications
+        required: false
+        default: false
+        type: boolean
+      push_hosts:
+        description: Hosts of your own push server, comma separated. Leave empty to accept any public push server.
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -48,6 +57,8 @@ jobs:
       ORGANIZATION_SHORT_NAME: ${{ inputs.organization_short_name }}
       ADMIN_EMAIL: ${{ inputs.admin_email }}
       ADMIN_NAME: ${{ inputs.admin_name }}
+      ENABLE_PUSH: ${{ inputs.enable_push }}
+      PUSH_HOSTS: ${{ inputs.push_hosts }}
     steps:
       - uses: actions/checkout@v4
 
@@ -85,5 +96,11 @@ jobs:
             fi
           else
             arguments+=(--skip-organization)
+          fi
+          if [ "$ENABLE_PUSH" = "true" ]; then
+            arguments+=(--with-push)
+            if [ -n "$PUSH_HOSTS" ]; then
+              arguments+=(--push-hosts "$PUSH_HOSTS")
+            fi
           fi
           node scripts/server/index.mjs "${arguments[@]}"

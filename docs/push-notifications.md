@@ -25,6 +25,16 @@ The lock screen only shows a generic public version ("Mesgard", "New message").
 
 ## Set up a deployment
 
+**The quick way.** One command does steps 1 and 2 below with a generated secret, then checks that the function and the database agree:
+
+```bash
+node scripts/server/index.mjs push --project-ref <your-project-ref>
+```
+
+Add `--push-hosts ntfy.school.edu` to accept only your own push server (step 3), `--rotate` to replace the secret later, or `--with-push` on the `setup` command to do it all at once. The `doctor` command makes the same check afterwards (a test call to the function), so a mismatch is reported instead of push silently doing nothing. Still do step 4 on each phone.
+
+The manual steps:
+
 1. Deploy the function and set its secret:
 
    ```bash

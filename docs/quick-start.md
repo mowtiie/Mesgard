@@ -49,5 +49,5 @@ You are done. From **Settings**, **Administration**, add the other people in you
 ## More
 
 - Add two-step verification for administrators and staff: [`mfa.md`](mfa.md)
-- Push notifications: [`push-notifications.md`](push-notifications.md)
+- Push notifications, in one command: [`push-notifications.md`](push-notifications.md)
 - The same setup without installing anything, or step by step by hand: [`supabase-setup.md`](supabase-setup.md)
