@@ -8,6 +8,7 @@ select is(
     where procedure.pronamespace = 'public'::regnamespace
       and procedure.prosecdef
       and has_function_privilege('authenticated', procedure.oid, 'execute')
+      and procedure.prorettype <> 'event_trigger'::regtype
       and procedure.proname <> 'is_mfa_required'
       and procedure.prosrc not like '%private.require_mfa()%'
   ),

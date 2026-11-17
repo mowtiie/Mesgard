@@ -41,6 +41,7 @@ begin
       and procedure.prosecdef
       and procedure.prolang = (select oid from pg_language where lanname = 'plpgsql')
       and has_function_privilege('authenticated', procedure.oid, 'execute')
+      and procedure.prorettype <> 'event_trigger'::regtype
       and procedure.proname <> 'is_mfa_required'
   loop
     definition := pg_get_functiondef(guarded_function.oid);
