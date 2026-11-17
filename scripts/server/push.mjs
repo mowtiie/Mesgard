@@ -97,7 +97,7 @@ export async function runPush({ target, options, deps, log = console.log, unicod
   });
   if (!result.ok) {
     throw new CliError(`Push is not working yet: ${result.reason}.
-Run this command again, or see docs/push-notifications.md.`);
+Run this command again, or see README.md, Push notifications.`);
   }
   ui.done("They agree");
 

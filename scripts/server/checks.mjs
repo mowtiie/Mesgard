@@ -145,7 +145,7 @@ async function checkOrganizations({ query }) {
     return result(FAIL, "Organization and administrator exist", "No organization yet", "Run setup to create the first one.");
   }
   if (counts.admins === 0) {
-    return result(FAIL, "Organization and administrator exist", "No administrator", "Add one as described in docs/first-organization.md.");
+    return result(FAIL, "Organization and administrator exist", "No administrator", "Add one as described in README.md, Setting up the backend by hand.");
   }
   return result(PASS, "Organization and administrator exist", `${counts.organizations} organization(s), ${counts.admins} administrator(s)`);
 }
@@ -160,7 +160,7 @@ async function checkEnforcement({ query }) {
   }
   return row?.enforced
     ? result(PASS, label, "Required")
-    : result(INFO, label, "Off, a password alone is enough", "Turn it on with: update private.mfa_settings set enforced = true; (docs/mfa.md)");
+    : result(INFO, label, "Off, a password alone is enough", "Turn it on with: update private.mfa_settings set enforced = true; (README.md, Two-step verification)");
 }
 
 const TWO_STEP_LABEL = "Two-step verification for administrators and staff";
@@ -179,7 +179,7 @@ async function checkErasure({ query }) {
   } catch {
     return result(INFO, label, "Unavailable until the database is up to date");
   }
-  return result(INFO, label, ERASURE_MODES[row?.mode] ?? "Unknown mode", "See docs/erasure.md to change it.");
+  return result(INFO, label, ERASURE_MODES[row?.mode] ?? "Unknown mode", "See README.md, Removing and erasing people, to change it.");
 }
 
 async function checkPush({ query, fetch }) {
@@ -190,7 +190,7 @@ async function checkPush({ query, fetch }) {
   } catch {
     return result(INFO, label, "Unavailable until the database is up to date");
   }
-  if (!row) return result(INFO, label, "Optional, not set up", "Set it up with: node scripts/server/index.mjs push (docs/push-notifications.md)");
+  if (!row) return result(INFO, label, "Optional, not set up", "Set it up with: node scripts/server/index.mjs push (README.md, Push notifications)");
   let outcome;
   try {
     outcome = await checkPushFunction({ functionUrl: row.function_url, secret: row.webhook_secret, fetch });

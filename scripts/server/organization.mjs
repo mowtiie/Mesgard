@@ -42,7 +42,7 @@ export function findProblems({ name, slug, email, displayName }) {
 
 const quote = (text) => `'${text.replaceAll("'", "''")}'`;
 
-/** The same statement as docs/first-organization.md, with the answers filled in. */
+/** The same statement as the manual route in README.md, with the answers filled in. */
 export function organizationSql({ name, slug, email }) {
   return `with new_organization as (
   insert into public.organizations (name, slug)
@@ -55,7 +55,7 @@ from new_organization, auth.users as users
 where lower(users.email) = lower(${quote(email)});`;
 }
 
-/** The statement from docs/mfa.md that holds administrators and staff to two-step verification. */
+/** The statement from the Two-step verification section of README.md that holds administrators and staff to two-step verification. */
 export const REQUIRE_TWO_STEP_SQL = "update private.mfa_settings set enforced = true;";
 
 function pick(alphabet) {

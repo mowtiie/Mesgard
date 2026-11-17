@@ -1,7 +1,7 @@
 name: Deploy backend
 
 # Sets up or updates a Supabase project from the Actions tab, without installing anything. It is meant for your own
-# copy (fork) of the repository, with the secrets below. See docs/supabase-setup.md.
+# copy (fork) of the repository, with the secrets below. See README.md, From GitHub, without installing anything.
 
 on:
   workflow_dispatch:
@@ -73,7 +73,7 @@ jobs:
           missing=0
           for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD; do
             if [ -z "${!name}" ]; then
-              echo "::error::The secret $name is not set. See docs/supabase-setup.md."
+              echo "::error::The secret $name is not set. See README.md, From GitHub, without installing anything."
               missing=1
             fi
           done
