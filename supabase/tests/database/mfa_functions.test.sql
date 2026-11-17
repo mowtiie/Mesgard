@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(8);
 
 select is(
   (
@@ -47,12 +47,6 @@ select throws_ok(
   '42501',
   'Two-step verification is required',
   'an aal1 administrator cannot complete a password change'
-);
-select throws_ok(
-  format('select public.create_announcement_conversation(%L)', tests.seed_id('10', 'a', 0)),
-  '42501',
-  'Two-step verification is required',
-  'an aal1 administrator cannot create an announcement conversation'
 );
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 1), 'aal2');

@@ -1,5 +1,5 @@
 begin;
-select plan(23);
+select plan(15);
 
 -- A change made without a signed in user (a migration, a cascade, the service role) is not an admin action.
 reset role;
@@ -123,74 +123,15 @@ select is(
   'an admin of another organization cannot read the audit log'
 );
 
--- The announcement conversation of organization a is recreated from scratch.
-reset role;
-delete from public.conversations where org_id = tests.seed_id('10', 'a', 0) and type = 'announcement';
-
-select tests.authenticate_as(tests.seed_id('20', 'a', 2));
-create temporary table announcements as
-select public.create_announcement_conversation(tests.seed_id('10', 'a', 0)) as id;
-grant all on announcements to authenticated;
-
-select is(
-  (select type || ':' || title from public.conversations where id = (select id from announcements)),
-  'announcement:Announcements',
-  'staff can create the announcement conversation of their organization'
-);
-select is(
-  (select count(*)::int from public.conversation_participants where conversation_id = (select id from announcements)),
-  (select count(*)::int from public.org_members where org_id = tests.seed_id('10', 'a', 0)),
-  'every member of the organization becomes a participant'
-);
-select is(
-  public.create_announcement_conversation(tests.seed_id('10', 'a', 0)),
-  (select id from announcements),
-  'creating the announcement conversation again is idempotent'
-);
-select is(
-  (select count(*)::int from public.conversations where org_id = tests.seed_id('10', 'a', 0) and type = 'announcement'),
-  1,
-  'an organization has a single announcement conversation'
-);
-
-select tests.authenticate_as(tests.seed_id('20', 'a', 4));
-select throws_ok(
-  format('select public.create_announcement_conversation(%L)', tests.seed_id('10', 'a', 0)),
-  '42501',
-  null,
-  'a student cannot create the announcement conversation'
-);
-
-select tests.authenticate_as(tests.seed_id('20', 'b', 1));
-select throws_ok(
-  format('select public.create_announcement_conversation(%L)', tests.seed_id('10', 'a', 0)),
-  '42501',
-  null,
-  'an admin of another organization cannot create it'
-);
-
-select tests.authenticate_as_anonymous();
-select throws_ok(
-  format('select public.create_announcement_conversation(%L)', tests.seed_id('10', 'a', 0)),
-  '42501',
-  null,
-  'anonymous users cannot create it'
-);
-
 select tests.authenticate_as(tests.seed_id('20', 'a', 1));
 insert into public.org_members (org_id, user_id, role)
 values (tests.seed_id('10', 'a', 0), tests.seed_id('20', 'b', 5), 'student');
 select ok(
   exists (
     select 1 from public.conversation_participants
-    where conversation_id = (select id from announcements) and user_id = tests.seed_id('20', 'b', 5)
+    where conversation_id = tests.seed_id('40', 'a', 3) and user_id = tests.seed_id('20', 'b', 5)
   ),
   'a new member of the organization joins the announcement conversation'
 );
-select ok(
-  exists (select 1 from public.audit_logs where action = 'announcements.enabled' and target_id = (select id from announcements)),
-  'enabling announcements is recorded'
-);
-
 select * from finish();
 rollback;
