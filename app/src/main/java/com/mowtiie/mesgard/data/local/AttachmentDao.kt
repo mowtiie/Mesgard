@@ -28,9 +28,6 @@ internal interface AttachmentDao {
 
     @Query("UPDATE attachments SET local_path = :localPath WHERE id = :attachmentId")
     suspend fun updateLocalPath(attachmentId: String, localPath: String)
-
-    @Query("SELECT local_path FROM attachments WHERE local_path IS NOT NULL")
-    suspend fun findAllLocalPaths(): List<String>
 }
 
 internal suspend fun AttachmentDao.upsertKeepingLocalPaths(attachments: List<AttachmentEntity>) {

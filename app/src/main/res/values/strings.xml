@@ -245,7 +245,6 @@
     <string name="admin_error_last_admin">An organization needs at least one administrator.</string>
     <string name="admin_error_unknown">Something went wrong. Try again later.</string>
     <string name="close">Close</string>
-    <string name="account_organization">Organization</string>
     <string name="account_organizations">Organizations</string>
     <string name="account_title">Account</string>
     <string name="account_email">Email</string>
