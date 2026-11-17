@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.ui.auth
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,15 +46,39 @@ import kotlinx.coroutines.launch
 private val KeyPadding = 16.dp
 private val KeySpacing = 8.dp
 
+/** Shown before anything else when the server requires a second factor, so the only way out is to sign out. */
 @Composable
 internal fun MfaEnrollmentRoute(modifier: Modifier = Modifier, viewModel: MfaEnrollmentViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     MfaEnrollmentScreen(
         uiState = uiState,
+        dismissLabel = R.string.sign_out_button,
         onCodeChanged = viewModel::onCodeChanged,
         onConfirmClicked = viewModel::onConfirmClicked,
         onRetryClicked = viewModel::onRetryClicked,
-        onSignOutClicked = viewModel::onSignOutClicked,
+        onDismissClicked = viewModel::onSignOutClicked,
+        modifier = modifier,
+    )
+}
+
+/** Opened from the Account screen by someone who chose to turn two-step verification on. */
+@Composable
+internal fun MfaSetupScreenRoute(
+    onFinished: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: MfaEnrollmentViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(uiState.isEnrolled) {
+        if (uiState.isEnrolled) onFinished()
+    }
+    MfaEnrollmentScreen(
+        uiState = uiState,
+        dismissLabel = R.string.cancel,
+        onCodeChanged = viewModel::onCodeChanged,
+        onConfirmClicked = viewModel::onConfirmClicked,
+        onRetryClicked = viewModel::onRetryClicked,
+        onDismissClicked = onFinished,
         modifier = modifier,
     )
 }
@@ -60,10 +86,11 @@ internal fun MfaEnrollmentRoute(modifier: Modifier = Modifier, viewModel: MfaEnr
 @Composable
 internal fun MfaEnrollmentScreen(
     uiState: MfaEnrollmentUiState,
+    @StringRes dismissLabel: Int,
     onCodeChanged: (String) -> Unit,
     onConfirmClicked: () -> Unit,
     onRetryClicked: () -> Unit,
-    onSignOutClicked: () -> Unit,
+    onDismissClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SecureWindowEffect()
@@ -81,8 +108,8 @@ internal fun MfaEnrollmentScreen(
             uiState.enrollment == null -> StartFailure(uiState, onRetryClicked)
             else -> EnrollmentSteps(uiState, uiState.enrollment, snackbarHostState, onCodeChanged, onConfirmClicked)
         }
-        TextButton(onClick = onSignOutClicked, enabled = !uiState.isVerifying) {
-            Text(stringResource(R.string.sign_out_button))
+        TextButton(onClick = onDismissClicked, enabled = !uiState.isVerifying) {
+            Text(stringResource(dismissLabel))
         }
     }
 }
@@ -191,10 +218,11 @@ private fun MfaEnrollmentScreenPreview() {
                 isLoading = false,
                 code = "123",
             ),
+            dismissLabel = R.string.sign_out_button,
             onCodeChanged = {},
             onConfirmClicked = {},
             onRetryClicked = {},
-            onSignOutClicked = {},
+            onDismissClicked = {},
         )
     }
 }

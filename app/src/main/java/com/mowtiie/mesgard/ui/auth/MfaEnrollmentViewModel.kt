@@ -25,6 +25,7 @@ internal data class MfaEnrollmentUiState(
     val code: String = "",
     val isVerifying: Boolean = false,
     val issue: MfaIssue? = null,
+    val isEnrolled: Boolean = false,
 ) {
     val canSubmit: Boolean
         get() = enrollment != null && code.length == MFA_CODE_LENGTH && !isVerifying
@@ -66,7 +67,7 @@ internal class MfaEnrollmentViewModel @Inject constructor(
             val result = mfaRepository.confirmEnrollment(enrollment, state.code)
             mutableUiState.update {
                 when (result) {
-                    is MfaResult.Success -> it.copy(code = "", isVerifying = false)
+                    is MfaResult.Success -> it.copy(code = "", isVerifying = false, isEnrolled = true)
                     is MfaResult.Failure -> it.copy(code = "", isVerifying = false, issue = result.error.toIssue())
                 }
             }

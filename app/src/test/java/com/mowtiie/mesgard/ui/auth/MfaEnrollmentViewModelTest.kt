@@ -69,6 +69,7 @@ class MfaEnrollmentViewModelTest {
 
         coVerify(exactly = 1) { mfaRepository.confirmEnrollment(enrollment, CODE) }
         assertFalse(viewModel.uiState.value.isVerifying)
+        assertTrue(viewModel.uiState.value.isEnrolled)
     }
 
     @Test

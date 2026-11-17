@@ -21,6 +21,7 @@ import com.mowtiie.mesgard.ui.admin.audit.AuditLogScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.AddGroupMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupDetailScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupsScreenRoute
+import com.mowtiie.mesgard.ui.auth.MfaSetupScreenRoute
 import com.mowtiie.mesgard.ui.conversation.ConversationScreenRoute
 import com.mowtiie.mesgard.ui.settings.AppearanceSettingsScreenRoute
 import com.mowtiie.mesgard.ui.settings.NotificationSettingsScreenRoute
@@ -61,8 +62,12 @@ internal fun MesgardNavHost(
             AccountScreenRoute(
                 onBack = { navController.popBackStack() },
                 onChangePassword = { navController.navigate(ChangePasswordRoute) },
+                onSetUpMfa = { navController.navigate(MfaSetupRoute) },
                 onSignOut = onSignOut,
             )
+        }
+        composable<MfaSetupRoute> {
+            MfaSetupScreenRoute(onFinished = { navController.popBackStack() })
         }
         composable<ChangePasswordRoute> {
             ChangePasswordScreenRoute(onBack = { navController.popBackStack() })

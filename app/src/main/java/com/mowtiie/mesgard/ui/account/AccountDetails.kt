@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -69,7 +70,12 @@ internal fun AccountHeader(account: Account) {
 }
 
 @Composable
-internal fun AccountDetails(account: Account, onChangePassword: () -> Unit) {
+internal fun AccountDetails(
+    account: Account,
+    mfa: MfaRowState,
+    onChangePassword: () -> Unit,
+    onMfaClicked: () -> Unit,
+) {
     Column(
         modifier = Modifier.padding(ContentPadding),
         verticalArrangement = Arrangement.spacedBy(CardSpacing),
@@ -89,6 +95,7 @@ internal fun AccountDetails(account: Account, onChangePassword: () -> Unit) {
                         headlineContent = { Text(email) },
                     )
                 }
+                MfaRow(mfa, onMfaClicked)
                 ListItem(
                     modifier = Modifier.clickable(role = Role.Button, onClick = onChangePassword),
                     colors = transparentListItemColors(),
@@ -98,6 +105,27 @@ internal fun AccountDetails(account: Account, onChangePassword: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun MfaRow(state: MfaRowState, onClick: () -> Unit) {
+    val supporting = when (state) {
+        MfaRowState.OFF -> R.string.account_mfa_off
+        MfaRowState.ON -> R.string.account_mfa_on
+        MfaRowState.REQUIRED -> R.string.account_mfa_required
+    }
+    val rowModifier = if (state == MfaRowState.REQUIRED) {
+        Modifier
+    } else {
+        Modifier.clickable(role = Role.Button, onClick = onClick)
+    }
+    ListItem(
+        modifier = rowModifier,
+        colors = transparentListItemColors(),
+        leadingContent = { Icon(painterResource(R.drawable.ic_shield), contentDescription = null) },
+        headlineContent = { Text(stringResource(R.string.account_mfa)) },
+        supportingContent = { Text(stringResource(supporting)) },
+    )
 }
 
 @Composable

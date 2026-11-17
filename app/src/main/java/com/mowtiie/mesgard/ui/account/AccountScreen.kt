@@ -40,6 +40,7 @@ private val ButtonPadding = 16.dp
 internal fun AccountScreenRoute(
     onBack: () -> Unit,
     onChangePassword: () -> Unit,
+    onSetUpMfa: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AccountViewModel = hiltViewModel(),
@@ -49,6 +50,9 @@ internal fun AccountScreenRoute(
         uiState = uiState,
         onBack = onBack,
         onChangePassword = onChangePassword,
+        onMfaClicked = { if (uiState.mfa == MfaRowState.OFF) onSetUpMfa() else viewModel.onDisableMfaClicked() },
+        onDisableMfaConfirmed = viewModel::onDisableMfaConfirmed,
+        onDisableMfaDismissed = viewModel::onDisableMfaDismissed,
         onSignOutClicked = viewModel::onSignOutClicked,
         onSignOutConfirmed = {
             viewModel.onSignOutDismissed()
@@ -65,6 +69,9 @@ internal fun AccountScreen(
     uiState: AccountUiState,
     onBack: () -> Unit,
     onChangePassword: () -> Unit,
+    onMfaClicked: () -> Unit,
+    onDisableMfaConfirmed: () -> Unit,
+    onDisableMfaDismissed: () -> Unit,
     onSignOutClicked: () -> Unit,
     onSignOutConfirmed: () -> Unit,
     onSignOutDismissed: () -> Unit,
@@ -96,7 +103,7 @@ internal fun AccountScreen(
             }
             uiState.account?.let { account ->
                 AccountHeader(account)
-                AccountDetails(account, onChangePassword)
+                AccountDetails(account, uiState.mfa, onChangePassword, onMfaClicked)
             }
             OutlinedButton(
                 onClick = onSignOutClicked,
@@ -108,6 +115,13 @@ internal fun AccountScreen(
         }
     }
 
+    if (uiState.showDisableMfaConfirmation) {
+        DisableMfaDialog(
+            isWorking = uiState.isWorking,
+            onConfirm = onDisableMfaConfirmed,
+            onDismiss = onDisableMfaDismissed,
+        )
+    }
     if (uiState.showSignOutConfirmation) {
         SignOutDialog(onConfirm = onSignOutConfirmed, onDismiss = onSignOutDismissed)
     }
@@ -117,6 +131,8 @@ internal fun AccountScreen(
 private fun AccountError.messageResource(): Int = when (this) {
     AccountError.REFRESH_NETWORK_UNAVAILABLE -> R.string.refresh_error_network_unavailable
     AccountError.REFRESH_UNKNOWN -> R.string.refresh_error_unknown
+    AccountError.MFA_NETWORK_UNAVAILABLE -> R.string.account_mfa_error_network_unavailable
+    AccountError.MFA_UNKNOWN -> R.string.account_mfa_error_unknown
 }
 
 @Preview(showBackground = true)
@@ -133,6 +149,9 @@ private fun AccountScreenPreview() {
             ),
             onBack = {},
             onChangePassword = {},
+            onMfaClicked = {},
+            onDisableMfaConfirmed = {},
+            onDisableMfaDismissed = {},
             onSignOutClicked = {},
             onSignOutConfirmed = {},
             onSignOutDismissed = {},

@@ -61,7 +61,7 @@
     <string name="mfa_error_network_unavailable">Unable to reach the server. Check your connection.</string>
     <string name="mfa_error_unknown">Unable to verify the code. Try again later.</string>
     <string name="mfa_enroll_title">Set up two-step verification</string>
-    <string name="mfa_enroll_help">Your account needs a second step. In an authenticator app, add an account with this setup key, or open the key in the app directly.</string>
+    <string name="mfa_enroll_help">In an authenticator app, add an account with this setup key, or open the key in the app directly.</string>
     <string name="mfa_enroll_key_label">Setup key</string>
     <string name="mfa_enroll_copy_key">Copy setup key</string>
     <string name="mfa_enroll_open_authenticator">Open in authenticator app</string>
@@ -243,6 +243,15 @@
     <string name="tab_contacts">Contacts</string>
     <string name="account_details">Details</string>
     <string name="account_open">Open account</string>
+    <string name="account_mfa">Two-step verification</string>
+    <string name="account_mfa_off">Off</string>
+    <string name="account_mfa_on">On</string>
+    <string name="account_mfa_required">On. Required for administrators and staff.</string>
+    <string name="account_mfa_disable_title">Turn off two-step verification?</string>
+    <string name="account_mfa_disable_message">You will sign in with your password alone. You can turn it on again at any time.</string>
+    <string name="account_mfa_disable_confirm">Turn off</string>
+    <string name="account_mfa_error_network_unavailable">Unable to reach the server. Check your connection.</string>
+    <string name="account_mfa_error_unknown">Unable to turn off two-step verification. Try again later.</string>
     <string name="account_change_password">Change password</string>
     <string name="account_change_password_help">Choose a new password. Use at least %1$d characters.</string>
     <string name="password_change_done">Password changed</string>
