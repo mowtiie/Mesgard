@@ -1,14 +1,18 @@
 *.iml
 .gradle
-/local.properties
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
+# Android Studio writes these per machine (selected device, JDK, window state), so they are not shared
+/.idea/deploymentTargetSelector.xml
+/.idea/misc.xml
+/.idea/deviceManager.xml
+/.idea/markdown.xml
+/.idea/AndroidProjectSystem.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
-/build
 /captures
 .externalNativeBuild
 .cxx
