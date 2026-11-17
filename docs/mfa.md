@@ -17,6 +17,10 @@ The requirement is enforced by the database, not only by the app. A session that
 - **Recovery:** there are no backup codes. An administrator resets a lost phone from **Settings, Administration, Members, Reset two-step verification**. The person is signed out and sets up again at the next sign in. An administrator cannot reset their own factor.
 - **Audit:** a reset is recorded in the audit log.
 
+## On a new server
+
+`setup` asks whether to require two-step verification for administrators and staff, and the default is yes. With yes, the first administrator is asked to set up an authenticator app at the first sign in, before anything else, so there is nothing to prepare. Use `--no-require-mfa` to leave it off, and the statement below to turn it on later.
+
 ## Turning it on for an existing server
 
 The order matters. Enforcement is **off** after the migration, so nobody is locked out by the update.

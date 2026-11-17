@@ -33,7 +33,8 @@ The CLI may ask for your database password. The setup then asks for:
 
 - the name of your school or organization,
 - a short name for it (press Enter to accept the suggestion),
-- the email and name of the first administrator.
+- the email and name of the first administrator,
+- whether to **require two-step verification** for administrators and staff (press Enter for yes, the recommended answer).
 
 When it finishes, it prints three things. Keep them for the next step:
 
@@ -46,7 +47,7 @@ Every line of the final checklist should say `[ok]`. If one says `[FAIL]`, the l
 
 1. Install Mesgard on the phone.
 2. Open the link from step 3 on the phone, or open Mesgard and type the server address and the public key.
-3. Sign in with the administrator's email and the temporary password. Mesgard asks you to choose your own password.
+3. Sign in with the administrator's email and the temporary password. If you answered yes to two-step verification, Mesgard first asks you to set up an authenticator app (enter the key it shows, then the 6-digit code). Then it asks you to choose your own password.
 
 You are done. From **Settings**, **Administration**, add the other people in your school.
 

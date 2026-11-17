@@ -26,6 +26,11 @@ on:
         description: Name of the first administrator
         required: false
         type: string
+      require_mfa:
+        description: Require two-step verification for administrators and staff (only used when an organization is created)
+        required: false
+        default: false
+        type: boolean
       enable_push:
         description: Also set up push notifications
         required: false
@@ -57,6 +62,7 @@ jobs:
       ORGANIZATION_SHORT_NAME: ${{ inputs.organization_short_name }}
       ADMIN_EMAIL: ${{ inputs.admin_email }}
       ADMIN_NAME: ${{ inputs.admin_name }}
+      REQUIRE_MFA: ${{ inputs.require_mfa }}
       ENABLE_PUSH: ${{ inputs.enable_push }}
       PUSH_HOSTS: ${{ inputs.push_hosts }}
     steps:
@@ -93,6 +99,11 @@ jobs:
               --admin-password-env MESGARD_ADMIN_PASSWORD)
             if [ -n "$ORGANIZATION_SHORT_NAME" ]; then
               arguments+=(--org-slug "$ORGANIZATION_SHORT_NAME")
+            fi
+            if [ "$REQUIRE_MFA" = "true" ]; then
+              arguments+=(--require-mfa)
+            else
+              arguments+=(--no-require-mfa)
             fi
           else
             arguments+=(--skip-organization)

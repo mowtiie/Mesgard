@@ -20,14 +20,14 @@ Run it with `node scripts/server/index.mjs setup --project-ref <your-project-ref
 | Link | Links the folder to the project, unless it already is. |
 | Migrations | Applies the migrations in `supabase/migrations` that the project does not have yet. |
 | Function | Deploys `admin-users`, the function that creates accounts, without Docker. |
-| Auth settings | Shows the differences, then asks before turning public sign-ups off and enabling TOTP. Nothing else in your Auth settings is touched. |
-| First organization | Asks for the organization name, its short name, and the administrator's email and name. Creates the login with a temporary password and adds the person as administrator. It is skipped when an organization already exists. |
+| Auth settings | Shows the differences, then asks `[Y/n]` before turning public sign-ups off and enabling TOTP. Nothing else in your Auth settings is touched. |
+| First organization | Asks for the organization name, its short name, the administrator's email and name, and whether to require two-step verification for administrators and staff (yes by default). Creates the login with a temporary password and adds the person as administrator. It is skipped when an organization already exists, and it never changes the two-step setting of a server that already has an organization. |
 | Connect | Prints the server address, the public key and a `mesgard://setup` link that fills the app's server form. |
 | Check | Runs the checklist below. |
 
 The temporary password is shown once. The administrator must choose their own at the first sign in. The script reads the secret key of the project only to create that login, keeps it in memory, and never prints it or stores it.
 
-You can give the answers as options so nothing is asked: `--org-name`, `--org-slug`, `--admin-email`, `--admin-name`. Add `--yes` to apply the Auth settings without a question, and `--add-organization` to create another organization on a server that has one.
+You can give the answers as options so nothing is asked: `--org-name`, `--org-slug`, `--admin-email`, `--admin-name`, and `--require-mfa` or `--no-require-mfa`. Add `--yes` to apply the Auth settings and accept the suggested answers (including yes to two-step verification) without a question, and `--add-organization` to create another organization on a server that has one.
 
 ## Without installing anything: GitHub Actions
 
@@ -42,7 +42,7 @@ If you would rather not install the CLI or Node, a workflow in this repository d
    | `SUPABASE_DB_PASSWORD` | The database password you chose for the project |
    | `MESGARD_ADMIN_PASSWORD` | A password of 12 or more characters for the first administrator. Only needed when you create the first organization. |
 
-3. Open the **Actions** tab, choose **Deploy backend**, and select **Run workflow**. Enter the project ref. To create the first organization, also enter its name, the administrator's email and name, and optionally a short name. Leave those empty to only deploy. Tick **enable_push** to set up push notifications as well.
+3. Open the **Actions** tab, choose **Deploy backend**, and select **Run workflow**. Enter the project ref. To create the first organization, also enter its name, the administrator's email and name, and optionally a short name. Leave those empty to only deploy. Tick **require_mfa** to require two-step verification for administrators and staff (it is off by default here, and only applies when you create the organization). Tick **enable_push** to set up push notifications as well.
 4. When the run finishes, its log ends with the connect link and the checklist.
 
 The administrator signs in with `MESGARD_ADMIN_PASSWORD` and is asked to choose their own password right away. That password is never printed. The log only contains public values (the project address and the public key), but anyone who can read your copy's Actions logs can see them, so keep the copy private if you can. To update later, bring your copy up to date with this repository and run the workflow again with the organization fields empty.
@@ -78,7 +78,7 @@ Then in the dashboard, under **Authentication**, keep **Email** on, turn public 
 - **"The Supabase CLI was not found":** install it and open a new terminal, so that `supabase` runs there.
 - **"No project selected":** pass `--project-ref`, or run `supabase link --project-ref <ref>` first.
 - **Push notifications:** add `--with-push` to the setup, or run `node scripts/server/index.mjs push` later. See [`push-notifications.md`](push-notifications.md).
-- **Two-step verification:** the setup turns TOTP on but leaves enforcement off. See [`mfa.md`](mfa.md).
+- **Two-step verification:** the setup turns TOTP on and asks whether to require it. If you said no, turn it on later as described in [`mfa.md`](mfa.md).
 - **A step failed:** fix the cause shown above it and run `setup` again. Every step can be repeated.
 - **Setup stopped after creating the login:** run it again with the same email. It reuses the existing login and finishes the organization, but the original temporary password stays unknown, so reset it from the dashboard.
 - **The administrator forgot the temporary password:** set a new one in the dashboard under Authentication, Users. The mark that asks for a new password stays until they choose their own, so they are still asked to at the first sign in.
