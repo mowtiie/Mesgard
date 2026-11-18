@@ -12,6 +12,7 @@ import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.SendRejection
 import com.mowtiie.mesgard.domain.model.SendResult
+import com.mowtiie.mesgard.domain.push.ConversationNotifications
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.domain.repository.MessageRepository
@@ -437,12 +438,24 @@ class ConversationViewModelTest {
         }
     }
 
+    private val notifications = mockk<ConversationNotifications>(relaxed = true)
+
+    @Test
+    fun `clears the notification of the conversation once it is visible`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.onVisibilityChanged(true)
+
+        verify { notifications.clear(CONVERSATION_ID) }
+    }
+
     private fun viewModel() = ConversationViewModel(
         savedStateHandle = SavedStateHandle(mapOf("conversationId" to CONVERSATION_ID)),
         conversationRepository = conversationRepository,
         messageRepository = messageRepository,
         typingRepository = typingRepository,
         realtimeSync = realtimeSync,
+        notifications = notifications,
     )
 
     private fun summary(

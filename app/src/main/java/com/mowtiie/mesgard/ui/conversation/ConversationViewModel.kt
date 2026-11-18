@@ -11,6 +11,7 @@ import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.SendRejection
 import com.mowtiie.mesgard.domain.model.SendResult
+import com.mowtiie.mesgard.domain.push.ConversationNotifications
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.domain.repository.MessageRepository
@@ -45,6 +46,7 @@ internal class ConversationViewModel @Inject constructor(
     private val messageRepository: MessageRepository,
     typingRepository: TypingRepository,
     realtimeSync: RealtimeSync,
+    private val notifications: ConversationNotifications,
 ) : ViewModel() {
     private val conversationId = savedStateHandle.toRoute<ConversationRoute>().conversationId
     private val visibleLimit = MutableStateFlow(MESSAGE_PAGE_SIZE)
@@ -137,6 +139,7 @@ internal class ConversationViewModel @Inject constructor(
     /** The screen is visible only while it is resumed, so not in the background and not behind the app lock. */
     fun onVisibilityChanged(visible: Boolean) {
         isVisible.value = visible
+        if (visible) notifications.clear(conversationId)
     }
 
     /** The unread count is read before anything marks the conversation as read, so the divider shows what was new. */

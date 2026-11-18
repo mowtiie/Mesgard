@@ -2,6 +2,11 @@
     <string name="app_name">Mesgard</string>
     <string name="notification_channel_messages">Messages</string>
     <string name="notification_new_message">New message</string>
+    <string name="notification_you">You</string>
+    <plurals name="notification_conversations">
+        <item quantity="one">%d conversation with new messages</item>
+        <item quantity="other">%d conversations with new messages</item>
+    </plurals>
     <string name="sign_in_title">Sign in to continue</string>
     <string name="sign_in_help">Accounts are created by the administrator of your organization.</string>
     <string name="sign_in_forgot_password">Forgot password?</string>
