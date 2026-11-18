@@ -110,6 +110,32 @@ class OfflineFirstMessageRepositoryTest {
     }
 
     @Test
+    fun `send stores who the message mentions`() = runTest {
+        repository.send(CONVERSATION_ID, "Hello @Ana", mentionedUserIds = listOf("ana", "ben"))
+
+        assertEquals("ana,ben", pendingMessages().single().mentionedUserIds)
+    }
+
+    @Test
+    fun `a message shows the names of the people it mentions and whether it mentions you`() = runTest {
+        databaseRule.database.profileDao().upsertAll(listOf(ProfileEntity("ana", "Ana Cruz")))
+        databaseRule.database.messageDao().upsert(
+            messageEntity(
+                "m1",
+                CONVERSATION_ID,
+                1_000L,
+            ).copy(body = "@Ana Cruz @me", mentionedUserIds = "ana,$CURRENT_USER_ID"),
+        )
+
+        repository.observeMessages(CONVERSATION_ID, PAGE).test {
+            val message = awaitItem().single()
+            assertEquals(listOf("Ana Cruz"), message.mentionNames)
+            assertEquals(true, message.mentionsYou)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `a reply shows what the original said and who wrote it`() = runTest {
         databaseRule.database.profileDao().upsertAll(listOf(ProfileEntity("ana", "Ana")))
         databaseRule.database.messageDao().upsert(

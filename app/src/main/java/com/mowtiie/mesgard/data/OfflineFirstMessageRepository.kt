@@ -12,7 +12,9 @@ import com.mowtiie.mesgard.data.remote.MessageDto
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.RemoteOutcome
 import com.mowtiie.mesgard.data.remote.attemptRemote
+import com.mowtiie.mesgard.data.remote.joinIds
 import com.mowtiie.mesgard.data.remote.parseEpochMillis
+import com.mowtiie.mesgard.data.remote.splitIds
 import com.mowtiie.mesgard.data.remote.toDomain
 import com.mowtiie.mesgard.data.remote.toRefreshResult
 import com.mowtiie.mesgard.data.work.MessageSendScheduler
@@ -53,10 +55,13 @@ internal class OfflineFirstMessageRepository @Inject constructor(
     override fun observeMessages(conversationId: String, limit: Int): Flow<List<Message>> = combine(
         messageDao.observeTimeline(conversationId, limit),
         attachmentDao.observeForConversation(conversationId),
-    ) { items, attachments ->
+        database.profileDao().observeAll(),
+        database.contactDao().observeAll(),
+    ) { items, attachments, profiles, contacts ->
         val currentUserId = authRepository.currentUserId
         val attachmentsByMessage = attachments.groupBy { it.messageId }
-        items.map { toMessage(it, currentUserId, attachmentsByMessage[it.id].orEmpty()) }
+        val names = contacts.associate { it.userId to it.displayName } + profiles.associate { it.id to it.displayName }
+        items.map { toMessage(it, currentUserId, attachmentsByMessage[it.id].orEmpty(), names) }
     }
 
     override suspend fun refresh(conversationId: String): RefreshResult = attemptRemote(TAG) {
@@ -87,6 +92,7 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         body: String,
         attachmentUris: List<String>,
         replyToId: String?,
+        mentionedUserIds: List<String>,
     ): SendResult {
         val text = body.trim()
         val senderId = authRepository.currentUserId
@@ -99,7 +105,10 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         return if (rejection != null || senderId == null) {
             SendResult.Rejected(rejection ?: SendRejection.NOT_SIGNED_IN)
         } else {
-            queue(NewMessage(UUID.randomUUID().toString(), conversationId, senderId, text, replyToId), attachmentUris)
+            queue(
+                NewMessage(UUID.randomUUID().toString(), conversationId, senderId, text, replyToId, mentionedUserIds),
+                attachmentUris,
+            )
         }
     }
 
@@ -116,6 +125,7 @@ internal class OfflineFirstMessageRepository @Inject constructor(
             createdAtEpochMillis = clock.millis(),
             status = MessageStatus.PENDING,
             replyToId = draft.replyToId,
+            mentionedUserIds = draft.mentionedUserIds.joinIds(),
         )
         database.withTransaction {
             messageDao.upsert(message)
@@ -157,7 +167,12 @@ internal class OfflineFirstMessageRepository @Inject constructor(
     private suspend fun storeMessages(messages: List<MessageDto>) = database.storeMessages(messages)
 }
 
-private fun toMessage(item: TimelineMessage, currentUserId: String?, attachments: List<AttachmentEntity>) = Message(
+private fun toMessage(
+    item: TimelineMessage,
+    currentUserId: String?,
+    attachments: List<AttachmentEntity>,
+    names: Map<String, String>,
+) = Message(
     id = item.id,
     conversationId = item.conversationId,
     senderId = item.senderId,
@@ -170,6 +185,8 @@ private fun toMessage(item: TimelineMessage, currentUserId: String?, attachments
     isOwn = item.senderId == currentUserId,
     attachments = attachments.map { it.toDomain() },
     replyTo = item.replyToId?.let { replyPreviewOf(it, item) },
+    mentionNames = item.mentionedUserIds.splitIds().mapNotNull { names[it] },
+    mentionsYou = currentUserId != null && currentUserId in item.mentionedUserIds.splitIds(),
 )
 
 private fun replyPreviewOf(messageId: String, item: TimelineMessage) = ReplyPreview(
@@ -186,6 +203,7 @@ private data class NewMessage(
     val senderId: String,
     val body: String,
     val replyToId: String?,
+    val mentionedUserIds: List<String>,
 )
 
 private fun rejectionFor(

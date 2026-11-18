@@ -25,4 +25,5 @@ internal data class MessageEntity(
     @ColumnInfo(name = "edited_at") val editedAtEpochMillis: Long? = null,
     @ColumnInfo(name = "deleted_at") val deletedAtEpochMillis: Long? = null,
     @ColumnInfo(name = "reply_to_id") val replyToId: String? = null,
+    @ColumnInfo(name = "mentioned_user_ids") val mentionedUserIds: String? = null,
 )

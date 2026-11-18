@@ -8,6 +8,7 @@ import io.github.jan.supabase.storage.storage
 import io.ktor.http.ContentType
 import java.io.File
 import javax.inject.Inject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -44,6 +45,9 @@ internal class SupabaseAttachmentRemoteSource @Inject constructor(private val cl
                 put("target_conversation_id", message.conversationId)
                 put("new_body", message.body)
                 message.replyToId?.let { put("new_reply_to", it) }
+                message.mentionedUserIds.splitIds().takeIf { it.isNotEmpty() }?.let { ids ->
+                    put("new_mentions", buildJsonArray { ids.forEach { add(JsonPrimitive(it)) } })
+                }
                 put(
                     "new_attachments",
                     buildJsonArray {

@@ -21,6 +21,7 @@ internal interface MessageRepository {
         body: String,
         attachmentUris: List<String> = emptyList(),
         replyToId: String? = null,
+        mentionedUserIds: List<String> = emptyList(),
     ): SendResult
 
     suspend fun retry(messageId: String)

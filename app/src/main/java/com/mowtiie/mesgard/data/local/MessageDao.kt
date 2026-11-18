@@ -21,6 +21,7 @@ internal data class TimelineMessage(
     val replyBody: String?,
     val replySenderName: String?,
     val replyDeletedAtEpochMillis: Long?,
+    val mentionedUserIds: String?,
 )
 
 @Dao
@@ -37,7 +38,8 @@ internal interface MessageDao {
             p.display_name AS senderName, m.body AS body, m.created_at AS createdAtEpochMillis,
             m.edited_at AS editedAtEpochMillis, m.deleted_at AS deletedAtEpochMillis, m.status AS status,
             m.reply_to_id AS replyToId, r.id AS replyOriginalId, r.body AS replyBody,
-            rp.display_name AS replySenderName, r.deleted_at AS replyDeletedAtEpochMillis
+            rp.display_name AS replySenderName, r.deleted_at AS replyDeletedAtEpochMillis,
+            m.mentioned_user_ids AS mentionedUserIds
         FROM messages AS m
         LEFT JOIN profiles AS p ON p.id = m.sender_id
         LEFT JOIN messages AS r ON r.id = m.reply_to_id

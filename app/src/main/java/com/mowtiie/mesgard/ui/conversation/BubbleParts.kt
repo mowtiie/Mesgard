@@ -43,7 +43,12 @@ private fun MessageBody(message: Message) {
             fontStyle = FontStyle.Italic,
         )
     } else if (message.body.isNotEmpty()) {
-        Text(text = remember(message.body) { linkedText(message.body) }, style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text = remember(message.body, message.mentionNames) {
+                linkedText(message.body, message.mentionNames)
+            },
+            style = MaterialTheme.typography.bodyLarge,
+        )
     }
 }
 

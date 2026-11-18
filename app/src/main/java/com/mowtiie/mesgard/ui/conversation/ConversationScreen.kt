@@ -45,6 +45,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.domain.model.MentionCandidate
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.TitledScreen
@@ -64,6 +65,7 @@ internal fun ConversationScreenRoute(
     actionsViewModel: ConversationActionsViewModel = hiltViewModel(),
     editViewModel: MessageEditViewModel = hiltViewModel(),
     replyViewModel: ReplyViewModel = hiltViewModel(),
+    mentionViewModel: MentionViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
@@ -81,6 +83,7 @@ internal fun ConversationScreenRoute(
     messageActions.readers?.let { MessageInfoSheet(it, onDismiss = actionsViewModel::onInfoDismissed) }
     val edit by editViewModel.uiState.collectAsStateWithLifecycle()
     val reply by replyViewModel.target.collectAsStateWithLifecycle()
+    val mentions by mentionViewModel.uiState.collectAsStateWithLifecycle()
     ConversationScreen(
         uiState = uiState.copy(error = uiState.error ?: messageActions.error ?: edit.error),
         edit = edit,
@@ -93,11 +96,17 @@ internal fun ConversationScreenRoute(
         ),
         downloads = downloads,
         onBack = onBack,
-        onDraftChanged = viewModel::onDraftChanged,
-        onSendClicked = {
-            viewModel.onSendClicked(reply?.messageId)
-            replyViewModel.onReplyDropped()
+        onDraftChanged = {
+            viewModel.onDraftChanged(it)
+            mentionViewModel.onDraftChanged(it)
         },
+        onSendClicked = {
+            viewModel.onSendClicked(reply?.messageId, mentionViewModel.mentionedIds(uiState.draft))
+            replyViewModel.onReplyDropped()
+            mentionViewModel.onSent()
+        },
+        mentions = mentions,
+        onMentionSelected = { viewModel.onDraftChanged(mentionViewModel.onSelected(it, uiState.draft)) },
         actions = MessageActions(
             onRetry = failedMessagesViewModel::onRetryClicked,
             onDiscard = failedMessagesViewModel::onDiscardClicked,
@@ -131,6 +140,8 @@ internal fun ConversationScreen(
     editActions: EditActions,
     reply: ReplyTarget?,
     onReplyDropped: () -> Unit,
+    mentions: MentionUiState,
+    onMentionSelected: (MentionCandidate) -> Unit,
     downloads: AttachmentDownloadsUiState,
     onBack: () -> Unit,
     onDraftChanged: (String) -> Unit,
@@ -210,6 +221,8 @@ internal fun ConversationScreen(
                 editActions = editActions,
                 reply = reply,
                 onReplyDropped = onReplyDropped,
+                mentions = mentions,
+                onMentionSelected = onMentionSelected,
                 onDraftChanged = onDraftChanged,
                 onSendClicked = onSendClicked,
                 onAttachmentsPicked = onAttachmentsPicked,

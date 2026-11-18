@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.ui.conversation
 
 import androidx.compose.runtime.Composable
+import com.mowtiie.mesgard.domain.model.MentionCandidate
 import com.mowtiie.mesgard.ui.common.readOnlyMessageResource
 
 /** Under the messages: the edit bar while a message is changed, otherwise the composer or why there is none. */
@@ -11,6 +12,8 @@ internal fun ComposerArea(
     editActions: EditActions,
     reply: ReplyTarget?,
     onReplyDropped: () -> Unit,
+    mentions: MentionUiState,
+    onMentionSelected: (MentionCandidate) -> Unit,
     onDraftChanged: (String) -> Unit,
     onSendClicked: () -> Unit,
     onAttachmentsPicked: (List<PickedAttachment>) -> Unit,
@@ -19,6 +22,7 @@ internal fun ComposerArea(
     if (edit.isEditing) {
         EditComposer(edit, editActions)
     } else if (uiState.canPost) {
+        MentionSuggestions(mentions.suggestions, onMentionSelected)
         reply?.let { ReplyBar(it, onDrop = onReplyDropped) }
         MessageComposer(
             draft = uiState.draft,

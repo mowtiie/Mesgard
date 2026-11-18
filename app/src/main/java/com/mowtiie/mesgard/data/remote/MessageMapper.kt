@@ -15,6 +15,7 @@ internal fun MessageDto.toEntity() = MessageEntity(
     editedAtEpochMillis = editedAt?.let(::parseEpochMillis),
     deletedAtEpochMillis = deletedAt?.let(::parseEpochMillis),
     replyToId = replyToMessageId,
+    mentionedUserIds = mentionedUserIds.joinIds(),
 )
 
 internal fun MessageDto.toSenderProfile(): ProfileEntity? =
@@ -27,6 +28,14 @@ internal fun MessageEntity.toNewMessageDto(orgId: String) = NewMessageDto(
     senderId = senderId,
     body = body,
     replyToMessageId = replyToId,
+    mentionedUserIds = mentionedUserIds.splitIds(),
 )
+
+private const val ID_SEPARATOR = ","
+
+/** Mentions are stored as one text column, because a message mentions at most 20 people and is read as a whole. */
+internal fun List<String>.joinIds(): String? = takeIf { it.isNotEmpty() }?.joinToString(ID_SEPARATOR)
+
+internal fun String?.splitIds(): List<String> = this?.split(ID_SEPARATOR)?.filter { it.isNotBlank() }.orEmpty()
 
 internal fun parseEpochMillis(timestamp: String): Long = OffsetDateTime.parse(timestamp).toInstant().toEpochMilli()

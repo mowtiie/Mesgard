@@ -13,4 +13,6 @@ internal data class Message(
     val isOwn: Boolean,
     val attachments: List<Attachment> = emptyList(),
     val replyTo: ReplyPreview? = null,
+    val mentionNames: List<String> = emptyList(),
+    val mentionsYou: Boolean = false,
 )
