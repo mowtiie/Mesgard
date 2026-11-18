@@ -189,7 +189,8 @@ node --test scripts/server/                    # server tool tests
 ./gradlew clean assembleRelease lintVitalRelease   # signed release (keystore.properties or SIGNING_* variables)
 ```
 
-- **Local accounts:** from `supabase/seed.sql`, for example `admin@rnhs.test` with password `password123`. Never seed or reset a real project.
+- **Local accounts:** from `supabase/seed.sql`, for example `admin@rnhs.test` with password `password123`. Never seed a real project.
+- **Start the database over:** `node scripts/server/index.mjs reset --local` rebuilds the local stack (add `--no-seed` to skip the seed). `reset --project-ref <ref>` erases a hosted project for good: it never seeds, shows what it holds and asks you to type the ref. Run `setup` afterwards.
 - **Point a build at a server:** set `supabase.url` and `supabase.anonKey` in `local.properties` (or the `SUPABASE_URL` and `SUPABASE_ANON_KEY` environment variables). While signed out, the app checks that server at start and shows the setup screen with the reason if it fails. Debug builds allow plain `http` for the local stack. The public GitHub release has no server built in.
 - **New server feature the app needs:** raise `api_level` in `server_info()` and `REQUIRED_API_LEVEL` in the same change. Migrations are only added, never edited.
 - **New table or function:** it needs Row Level Security, the "Require two-step verification" policy and `private.require_mfa()`. The database tests fail if one is missing.

@@ -4,11 +4,12 @@ import { join } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { applyAuthSettings, describeChange, readAuthSettingDifferences } from "./auth-settings.mjs";
 import { CliError, runSupabase } from "./supabase.mjs";
+import { hostedResetArguments, localResetArguments } from "./reset.mjs";
 import { readLinkedRef } from "./target.mjs";
 
 function runVisibly(args, what) {
   const result = runSupabase(args, { inherit: true });
-  if (result.status !== 0) throw new CliError(`${what} failed. Fix the problem above and run setup again.`);
+  if (result.status !== 0) throw new CliError(`${what} failed. Fix the problem above and try again.`);
 }
 
 /** For steps that never ask anything: the CLI's progress is hidden and shown only when the step fails. */
@@ -16,7 +17,7 @@ function runQuietly(args, what) {
   const result = runSupabase(args);
   if (result.status === 0) return;
   process.stderr.write(`${(result.stderr || result.stdout).trim()}\n`);
-  throw new CliError(`${what} failed. Fix the problem above and run setup again.`);
+  throw new CliError(`${what} failed. Fix the problem above and try again.`);
 }
 
 async function prompt(question) {
@@ -40,6 +41,8 @@ export function realTools(target, repositoryRoot) {
     deployFunction: (ref, name = "admin-users") =>
       runQuietly(["functions", "deploy", name, `--remote=${ref}`, "--use-api", "--yes"], `Deploying ${name}`),
     setSecrets: (ref, values) => setSecrets(ref, values),
+    resetLocal: (settings) => runVisibly(localResetArguments(settings), "Resetting the local database"),
+    resetHosted: (ref) => runVisibly(hostedResetArguments(ref), "Resetting the database"),
     fetch,
     wait: (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
     authDifferences: (ref) => readAuthSettingDifferences(ref).map(describeChange),
