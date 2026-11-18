@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.FilledTonalButton
@@ -57,6 +58,12 @@ internal fun ManageSection(uiState: AdministrationUiState, navigation: AdminNavi
         title = R.string.members_title,
         summary = membersSummary(uiState),
         onClick = navigation.onOpenMembers,
+    )
+    ManageRow(
+        icon = { Icon(Icons.Default.AccountCircle, contentDescription = null) },
+        title = R.string.former_members_title,
+        summary = stringResource(R.string.settings_former_members_summary),
+        onClick = navigation.onOpenFormerMembers,
     )
     ManageRow(
         icon = { Icon(painterResource(R.drawable.ic_group_outline), contentDescription = null) },

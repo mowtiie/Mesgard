@@ -132,6 +132,14 @@
     <string name="members_erase_confirm">Remove and erase</string>
     <string name="settings_groups_summary">Create groups and manage who is in them.</string>
     <string name="settings_audit_summary">See who changed what.</string>
+    <string name="settings_former_members_summary">People who were removed, and finishing an erase.</string>
+    <string name="former_members_title">Former members</string>
+    <string name="former_members_empty">No former members</string>
+    <string name="former_members_empty_hint">People you remove from the organization are listed here.</string>
+    <string name="former_members_removed">Removed %1$s</string>
+    <string name="former_members_erased">Personal data erased, removed %1$s</string>
+    <string name="former_members_erase">Erase</string>
+    <string name="former_members_erase_title">Erase %1$s?</string>
     <string name="audit_title">Audit log</string>
     <string name="audit_empty">No activity recorded yet</string>
     <string name="audit_empty_hint">Changes made by administrators are listed here.</string>

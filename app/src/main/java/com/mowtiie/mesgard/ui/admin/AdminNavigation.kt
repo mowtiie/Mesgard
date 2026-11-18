@@ -4,6 +4,7 @@ package com.mowtiie.mesgard.ui.admin
 internal data class AdminNavigation(
     val onOpenMembers: () -> Unit,
     val onOpenGroups: () -> Unit,
+    val onOpenFormerMembers: () -> Unit,
     val onOpenAuditLog: () -> Unit,
     val onAddMember: () -> Unit,
     val onImportMembers: () -> Unit,

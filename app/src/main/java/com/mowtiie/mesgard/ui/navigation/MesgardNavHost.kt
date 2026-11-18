@@ -18,6 +18,7 @@ import com.mowtiie.mesgard.ui.admin.AdministrationScreenRoute
 import com.mowtiie.mesgard.ui.admin.ImportMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.MembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.audit.AuditLogScreenRoute
+import com.mowtiie.mesgard.ui.admin.former.FormerMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.AddGroupMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupDetailScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupsScreenRoute
@@ -96,6 +97,7 @@ internal fun MesgardNavHost(
                 navigation = AdminNavigation(
                     onOpenMembers = { navController.navigate(MembersRoute) },
                     onOpenGroups = { navController.navigate(GroupsRoute) },
+                    onOpenFormerMembers = { navController.navigate(FormerMembersRoute) },
                     onOpenAuditLog = { navController.navigate(AuditLogRoute) },
                     onAddMember = { navController.navigate(AddMemberRoute) },
                     onImportMembers = { navController.navigate(ImportMembersRoute) },
@@ -124,6 +126,9 @@ internal fun MesgardNavHost(
         }
         composable<AddGroupMembersRoute> {
             AddGroupMembersScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<FormerMembersRoute> {
+            FormerMembersScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<AuditLogRoute> {
             AuditLogScreenRoute(onBack = { navController.popBackStack() })
