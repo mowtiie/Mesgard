@@ -73,6 +73,7 @@ internal class ConversationViewModel @Inject constructor(
             typingNames = typingNames,
             isLoaded = true,
             isLoadingOlder = local.isLoadingOlder,
+            isHistoryComplete = local.isHistoryComplete,
             unreadMarker = local.unreadMarker,
             error = local.error,
         )

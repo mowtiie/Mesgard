@@ -373,6 +373,11 @@
     <string name="contacts_section_groups">Groups</string>
     <string name="contacts_search_placeholder">Search</string>
     <string name="chats_search_placeholder">Search conversations</string>
+    <string name="conversation_search">Search messages</string>
+    <string name="conversation_search_placeholder">Search in this conversation</string>
+    <string name="conversation_search_hint">Type at least 2 characters to search the messages of this conversation.</string>
+    <string name="conversation_search_error">Unable to search. Check your connection and try again.</string>
+    <string name="conversation_search_not_found">Unable to find that message.</string>
     <string name="search_clear">Clear search</string>
     <string name="search">Search</string>
     <string name="close_search">Close search</string>

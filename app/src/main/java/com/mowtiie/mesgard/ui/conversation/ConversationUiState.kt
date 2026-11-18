@@ -29,6 +29,7 @@ internal data class ConversationUiState(
     val typingNames: List<String> = emptyList(),
     val isLoaded: Boolean = false,
     val isLoadingOlder: Boolean = false,
+    val isHistoryComplete: Boolean = false,
     val unreadMarker: UnreadMarker? = null,
     val error: ConversationError? = null,
 ) {

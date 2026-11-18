@@ -47,7 +47,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.MentionCandidate
 import com.mowtiie.mesgard.ui.common.EmptyState
-import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
 import java.time.ZoneId
@@ -66,6 +65,7 @@ internal fun ConversationScreenRoute(
     editViewModel: MessageEditViewModel = hiltViewModel(),
     replyViewModel: ReplyViewModel = hiltViewModel(),
     mentionViewModel: MentionViewModel = hiltViewModel(),
+    searchViewModel: ConversationSearchViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
@@ -84,6 +84,7 @@ internal fun ConversationScreenRoute(
     val edit by editViewModel.uiState.collectAsStateWithLifecycle()
     val reply by replyViewModel.target.collectAsStateWithLifecycle()
     val mentions by mentionViewModel.uiState.collectAsStateWithLifecycle()
+    val searchState by searchViewModel.uiState.collectAsStateWithLifecycle()
     ConversationScreen(
         uiState = uiState.copy(error = uiState.error ?: messageActions.error ?: edit.error),
         edit = edit,
@@ -107,6 +108,14 @@ internal fun ConversationScreenRoute(
         },
         mentions = mentions,
         onMentionSelected = { viewModel.onDraftChanged(mentionViewModel.onSelected(it, uiState.draft)) },
+        search = ConversationSearch(
+            state = searchState,
+            onQueryChanged = searchViewModel::onQueryChanged,
+            onLoadMore = searchViewModel::onLoadMore,
+            onHitSelected = searchViewModel::onHitSelected,
+            onJumpHandled = searchViewModel::onJumpHandled,
+            onClosed = searchViewModel::onClosed,
+        ),
         actions = MessageActions(
             onRetry = failedMessagesViewModel::onRetryClicked,
             onDiscard = failedMessagesViewModel::onDiscardClicked,
@@ -142,6 +151,7 @@ internal fun ConversationScreen(
     onReplyDropped: () -> Unit,
     mentions: MentionUiState,
     onMentionSelected: (MentionCandidate) -> Unit,
+    search: ConversationSearch,
     downloads: AttachmentDownloadsUiState,
     onBack: () -> Unit,
     onDraftChanged: (String) -> Unit,
@@ -157,6 +167,9 @@ internal fun ConversationScreen(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    var isSearching by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val notFoundMessage = stringResource(R.string.conversation_search_not_found)
     val errorMessage = uiState.error?.let { stringResource(it.messageResource()) }
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
@@ -198,20 +211,43 @@ internal fun ConversationScreen(
             }
         },
         actions = {
-            OverflowMenu { dismiss ->
-                MuteMenuItem(uiState.isMuted) {
-                    dismiss()
-                    onMuteChanged(!uiState.isMuted)
+            ConversationBarActions(uiState.isMuted, onSearch = { isSearching = true }, onMuteChanged = onMuteChanged)
+        },
+        searchBar = if (isSearching) {
+            {
+                ConversationSearchBar(search) {
+                    isSearching = false
+                    search.onClosed()
                 }
             }
+        } else {
+            null
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).consumeWindowInsets(padding).imePadding().fillMaxSize()) {
+            if (isSearching) {
+                SearchResults(
+                    state = search.state,
+                    onHitSelected = {
+                        search.onHitSelected(it)
+                        isSearching = false
+                        search.onClosed()
+                    },
+                    onLoadMore = search.onLoadMore,
+                )
+                return@Column
+            }
             MessageList(
                 uiState = uiState,
                 downloads = downloads,
                 actions = actions.copy(onCopy = copyMessage, onImageClick = { viewedImageId = it.id }),
+                jumpTo = search.state.jumpTo,
+                onJumpHandled = search.onJumpHandled,
+                onJumpFailed = {
+                    search.onJumpHandled()
+                    scope.launch { snackbarHostState.showSnackbar(notFoundMessage) }
+                },
                 onLoadOlder = onLoadOlder,
                 modifier = Modifier.weight(1f),
             )
@@ -244,6 +280,9 @@ private fun MessageList(
     uiState: ConversationUiState,
     downloads: AttachmentDownloadsUiState,
     actions: MessageActions,
+    jumpTo: String?,
+    onJumpHandled: () -> Unit,
+    onJumpFailed: () -> Unit,
     onLoadOlder: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -268,6 +307,16 @@ private fun MessageList(
     LaunchedEffect(newestMessage?.id) {
         if (newestMessage?.isOwn == true || !isScrolledUp) listState.animateScrollToItem(0)
     }
+    JumpToMessageEffect(
+        jumpTo = jumpTo,
+        timeline = timeline,
+        isLoadingOlder = uiState.isLoadingOlder,
+        isHistoryComplete = uiState.isHistoryComplete,
+        listState = listState,
+        onJumpHandled = onJumpHandled,
+        onJumpFailed = onJumpFailed,
+        onLoadOlder = onLoadOlder,
+    )
     LaunchedEffect(hasUnreadDivider) {
         val index = timeline.indexOfFirst { it is TimelineItem.UnreadDivider }
         if (index >= 0) listState.showAtTop(index)
