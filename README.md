@@ -131,7 +131,7 @@ update private.erasure_settings set mode = 'keep_messages';
 | `blank_messages` | The same, and the person's messages and files are erased too. |
 | `off` | Nobody can be erased. |
 
-Backups and Supabase's own logs are not erased. Ask your data protection officer which mode fits before the first erasure. If an erase fails half way, the person is already removed and the app cannot finish it yet, so repeat the `erase_member` request to the `admin-users` function.
+Backups and Supabase's own logs are not erased. Ask your data protection officer which mode fits before the first erasure. If an erase fails half way, the person is already removed. Open **Administration, Former members** and choose **Erase** again: it is safe to repeat.
 
 ## Updating
 
