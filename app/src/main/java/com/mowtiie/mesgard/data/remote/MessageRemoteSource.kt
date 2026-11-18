@@ -28,6 +28,9 @@ internal interface MessageRemoteSource {
 
     suspend fun fetchAttachments(messageId: String): List<AttachmentDto>
 
+    /** Soft deletes the message. The server blanks the text and archives the original for administrators. */
+    suspend fun delete(messageId: String): MessageDto
+
     suspend fun markConversationRead(conversationId: String, upToMessageId: String)
 }
 
@@ -58,6 +61,15 @@ internal class SupabaseMessageRemoteSource @Inject constructor(private val clien
         return client.from(MESSAGES_TABLE).select(MESSAGE_COLUMNS) {
             filter { eq("id", message.id) }
         }.decodeSingle<MessageDto>()
+    }
+
+    override suspend fun delete(messageId: String): MessageDto {
+        val rows = client.from(MESSAGES_TABLE).update({ set("deleted_at", "now") }) {
+            select(MESSAGE_COLUMNS)
+            filter { eq("id", messageId) }
+        }.decodeList<MessageDto>()
+        require(rows.isNotEmpty()) { "No message was deleted" }
+        return rows.first()
     }
 
     override suspend fun fetchAttachments(messageId: String): List<AttachmentDto> =

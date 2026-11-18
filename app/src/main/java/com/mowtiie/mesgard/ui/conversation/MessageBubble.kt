@@ -51,6 +51,7 @@ internal data class MessageActions(
     val onRetry: (String) -> Unit = {},
     val onDiscard: (String) -> Unit = {},
     val onCopy: (String) -> Unit = {},
+    val onDelete: (String) -> Unit = {},
     val onAttachmentClick: (Attachment) -> Unit = {},
     val onImageClick: (Attachment) -> Unit = {},
     val onImageShown: (Attachment) -> Unit = {},
@@ -70,6 +71,7 @@ internal fun MessageBubble(
     var isMenuOpen by remember { mutableStateOf(false) }
     val colors = bubbleColors(message)
     val canCopy = !message.isDeleted && message.body.isNotEmpty()
+    val canDelete = message.isOwn && !message.isDeleted && message.status == MessageStatus.SENT
     val copyLabel = stringResource(R.string.message_copy)
     val haptics = LocalHapticFeedback.current
     Column(
@@ -83,7 +85,7 @@ internal fun MessageBubble(
     ) {
         Box {
             Surface(
-                modifier = Modifier.onLongPress(canCopy, copyLabel) {
+                modifier = Modifier.onLongPress(canCopy || canDelete, copyLabel) {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     isMenuOpen = true
                 },
@@ -93,31 +95,56 @@ internal fun MessageBubble(
             ) {
                 Column(modifier = Modifier.widthIn(max = maxBubbleWidth()).padding(BubblePadding)) {
                     MessageText(message, showSenderName && startsGroup)
-                    AttachmentList(
-                        message.attachments,
-                        downloads,
-                        actions.onAttachmentClick,
-                        actions.onImageClick,
-                        actions.onImageShown,
-                        actions.onRetryDownload,
-                    )
+                    if (!message.isDeleted) {
+                        AttachmentList(
+                            message.attachments,
+                            downloads,
+                            actions.onAttachmentClick,
+                            actions.onImageClick,
+                            actions.onImageShown,
+                            actions.onRetryDownload,
+                        )
+                    }
                     if (endsGroup || message.status != MessageStatus.SENT || message.isEdited) {
                         Text(text = metadata(message), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
-            DropdownMenu(expanded = isMenuOpen, onDismissRequest = { isMenuOpen = false }) {
-                DropdownMenuItem(
-                    text = { Text(copyLabel) },
-                    onClick = {
-                        isMenuOpen = false
-                        actions.onCopy(message.body)
-                    },
-                )
-            }
+            MessageMenu(isMenuOpen, canCopy, canDelete, message, actions) { isMenuOpen = false }
         }
         if (message.status == MessageStatus.FAILED) {
             FailedMessageNotice({ actions.onRetry(message.id) }, { actions.onDiscard(message.id) })
+        }
+    }
+}
+
+@Composable
+private fun MessageMenu(
+    expanded: Boolean,
+    canCopy: Boolean,
+    canDelete: Boolean,
+    message: Message,
+    actions: MessageActions,
+    onDismiss: () -> Unit,
+) {
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        if (canCopy) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.message_copy)) },
+                onClick = {
+                    onDismiss()
+                    actions.onCopy(message.body)
+                },
+            )
+        }
+        if (canDelete) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.message_delete)) },
+                onClick = {
+                    onDismiss()
+                    actions.onDelete(message.id)
+                },
+            )
         }
     }
 }

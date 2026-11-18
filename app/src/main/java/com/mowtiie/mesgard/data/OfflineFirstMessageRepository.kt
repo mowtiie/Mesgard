@@ -8,16 +8,13 @@ import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.MessageEntity
 import com.mowtiie.mesgard.data.local.TimelineMessage
 import com.mowtiie.mesgard.data.local.upsert
-import com.mowtiie.mesgard.data.local.upsertKeepingLocalPaths
 import com.mowtiie.mesgard.data.remote.MessageDto
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.RemoteOutcome
 import com.mowtiie.mesgard.data.remote.attemptRemote
 import com.mowtiie.mesgard.data.remote.parseEpochMillis
 import com.mowtiie.mesgard.data.remote.toDomain
-import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.remote.toRefreshResult
-import com.mowtiie.mesgard.data.remote.toSenderProfile
 import com.mowtiie.mesgard.data.work.MessageSendScheduler
 import com.mowtiie.mesgard.domain.attachment.MAX_ATTACHMENTS_PER_MESSAGE
 import com.mowtiie.mesgard.domain.model.Message
@@ -150,17 +147,7 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         }
     }
 
-    private suspend fun storeMessages(messages: List<MessageDto>) {
-        database.withTransaction {
-            profileDao.upsertAll(messages.mapNotNull { it.toSenderProfile() }.distinctBy { it.id })
-            messageDao.upsertAll(messages.map { it.toEntity() })
-            attachmentDao.upsertKeepingLocalPaths(
-                messages.flatMap { dto ->
-                    dto.attachments.map { it.toEntity(dto.id) }
-                },
-            )
-        }
-    }
+    private suspend fun storeMessages(messages: List<MessageDto>) = database.storeMessages(messages)
 }
 
 private fun toMessage(item: TimelineMessage, currentUserId: String?, attachments: List<AttachmentEntity>) = Message(

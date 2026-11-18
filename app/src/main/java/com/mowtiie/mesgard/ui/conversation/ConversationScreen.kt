@@ -61,6 +61,7 @@ internal fun ConversationScreenRoute(
     viewModel: ConversationViewModel = hiltViewModel(),
     downloadsViewModel: AttachmentDownloadsViewModel = hiltViewModel(),
     failedMessagesViewModel: FailedMessagesViewModel = hiltViewModel(),
+    messageActionsViewModel: MessageActionsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
@@ -68,8 +69,15 @@ internal fun ConversationScreenRoute(
         viewModel.onVisibilityChanged(true)
         onPauseOrDispose { viewModel.onVisibilityChanged(false) }
     }
+    val messageActions by messageActionsViewModel.uiState.collectAsStateWithLifecycle()
+    messageActions.messageToDelete?.let {
+        DeleteMessageDialog(
+            onConfirm = messageActionsViewModel::onDeleteConfirmed,
+            onDismiss = messageActionsViewModel::onDeleteDismissed,
+        )
+    }
     ConversationScreen(
-        uiState = uiState,
+        uiState = uiState.copy(error = uiState.error ?: messageActions.error),
         downloads = downloads,
         onBack = onBack,
         onDraftChanged = viewModel::onDraftChanged,
@@ -77,6 +85,7 @@ internal fun ConversationScreenRoute(
         actions = MessageActions(
             onRetry = failedMessagesViewModel::onRetryClicked,
             onDiscard = failedMessagesViewModel::onDiscardClicked,
+            onDelete = messageActionsViewModel::onDeleteRequested,
             onAttachmentClick = downloadsViewModel::onAttachmentClicked,
             onImageShown = downloadsViewModel::onImageShown,
             onRetryDownload = downloadsViewModel::onRetryDownload,
@@ -86,7 +95,10 @@ internal fun ConversationScreenRoute(
         onAttachmentOpened = downloadsViewModel::onAttachmentOpened,
         onDownloadErrorShown = downloadsViewModel::onErrorShown,
         onLoadOlder = viewModel::onLoadOlder,
-        onErrorShown = viewModel::onErrorShown,
+        onErrorShown = {
+            viewModel.onErrorShown()
+            messageActionsViewModel.onErrorShown()
+        },
         modifier = modifier,
     )
 }
