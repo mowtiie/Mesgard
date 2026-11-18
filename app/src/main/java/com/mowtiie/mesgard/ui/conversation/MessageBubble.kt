@@ -52,6 +52,7 @@ internal data class MessageActions(
     val onDiscard: (String) -> Unit = {},
     val onCopy: (String) -> Unit = {},
     val onDelete: (String) -> Unit = {},
+    val onInfo: (String) -> Unit = {},
     val onAttachmentClick: (Attachment) -> Unit = {},
     val onImageClick: (Attachment) -> Unit = {},
     val onImageShown: (Attachment) -> Unit = {},
@@ -138,6 +139,13 @@ private fun MessageMenu(
             )
         }
         if (canDelete) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.message_info)) },
+                onClick = {
+                    onDismiss()
+                    actions.onInfo(message.id)
+                },
+            )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.message_delete)) },
                 onClick = {

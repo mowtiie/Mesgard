@@ -77,6 +77,7 @@ internal fun ConversationScreenRoute(
             onDismiss = actionsViewModel::onDeleteDismissed,
         )
     }
+    messageActions.readers?.let { MessageInfoSheet(it, onDismiss = actionsViewModel::onInfoDismissed) }
     ConversationScreen(
         uiState = uiState.copy(error = uiState.error ?: messageActions.error),
         downloads = downloads,
@@ -87,6 +88,7 @@ internal fun ConversationScreenRoute(
             onRetry = failedMessagesViewModel::onRetryClicked,
             onDiscard = failedMessagesViewModel::onDiscardClicked,
             onDelete = actionsViewModel::onDeleteRequested,
+            onInfo = actionsViewModel::onInfoRequested,
             onAttachmentClick = downloadsViewModel::onAttachmentClicked,
             onImageShown = downloadsViewModel::onImageShown,
             onRetryDownload = downloadsViewModel::onRetryDownload,

@@ -320,6 +320,14 @@
     <string name="message_edited">Edited</string>
     <string name="message_deleted">This message was deleted</string>
     <string name="message_delete">Delete</string>
+    <string name="message_info">Info</string>
+    <string name="message_info_title">Seen by</string>
+    <plurals name="message_seen_by">
+        <item quantity="one">Seen by %d person</item>
+        <item quantity="other">Seen by %d people</item>
+    </plurals>
+    <string name="message_info_empty">Nobody has seen this message yet.</string>
+    <string name="message_info_error">Unable to load this. Check your connection and try again.</string>
     <string name="conversation_mute">Mute notifications</string>
     <string name="conversation_unmute">Unmute notifications</string>
     <string name="conversation_muted">Notifications muted</string>

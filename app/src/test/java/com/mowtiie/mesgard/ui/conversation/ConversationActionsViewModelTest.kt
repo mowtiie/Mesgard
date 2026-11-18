@@ -1,6 +1,8 @@
 package com.mowtiie.mesgard.ui.conversation
 
 import androidx.lifecycle.SavedStateHandle
+import com.mowtiie.mesgard.domain.model.MessageReader
+import com.mowtiie.mesgard.domain.model.ReadersResult
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
@@ -30,6 +32,27 @@ class ConversationActionsViewModelTest {
             repository,
             conversationRepository,
         )
+    }
+
+    @Test
+    fun `info loads who read the message and closes again`() = runTest {
+        val readers = listOf(MessageReader("u1", "Ana", 1_000L))
+        coEvery { repository.readers("m1") } returns ReadersResult.Loaded(readers)
+
+        viewModel.onInfoRequested("m1")
+        assertEquals(ReadersState.Loaded(readers), viewModel.uiState.value.readers)
+
+        viewModel.onInfoDismissed()
+        assertNull(viewModel.uiState.value.readers)
+    }
+
+    @Test
+    fun `info says it failed when the readers cannot be loaded`() = runTest {
+        coEvery { repository.readers("m1") } returns ReadersResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
+
+        viewModel.onInfoRequested("m1")
+
+        assertEquals(ReadersState.Failed, viewModel.uiState.value.readers)
     }
 
     @Test

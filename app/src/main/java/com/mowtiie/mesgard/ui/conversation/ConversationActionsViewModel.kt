@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.mowtiie.mesgard.domain.model.MessageReader
+import com.mowtiie.mesgard.domain.model.ReadersResult
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MessageActionsRepository
@@ -16,8 +18,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** The "Seen by" list of one message, while it loads, when it arrived and when it could not be loaded. */
+internal sealed interface ReadersState {
+    data object Loading : ReadersState
+
+    data class Loaded(val readers: List<MessageReader>) : ReadersState
+
+    data object Failed : ReadersState
+}
+
 internal data class ConversationActionsUiState(
     val messageToDelete: String? = null,
+    val readers: ReadersState? = null,
     val error: ConversationError? = null,
 )
 
@@ -41,6 +53,19 @@ internal class ConversationActionsViewModel @Inject constructor(
         mutableUiState.update { it.copy(messageToDelete = null) }
         viewModelScope.launch { report(messageActions.delete(messageId)) }
     }
+
+    fun onInfoRequested(messageId: String) {
+        mutableUiState.update { it.copy(readers = ReadersState.Loading) }
+        viewModelScope.launch {
+            val state = when (val result = messageActions.readers(messageId)) {
+                is ReadersResult.Loaded -> ReadersState.Loaded(result.readers)
+                is ReadersResult.Failure -> ReadersState.Failed
+            }
+            mutableUiState.update { current -> if (current.readers == null) current else current.copy(readers = state) }
+        }
+    }
+
+    fun onInfoDismissed() = mutableUiState.update { it.copy(readers = null) }
 
     fun onMuteChanged(muted: Boolean) {
         viewModelScope.launch { report(conversationRepository.setMuted(conversationId, muted)) }

@@ -3,8 +3,12 @@ package com.mowtiie.mesgard.data
 import com.mowtiie.mesgard.data.local.AttachmentEntity
 import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
+import com.mowtiie.mesgard.data.remote.ReaderProfileDto
+import com.mowtiie.mesgard.data.remote.ReceiptDto
+import com.mowtiie.mesgard.domain.model.ReadersResult
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
+import com.mowtiie.mesgard.domain.repository.MESSAGE_READERS_LIMIT
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
 import com.mowtiie.mesgard.testing.conversationEntity
 import com.mowtiie.mesgard.testing.messageDto
@@ -49,6 +53,26 @@ class OfflineFirstMessageActionsRepositoryTest {
         fileName = "mine.png",
         localPath = localPath,
     )
+
+    @Test
+    fun `readers lists who read the message with the time`() = runTest {
+        coEvery { remoteSource.fetchReaders("mine", MESSAGE_READERS_LIMIT) } returns listOf(
+            ReceiptDto("u1", "2026-11-18T08:00:00+00:00", ReaderProfileDto("Ana")),
+            ReceiptDto("u2", "2026-11-18T07:00:00+00:00", null),
+        )
+
+        val result = repository.readers("mine") as ReadersResult.Loaded
+
+        assertEquals(listOf("Ana", ""), result.readers.map { it.displayName })
+        assertEquals(1_794_988_800_000L, result.readers.first().readAtEpochMillis)
+    }
+
+    @Test
+    fun `readers reports a connection problem`() = runTest {
+        coEvery { remoteSource.fetchReaders(any(), any()) } throws IOException("offline")
+
+        assertEquals(ReadersResult.Failure(RefreshError.NETWORK_UNAVAILABLE), repository.readers("mine"))
+    }
 
     @Test
     fun `delete stores the deleted message the server answers with and removes its local files`() = runTest {

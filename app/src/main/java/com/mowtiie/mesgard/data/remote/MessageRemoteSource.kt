@@ -6,6 +6,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import java.time.Instant
 import javax.inject.Inject
 import kotlinx.serialization.json.buildJsonObject
@@ -13,6 +14,7 @@ import kotlinx.serialization.json.put
 
 private const val MESSAGES_TABLE = "messages"
 private const val ATTACHMENTS_TABLE = "attachments"
+private const val RECEIPTS_TABLE = "message_receipts"
 private const val MARK_READ_FUNCTION = "mark_conversation_read"
 private val MESSAGE_COLUMNS = Columns.raw(
     "*, sender:profiles!messages_sender_id_fkey(id, display_name), " +
@@ -27,6 +29,9 @@ internal interface MessageRemoteSource {
     suspend fun send(message: NewMessageDto): MessageDto
 
     suspend fun fetchAttachments(messageId: String): List<AttachmentDto>
+
+    /** The people who have read the message, the latest first. Only its sender can see them. */
+    suspend fun fetchReaders(messageId: String, limit: Int): List<ReceiptDto>
 
     /** Soft deletes the message. The server blanks the text and archives the original for administrators. */
     suspend fun delete(messageId: String): MessageDto
@@ -62,6 +67,16 @@ internal class SupabaseMessageRemoteSource @Inject constructor(private val clien
             filter { eq("id", message.id) }
         }.decodeSingle<MessageDto>()
     }
+
+    override suspend fun fetchReaders(messageId: String, limit: Int): List<ReceiptDto> =
+        client.from(RECEIPTS_TABLE).select(Columns.raw("user_id, read_at, profiles(display_name)")) {
+            filter {
+                eq("message_id", messageId)
+                filterNot("read_at", FilterOperator.IS, "null")
+            }
+            order("read_at", Order.DESCENDING)
+            limit(limit.toLong())
+        }.decodeList<ReceiptDto>()
 
     override suspend fun delete(messageId: String): MessageDto {
         val rows = client.from(MESSAGES_TABLE).update({ set("deleted_at", "now") }) {
