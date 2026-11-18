@@ -5,10 +5,13 @@ import com.mowtiie.mesgard.data.remote.CONVERSATION_PAGE_SIZE
 import com.mowtiie.mesgard.data.remote.ConversationRemoteSource
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
+import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
 import com.mowtiie.mesgard.testing.conversationEntity
 import com.mowtiie.mesgard.testing.summaryDto
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
@@ -24,7 +27,57 @@ class OfflineFirstConversationRepositoryTest {
     val databaseRule = InMemoryDatabaseRule()
 
     private val remoteSource = mockk<ConversationRemoteSource>()
-    private val repository by lazy { OfflineFirstConversationRepository(databaseRule.database, remoteSource) }
+    private val authRepository = mockk<AuthRepository> { every { currentUserId } returns "me" }
+
+    init {
+        coEvery { remoteSource.fetchMutedConversationIds(any()) } returns emptySet()
+    }
+
+    private val repository by lazy {
+        OfflineFirstConversationRepository(databaseRule.database, remoteSource, authRepository)
+    }
+
+    @Test
+    fun `refresh marks the conversations the user muted`() = runTest {
+        coEvery { remoteSource.fetchSummaries() } returns listOf(summaryDto("quiet"), summaryDto("loud"))
+        coEvery { remoteSource.fetchMutedConversationIds("me") } returns setOf("quiet")
+
+        repository.refresh()
+
+        repository.observeConversations().test {
+            assertEquals(mapOf("quiet" to true, "loud" to false), awaitItem().associate { it.id to it.isMuted })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `muting asks the server first and then marks the conversation`() = runTest {
+        databaseRule.database.conversationDao().upsertAll(listOf(conversationEntity("chat")))
+        coEvery { remoteSource.setMuted("chat", "me", true) } returns Unit
+
+        val result = repository.setMuted("chat", muted = true)
+
+        assertEquals(RefreshResult.Success, result)
+        coVerify { remoteSource.setMuted("chat", "me", true) }
+        repository.observeConversation("chat").test {
+            assertEquals(true, awaitItem()?.isMuted)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a mute the server did not accept is not marked on the device`() = runTest {
+        databaseRule.database.conversationDao().upsertAll(listOf(conversationEntity("chat")))
+        coEvery { remoteSource.setMuted("chat", "me", true) } throws IOException("offline")
+
+        val result = repository.setMuted("chat", muted = true)
+
+        assertEquals(RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE), result)
+        repository.observeConversation("chat").test {
+            assertEquals(false, awaitItem()?.isMuted)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 
     @Test
     fun `refresh stores the conversations with their last message`() = runTest {

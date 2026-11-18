@@ -8,4 +8,5 @@ internal data class ConversationSummary(
     val lastActivityAtEpochMillis: Long,
     val unreadCount: Int,
     val canPost: Boolean,
+    val isMuted: Boolean = false,
 )

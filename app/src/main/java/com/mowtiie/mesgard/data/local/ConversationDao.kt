@@ -12,13 +12,14 @@ internal data class ConversationListItem(
     val title: String?,
     val unreadCount: Int,
     val canPost: Boolean,
+    val isMuted: Boolean,
     val lastMessageBody: String?,
     val activityAtEpochMillis: Long,
 )
 
 private const val CONVERSATION_ITEM_SELECT = """
     SELECT c.id AS id, c.type AS type, c.title AS title, c.unread_count AS unreadCount,
-        c.can_post AS canPost,
+        c.can_post AS canPost, c.is_muted AS isMuted,
         m.body AS lastMessageBody, COALESCE(m.created_at, c.created_at) AS activityAtEpochMillis
     FROM conversations AS c
     LEFT JOIN messages AS m ON m.id = (
@@ -45,6 +46,9 @@ internal interface ConversationDao {
 
     @Query("UPDATE conversations SET unread_count = unread_count + 1 WHERE id = :conversationId")
     suspend fun incrementUnreadCount(conversationId: String)
+
+    @Query("UPDATE conversations SET is_muted = :isMuted WHERE id = :conversationId")
+    suspend fun updateMuted(conversationId: String, isMuted: Boolean)
 
     @Query("UPDATE conversations SET unread_count = 0 WHERE id = :conversationId")
     suspend fun clearUnreadCount(conversationId: String)

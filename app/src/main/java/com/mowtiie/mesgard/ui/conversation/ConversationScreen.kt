@@ -46,6 +46,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.common.EmptyState
+import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
 import com.mowtiie.mesgard.ui.common.readOnlyMessageResource
@@ -61,7 +62,7 @@ internal fun ConversationScreenRoute(
     viewModel: ConversationViewModel = hiltViewModel(),
     downloadsViewModel: AttachmentDownloadsViewModel = hiltViewModel(),
     failedMessagesViewModel: FailedMessagesViewModel = hiltViewModel(),
-    messageActionsViewModel: MessageActionsViewModel = hiltViewModel(),
+    actionsViewModel: ConversationActionsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
@@ -69,11 +70,11 @@ internal fun ConversationScreenRoute(
         viewModel.onVisibilityChanged(true)
         onPauseOrDispose { viewModel.onVisibilityChanged(false) }
     }
-    val messageActions by messageActionsViewModel.uiState.collectAsStateWithLifecycle()
+    val messageActions by actionsViewModel.uiState.collectAsStateWithLifecycle()
     messageActions.messageToDelete?.let {
         DeleteMessageDialog(
-            onConfirm = messageActionsViewModel::onDeleteConfirmed,
-            onDismiss = messageActionsViewModel::onDeleteDismissed,
+            onConfirm = actionsViewModel::onDeleteConfirmed,
+            onDismiss = actionsViewModel::onDeleteDismissed,
         )
     }
     ConversationScreen(
@@ -85,7 +86,7 @@ internal fun ConversationScreenRoute(
         actions = MessageActions(
             onRetry = failedMessagesViewModel::onRetryClicked,
             onDiscard = failedMessagesViewModel::onDiscardClicked,
-            onDelete = messageActionsViewModel::onDeleteRequested,
+            onDelete = actionsViewModel::onDeleteRequested,
             onAttachmentClick = downloadsViewModel::onAttachmentClicked,
             onImageShown = downloadsViewModel::onImageShown,
             onRetryDownload = downloadsViewModel::onRetryDownload,
@@ -95,9 +96,10 @@ internal fun ConversationScreenRoute(
         onAttachmentOpened = downloadsViewModel::onAttachmentOpened,
         onDownloadErrorShown = downloadsViewModel::onErrorShown,
         onLoadOlder = viewModel::onLoadOlder,
+        onMuteChanged = actionsViewModel::onMuteChanged,
         onErrorShown = {
             viewModel.onErrorShown()
-            messageActionsViewModel.onErrorShown()
+            actionsViewModel.onErrorShown()
         },
         modifier = modifier,
     )
@@ -116,6 +118,7 @@ internal fun ConversationScreen(
     onAttachmentOpened: () -> Unit,
     onDownloadErrorShown: () -> Unit,
     onLoadOlder: () -> Unit,
+    onMuteChanged: (Boolean) -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -158,6 +161,14 @@ internal fun ConversationScreen(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.navigate_back),
                 )
+            }
+        },
+        actions = {
+            OverflowMenu { dismiss ->
+                MuteMenuItem(uiState.isMuted) {
+                    dismiss()
+                    onMuteChanged(!uiState.isMuted)
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

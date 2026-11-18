@@ -1,7 +1,9 @@
 package com.mowtiie.mesgard.ui.conversation
 
+import androidx.lifecycle.SavedStateHandle
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
+import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MessageActionsRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
@@ -12,13 +14,44 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
-class MessageActionsViewModelTest {
+@RunWith(RobolectricTestRunner::class)
+class ConversationActionsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
     private val repository = mockk<MessageActionsRepository>()
-    private val viewModel by lazy { MessageActionsViewModel(repository) }
+    private val conversationRepository = mockk<ConversationRepository>()
+    private val viewModel by lazy {
+        ConversationActionsViewModel(
+            SavedStateHandle(mapOf("conversationId" to "c1")),
+            repository,
+            conversationRepository,
+        )
+    }
+
+    @Test
+    fun `muting and unmuting go to the server for this conversation`() = runTest {
+        coEvery { conversationRepository.setMuted("c1", any()) } returns RefreshResult.Success
+
+        viewModel.onMuteChanged(true)
+        viewModel.onMuteChanged(false)
+
+        coVerify { conversationRepository.setMuted("c1", true) }
+        coVerify { conversationRepository.setMuted("c1", false) }
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `a mute that fails shows the reason`() = runTest {
+        coEvery { conversationRepository.setMuted("c1", true) } returns RefreshResult.Failure(RefreshError.UNKNOWN)
+
+        viewModel.onMuteChanged(true)
+
+        assertEquals(ConversationError.UNKNOWN, viewModel.uiState.value.error)
+    }
 
     @Test
     fun `deleting asks first and then deletes the message for everyone`() = runTest {

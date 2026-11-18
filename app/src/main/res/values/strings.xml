@@ -320,6 +320,9 @@
     <string name="message_edited">Edited</string>
     <string name="message_deleted">This message was deleted</string>
     <string name="message_delete">Delete</string>
+    <string name="conversation_mute">Mute notifications</string>
+    <string name="conversation_unmute">Unmute notifications</string>
+    <string name="conversation_muted">Notifications muted</string>
     <string name="message_delete_title">Delete this message?</string>
     <string name="message_delete_text">It is removed for everyone in the conversation. Administrators of your organization can still read the original.</string>
     <string name="conversation_empty">No messages yet</string>

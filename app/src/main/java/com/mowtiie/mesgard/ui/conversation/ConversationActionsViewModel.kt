@@ -1,0 +1,54 @@
+package com.mowtiie.mesgard.ui.conversation
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import com.mowtiie.mesgard.domain.model.RefreshResult
+import com.mowtiie.mesgard.domain.repository.ConversationRepository
+import com.mowtiie.mesgard.domain.repository.MessageActionsRepository
+import com.mowtiie.mesgard.ui.navigation.ConversationRoute
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+internal data class ConversationActionsUiState(
+    val messageToDelete: String? = null,
+    val error: ConversationError? = null,
+)
+
+/** What the user can do beyond reading and writing: delete a message they sent, after asking, and mute the chat. */
+@HiltViewModel
+internal class ConversationActionsViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    private val messageActions: MessageActionsRepository,
+    private val conversationRepository: ConversationRepository,
+) : ViewModel() {
+    private val conversationId = savedStateHandle.toRoute<ConversationRoute>().conversationId
+    private val mutableUiState = MutableStateFlow(ConversationActionsUiState())
+    val uiState: StateFlow<ConversationActionsUiState> = mutableUiState.asStateFlow()
+
+    fun onDeleteRequested(messageId: String) = mutableUiState.update { it.copy(messageToDelete = messageId) }
+
+    fun onDeleteDismissed() = mutableUiState.update { it.copy(messageToDelete = null) }
+
+    fun onDeleteConfirmed() {
+        val messageId = mutableUiState.value.messageToDelete ?: return
+        mutableUiState.update { it.copy(messageToDelete = null) }
+        viewModelScope.launch { report(messageActions.delete(messageId)) }
+    }
+
+    fun onMuteChanged(muted: Boolean) {
+        viewModelScope.launch { report(conversationRepository.setMuted(conversationId, muted)) }
+    }
+
+    fun onErrorShown() = mutableUiState.update { it.copy(error = null) }
+
+    private fun report(result: RefreshResult) {
+        if (result is RefreshResult.Failure) mutableUiState.update { it.copy(error = result.error.toError()) }
+    }
+}

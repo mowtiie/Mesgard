@@ -66,6 +66,7 @@ internal class ConversationViewModel @Inject constructor(
             title = conversation?.title,
             type = conversation?.type,
             canPost = conversation?.canPost ?: true,
+            isMuted = conversation?.isMuted ?: false,
             messages = messages,
             draft = local.draft,
             attachments = local.attachments,

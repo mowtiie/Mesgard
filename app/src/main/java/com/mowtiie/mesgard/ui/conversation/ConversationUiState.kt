@@ -22,6 +22,7 @@ internal data class ConversationUiState(
     val title: String? = null,
     val type: ConversationType? = null,
     val canPost: Boolean = true,
+    val isMuted: Boolean = false,
     val messages: List<Message> = emptyList(),
     val draft: String = "",
     val attachments: List<PickedAttachment> = emptyList(),

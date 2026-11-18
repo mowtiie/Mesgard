@@ -5,7 +5,7 @@ import com.mowtiie.mesgard.data.local.MessageEntity
 import com.mowtiie.mesgard.domain.model.ConversationType
 import com.mowtiie.mesgard.domain.model.MessageStatus
 
-internal fun ConversationSummaryDto.toEntity() = ConversationEntity(
+internal fun ConversationSummaryDto.toEntity(isMuted: Boolean = false) = ConversationEntity(
     id = conversationId,
     orgId = orgId,
     type = ConversationType.valueOf(type.uppercase()),
@@ -13,6 +13,7 @@ internal fun ConversationSummaryDto.toEntity() = ConversationEntity(
     createdAtEpochMillis = parseEpochMillis(createdAt),
     unreadCount = unreadCount,
     canPost = canPost,
+    isMuted = isMuted,
 )
 
 internal fun ConversationSummaryDto.toLastMessageEntity(): MessageEntity? {
