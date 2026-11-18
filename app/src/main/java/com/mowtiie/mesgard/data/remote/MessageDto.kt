@@ -14,6 +14,7 @@ internal data class MessageDto(
     @SerialName("edited_at") val editedAt: String? = null,
     @SerialName("deleted_at") val deletedAt: String? = null,
     @SerialName("has_attachments") val hasAttachments: Boolean = false,
+    @SerialName("reply_to_message_id") val replyToMessageId: String? = null,
     val attachments: List<AttachmentDto> = emptyList(),
     val sender: SenderDto? = null,
 )
@@ -28,4 +29,5 @@ internal data class NewMessageDto(
     @SerialName("conversation_id") val conversationId: String,
     @SerialName("sender_id") val senderId: String,
     val body: String,
+    @SerialName("reply_to_message_id") val replyToMessageId: String? = null,
 )

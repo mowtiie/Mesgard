@@ -49,7 +49,6 @@ import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
-import com.mowtiie.mesgard.ui.common.readOnlyMessageResource
 import java.time.ZoneId
 import kotlinx.coroutines.launch
 
@@ -64,6 +63,7 @@ internal fun ConversationScreenRoute(
     failedMessagesViewModel: FailedMessagesViewModel = hiltViewModel(),
     actionsViewModel: ConversationActionsViewModel = hiltViewModel(),
     editViewModel: MessageEditViewModel = hiltViewModel(),
+    replyViewModel: ReplyViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
@@ -80,9 +80,12 @@ internal fun ConversationScreenRoute(
     }
     messageActions.readers?.let { MessageInfoSheet(it, onDismiss = actionsViewModel::onInfoDismissed) }
     val edit by editViewModel.uiState.collectAsStateWithLifecycle()
+    val reply by replyViewModel.target.collectAsStateWithLifecycle()
     ConversationScreen(
         uiState = uiState.copy(error = uiState.error ?: messageActions.error ?: edit.error),
         edit = edit,
+        reply = reply,
+        onReplyDropped = replyViewModel::onReplyDropped,
         editActions = EditActions(
             onTextChanged = editViewModel::onTextChanged,
             onCancel = editViewModel::onEditCancelled,
@@ -91,13 +94,17 @@ internal fun ConversationScreenRoute(
         downloads = downloads,
         onBack = onBack,
         onDraftChanged = viewModel::onDraftChanged,
-        onSendClicked = viewModel::onSendClicked,
+        onSendClicked = {
+            viewModel.onSendClicked(reply?.messageId)
+            replyViewModel.onReplyDropped()
+        },
         actions = MessageActions(
             onRetry = failedMessagesViewModel::onRetryClicked,
             onDiscard = failedMessagesViewModel::onDiscardClicked,
             onDelete = actionsViewModel::onDeleteRequested,
             onInfo = actionsViewModel::onInfoRequested,
             onEdit = editViewModel::onEditRequested,
+            onReply = replyViewModel::onReplyRequested,
             onAttachmentClick = downloadsViewModel::onAttachmentClicked,
             onImageShown = downloadsViewModel::onImageShown,
             onRetryDownload = downloadsViewModel::onRetryDownload,
@@ -122,6 +129,8 @@ internal fun ConversationScreen(
     uiState: ConversationUiState,
     edit: MessageEditUiState,
     editActions: EditActions,
+    reply: ReplyTarget?,
+    onReplyDropped: () -> Unit,
     downloads: AttachmentDownloadsUiState,
     onBack: () -> Unit,
     onDraftChanged: (String) -> Unit,
@@ -195,21 +204,17 @@ internal fun ConversationScreen(
                 onLoadOlder = onLoadOlder,
                 modifier = Modifier.weight(1f),
             )
-            if (edit.isEditing) {
-                EditComposer(edit, editActions)
-            } else if (uiState.canPost) {
-                MessageComposer(
-                    draft = uiState.draft,
-                    attachments = uiState.attachments,
-                    canSend = uiState.canSend,
-                    onDraftChanged = onDraftChanged,
-                    onSendClicked = onSendClicked,
-                    onAttachmentsPicked = onAttachmentsPicked,
-                    onAttachmentRemoved = onAttachmentRemoved,
-                )
-            } else {
-                ReadOnlyNotice(uiState.type.readOnlyMessageResource())
-            }
+            ComposerArea(
+                uiState = uiState,
+                edit = edit,
+                editActions = editActions,
+                reply = reply,
+                onReplyDropped = onReplyDropped,
+                onDraftChanged = onDraftChanged,
+                onSendClicked = onSendClicked,
+                onAttachmentsPicked = onAttachmentsPicked,
+                onAttachmentRemoved = onAttachmentRemoved,
+            )
         }
     }
     viewedImage?.let {
@@ -255,6 +260,13 @@ private fun MessageList(
         if (index >= 0) listState.showAtTop(index)
     }
 
+    val jumpingActions = actions.copy(
+        onReplyClick = { id ->
+            val index = timeline.indexOfFirst { it is TimelineItem.Bubble && it.message.id == id }
+            if (index >= 0) scope.launch { listState.animateScrollToItem(index) }
+        },
+    )
+
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(state = listState, reverseLayout = true, modifier = Modifier.fillMaxSize()) {
             items(timeline, key = { it.key }) { item ->
@@ -263,7 +275,7 @@ private fun MessageList(
                         message = item.message,
                         showSenderName = uiState.showSenderNames,
                         downloads = downloads,
-                        actions = actions,
+                        actions = jumpingActions,
                         startsGroup = item.startsGroup,
                         endsGroup = item.endsGroup,
                     )

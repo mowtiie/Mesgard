@@ -14,6 +14,7 @@ internal fun MessageDto.toEntity() = MessageEntity(
     status = MessageStatus.SENT,
     editedAtEpochMillis = editedAt?.let(::parseEpochMillis),
     deletedAtEpochMillis = deletedAt?.let(::parseEpochMillis),
+    replyToId = replyToMessageId,
 )
 
 internal fun MessageDto.toSenderProfile(): ProfileEntity? =
@@ -25,6 +26,7 @@ internal fun MessageEntity.toNewMessageDto(orgId: String) = NewMessageDto(
     conversationId = conversationId,
     senderId = senderId,
     body = body,
+    replyToMessageId = replyToId,
 )
 
 internal fun parseEpochMillis(timestamp: String): Long = OffsetDateTime.parse(timestamp).toInstant().toEpochMilli()

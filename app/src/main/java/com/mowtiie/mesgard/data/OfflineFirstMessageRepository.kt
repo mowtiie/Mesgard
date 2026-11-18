@@ -21,6 +21,7 @@ import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.domain.model.MessageStatus
 import com.mowtiie.mesgard.domain.model.PageResult
 import com.mowtiie.mesgard.domain.model.RefreshResult
+import com.mowtiie.mesgard.domain.model.ReplyPreview
 import com.mowtiie.mesgard.domain.model.SendRejection
 import com.mowtiie.mesgard.domain.model.SendResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
@@ -81,7 +82,12 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         }
     }
 
-    override suspend fun send(conversationId: String, body: String, attachmentUris: List<String>): SendResult {
+    override suspend fun send(
+        conversationId: String,
+        body: String,
+        attachmentUris: List<String>,
+        replyToId: String?,
+    ): SendResult {
         val text = body.trim()
         val senderId = authRepository.currentUserId
         val rejection = rejectionFor(
@@ -93,7 +99,7 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         return if (rejection != null || senderId == null) {
             SendResult.Rejected(rejection ?: SendRejection.NOT_SIGNED_IN)
         } else {
-            queue(NewMessage(UUID.randomUUID().toString(), conversationId, senderId, text), attachmentUris)
+            queue(NewMessage(UUID.randomUUID().toString(), conversationId, senderId, text, replyToId), attachmentUris)
         }
     }
 
@@ -109,6 +115,7 @@ internal class OfflineFirstMessageRepository @Inject constructor(
             body = draft.body,
             createdAtEpochMillis = clock.millis(),
             status = MessageStatus.PENDING,
+            replyToId = draft.replyToId,
         )
         database.withTransaction {
             messageDao.upsert(message)
@@ -162,9 +169,24 @@ private fun toMessage(item: TimelineMessage, currentUserId: String?, attachments
     status = item.status,
     isOwn = item.senderId == currentUserId,
     attachments = attachments.map { it.toDomain() },
+    replyTo = item.replyToId?.let { replyPreviewOf(it, item) },
 )
 
-private data class NewMessage(val id: String, val conversationId: String, val senderId: String, val body: String)
+private fun replyPreviewOf(messageId: String, item: TimelineMessage) = ReplyPreview(
+    messageId = messageId,
+    isLoaded = item.replyOriginalId != null,
+    senderName = item.replySenderName,
+    body = item.replyBody.orEmpty(),
+    isDeleted = item.replyDeletedAtEpochMillis != null,
+)
+
+private data class NewMessage(
+    val id: String,
+    val conversationId: String,
+    val senderId: String,
+    val body: String,
+    val replyToId: String?,
+)
 
 private fun rejectionFor(
     text: String,

@@ -12,4 +12,5 @@ internal data class Message(
     val status: MessageStatus,
     val isOwn: Boolean,
     val attachments: List<Attachment> = emptyList(),
+    val replyTo: ReplyPreview? = null,
 )

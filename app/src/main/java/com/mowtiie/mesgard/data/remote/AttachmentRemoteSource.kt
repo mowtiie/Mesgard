@@ -43,6 +43,7 @@ internal class SupabaseAttachmentRemoteSource @Inject constructor(private val cl
                 put("new_message_id", message.id)
                 put("target_conversation_id", message.conversationId)
                 put("new_body", message.body)
+                message.replyToId?.let { put("new_reply_to", it) }
                 put(
                     "new_attachments",
                     buildJsonArray {

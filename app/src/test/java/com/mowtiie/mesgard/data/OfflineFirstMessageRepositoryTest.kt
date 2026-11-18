@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.data
 import app.cash.turbine.test
 import com.mowtiie.mesgard.data.attachment.AttachmentIntake
 import com.mowtiie.mesgard.data.local.AttachmentEntity
+import com.mowtiie.mesgard.data.local.ProfileEntity
 import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.toEntity
@@ -15,6 +16,7 @@ import com.mowtiie.mesgard.domain.model.MessageStatus
 import com.mowtiie.mesgard.domain.model.PageResult
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
+import com.mowtiie.mesgard.domain.model.ReplyPreview
 import com.mowtiie.mesgard.domain.model.SendRejection
 import com.mowtiie.mesgard.domain.model.SendResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
@@ -98,6 +100,68 @@ class OfflineFirstMessageRepositoryTest {
         assertEquals("/files/photo", attachment.localPath)
         assertEquals("$CONVERSATION_ID/${message.id}/${attachment.id}", attachment.storagePath)
         verify(exactly = 1) { sendScheduler.schedule(message.id) }
+    }
+
+    @Test
+    fun `send stores the message it answers`() = runTest {
+        repository.send(CONVERSATION_ID, "An answer", replyToId = "original")
+
+        assertEquals("original", pendingMessages().single().replyToId)
+    }
+
+    @Test
+    fun `a reply shows what the original said and who wrote it`() = runTest {
+        databaseRule.database.profileDao().upsertAll(listOf(ProfileEntity("ana", "Ana")))
+        databaseRule.database.messageDao().upsert(
+            messageEntity("original", CONVERSATION_ID, 1_000L).copy(senderId = "ana", body = "Is it due Friday?"),
+        )
+        databaseRule.database.messageDao().upsert(
+            messageEntity("answer", CONVERSATION_ID, 2_000L).copy(replyToId = "original"),
+        )
+
+        repository.observeMessages(CONVERSATION_ID, PAGE).test {
+            val reply = awaitItem().first { it.id == "answer" }.replyTo
+            assertEquals(
+                ReplyPreview(
+                    "original",
+                    isLoaded = true,
+                    senderName = "Ana",
+                    body = "Is it due Friday?",
+                    isDeleted = false,
+                ),
+                reply,
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a reply to a message that is not on the device says so`() = runTest {
+        databaseRule.database.messageDao().upsert(
+            messageEntity("answer", CONVERSATION_ID, 2_000L).copy(replyToId = "older"),
+        )
+
+        repository.observeMessages(CONVERSATION_ID, PAGE).test {
+            val reply = awaitItem().single().replyTo
+            assertEquals(false, reply?.isLoaded)
+            assertEquals("older", reply?.messageId)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a reply to a deleted message marks it deleted`() = runTest {
+        databaseRule.database.messageDao().upsert(
+            messageEntity("original", CONVERSATION_ID, 1_000L).copy(body = "", deletedAtEpochMillis = 1_500L),
+        )
+        databaseRule.database.messageDao().upsert(
+            messageEntity("answer", CONVERSATION_ID, 2_000L).copy(replyToId = "original"),
+        )
+
+        repository.observeMessages(CONVERSATION_ID, PAGE).test {
+            assertEquals(true, awaitItem().first { it.id == "answer" }.replyTo?.isDeleted)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test

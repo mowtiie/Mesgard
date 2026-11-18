@@ -1,19 +1,14 @@
 package com.mowtiie.mesgard.ui.conversation
 
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,8 +24,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
@@ -54,6 +47,8 @@ internal data class MessageActions(
     val onDelete: (String) -> Unit = {},
     val onInfo: (String) -> Unit = {},
     val onEdit: (Message) -> Unit = {},
+    val onReply: (Message) -> Unit = {},
+    val onReplyClick: (String) -> Unit = {},
     val onAttachmentClick: (Attachment) -> Unit = {},
     val onImageClick: (Attachment) -> Unit = {},
     val onImageShown: (Attachment) -> Unit = {},
@@ -69,6 +64,23 @@ internal fun MessageBubble(
     modifier: Modifier = Modifier,
     startsGroup: Boolean = true,
     endsGroup: Boolean = true,
+) {
+    val canReply = !message.isDeleted && message.status == MessageStatus.SENT
+    ReplySwipe(enabled = canReply, onReply = { actions.onReply(message) }) {
+        BubbleBody(message, showSenderName, downloads, actions, modifier, startsGroup, endsGroup, canReply)
+    }
+}
+
+@Composable
+private fun BubbleBody(
+    message: Message,
+    showSenderName: Boolean,
+    downloads: AttachmentDownloadsUiState,
+    actions: MessageActions,
+    modifier: Modifier,
+    startsGroup: Boolean,
+    endsGroup: Boolean,
+    canReply: Boolean,
 ) {
     var isMenuOpen by remember { mutableStateOf(false) }
     val colors = bubbleColors(message)
@@ -87,7 +99,7 @@ internal fun MessageBubble(
     ) {
         Box {
             Surface(
-                modifier = Modifier.onLongPress(canCopy || canDelete, copyLabel) {
+                modifier = Modifier.onLongPress(canCopy || canDelete || canReply, copyLabel) {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     isMenuOpen = true
                 },
@@ -95,24 +107,9 @@ internal fun MessageBubble(
                 color = colors.container,
                 contentColor = colors.content,
             ) {
-                Column(modifier = Modifier.widthIn(max = maxBubbleWidth()).padding(BubblePadding)) {
-                    MessageText(message, showSenderName && startsGroup)
-                    if (!message.isDeleted) {
-                        AttachmentList(
-                            message.attachments,
-                            downloads,
-                            actions.onAttachmentClick,
-                            actions.onImageClick,
-                            actions.onImageShown,
-                            actions.onRetryDownload,
-                        )
-                    }
-                    if (endsGroup || message.status != MessageStatus.SENT || message.isEdited) {
-                        Text(text = metadata(message), style = MaterialTheme.typography.labelSmall)
-                    }
-                }
+                BubbleContent(message, showSenderName && startsGroup, endsGroup, downloads, actions)
             }
-            MessageMenu(isMenuOpen, canCopy, canDelete, message, actions) { isMenuOpen = false }
+            MessageMenu(isMenuOpen, canCopy, canDelete, canReply, message, actions) { isMenuOpen = false }
         }
         if (message.status == MessageStatus.FAILED) {
             FailedMessageNotice({ actions.onRetry(message.id) }, { actions.onDiscard(message.id) })
@@ -121,48 +118,28 @@ internal fun MessageBubble(
 }
 
 @Composable
-private fun MessageMenu(
-    expanded: Boolean,
-    canCopy: Boolean,
-    canDelete: Boolean,
+private fun BubbleContent(
     message: Message,
+    showSenderName: Boolean,
+    endsGroup: Boolean,
+    downloads: AttachmentDownloadsUiState,
     actions: MessageActions,
-    onDismiss: () -> Unit,
 ) {
-    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-        if (canCopy) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.message_copy)) },
-                onClick = {
-                    onDismiss()
-                    actions.onCopy(message.body)
-                },
+    Column(modifier = Modifier.widthIn(max = maxBubbleWidth()).padding(BubblePadding)) {
+        message.replyTo?.let { QuotedReply(it, onClick = { id -> actions.onReplyClick(id) }) }
+        MessageText(message, showSenderName)
+        if (!message.isDeleted) {
+            AttachmentList(
+                message.attachments,
+                downloads,
+                actions.onAttachmentClick,
+                actions.onImageClick,
+                actions.onImageShown,
+                actions.onRetryDownload,
             )
         }
-        if (canDelete) {
-            if (message.body.isNotEmpty()) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.message_edit)) },
-                    onClick = {
-                        onDismiss()
-                        actions.onEdit(message)
-                    },
-                )
-            }
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.message_info)) },
-                onClick = {
-                    onDismiss()
-                    actions.onInfo(message.id)
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.message_delete)) },
-                onClick = {
-                    onDismiss()
-                    actions.onDelete(message.id)
-                },
-            )
+        if (endsGroup || message.status != MessageStatus.SENT || message.isEdited) {
+            Text(text = metadata(message), style = MaterialTheme.typography.labelSmall)
         }
     }
 }
@@ -193,49 +170,6 @@ private fun bubbleColors(message: Message): BubbleColors {
         message.status == MessageStatus.FAILED -> BubbleColors(scheme.errorContainer, scheme.onErrorContainer)
         message.isOwn -> BubbleColors(scheme.primaryContainer, scheme.onPrimaryContainer)
         else -> BubbleColors(scheme.surfaceContainerHigh, scheme.onSurface)
-    }
-}
-
-/** The sender and the text are read as one item, and a message of the user says so. */
-@Composable
-private fun MessageText(message: Message, showSenderName: Boolean) {
-    val sentByYou = stringResource(R.string.message_sent_by_you)
-    Column(
-        modifier = Modifier.semantics(mergeDescendants = true) {
-            if (message.isOwn) stateDescription = sentByYou
-        },
-    ) {
-        val name = message.senderName
-        if (showSenderName && !message.isOwn && name != null) {
-            Text(text = name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-        }
-        MessageBody(message)
-    }
-}
-
-@Composable
-private fun MessageBody(message: Message) {
-    if (message.isDeleted) {
-        Text(
-            text = stringResource(R.string.message_deleted),
-            style = MaterialTheme.typography.bodyLarge,
-            fontStyle = FontStyle.Italic,
-        )
-    } else if (message.body.isNotEmpty()) {
-        Text(text = remember(message.body) { linkedText(message.body) }, style = MaterialTheme.typography.bodyLarge)
-    }
-}
-
-@Composable
-private fun FailedMessageNotice(onRetry: () -> Unit, onDiscard: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
-        Text(
-            text = stringResource(R.string.message_not_sent),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.error,
-        )
-        TextButton(onClick = onRetry) { Text(stringResource(R.string.message_retry)) }
-        TextButton(onClick = onDiscard) { Text(stringResource(R.string.message_discard)) }
     }
 }
 

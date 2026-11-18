@@ -95,11 +95,20 @@ internal class ConversationViewModel @Inject constructor(
         if (draft.isNotBlank()) ownTyping.tryEmit(Unit)
     }
 
-    fun onSendClicked() {
+    fun onSendClicked(replyToId: String? = null) {
         val state = localState.value
         if (state.draft.isBlank() && state.attachments.isEmpty()) return
         viewModelScope.launch {
-            when (val result = messageRepository.send(conversationId, state.draft, state.attachments.map { it.uri })) {
+            when (
+                val result = messageRepository.send(
+                    conversationId,
+                    state.draft,
+                    state.attachments.map {
+                        it.uri
+                    },
+                    replyToId,
+                )
+            ) {
                 SendResult.Queued -> localState.update { it.copy(draft = "", attachments = emptyList()) }
                 is SendResult.Rejected -> localState.update { it.copy(error = result.reason.toError()) }
             }
