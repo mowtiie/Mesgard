@@ -63,6 +63,20 @@ class ServerSetupViewModelTest {
     }
 
     @Test
+    fun `shows what went wrong when the saved server failed the check at start`() {
+        stored = ServerConfig("https://old.example", "old-key")
+        val viewModel = viewModel()
+
+        viewModel.onStartupProblem(ServerSetupError.KEY_REJECTED)
+
+        val state = viewModel.uiState.value
+        assertEquals(ServerSetupError.KEY_REJECTED, state.error)
+        assertTrue(state.hasStartupProblem)
+        assertEquals("https://old.example", state.address)
+        assertTrue(state.canCancel)
+    }
+
+    @Test
     fun `saves a server that answers and restarts the app`() = runTest {
         coEvery { checker.check(any()) } returns ServerCheckResult.Reachable
         val viewModel = viewModel().apply { fill() }

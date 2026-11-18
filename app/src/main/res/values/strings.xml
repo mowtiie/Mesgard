@@ -13,6 +13,7 @@
     <string name="server_card_change">Change</string>
     <string name="server_setup_title">Connect to your organization</string>
     <string name="server_setup_help">Enter the server address and the access key from your administrator.</string>
+    <string name="server_setup_help_problem">The saved server did not work. Check the details below, or enter a different server.</string>
     <string name="server_setup_link_warning">This setup came from a link. Continue only if the address below is the one your organization gave you.</string>
     <string name="server_setup_address_label">Server address</string>
     <string name="server_setup_address_hint">For example chat.example.org</string>

@@ -42,6 +42,11 @@ internal class ServerSetupViewModel @Inject constructor(
         it.copy(address = prefill.address, accessKey = prefill.accessKey, isFromLink = true, error = null)
     }
 
+    /** The saved server failed the check at start, so the form shows what went wrong. */
+    fun onStartupProblem(problem: ServerSetupError) = mutableUiState.update {
+        it.copy(error = problem, hasStartupProblem = true)
+    }
+
     fun onAddressChanged(address: String) = mutableUiState.update { it.copy(address = address, error = null) }
 
     fun onAccessKeyChanged(accessKey: String) = mutableUiState.update { it.copy(accessKey = accessKey, error = null) }

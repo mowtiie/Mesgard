@@ -7,7 +7,9 @@ import android.view.WindowManager
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,8 +25,10 @@ import com.mowtiie.mesgard.domain.lock.AppLock
 import com.mowtiie.mesgard.domain.repository.DeviceSettingsRepository
 import com.mowtiie.mesgard.domain.server.ServerConfigStore
 import com.mowtiie.mesgard.ui.MesgardApp
+import com.mowtiie.mesgard.ui.server.ServerSetupError
 import com.mowtiie.mesgard.ui.server.ServerSetupPrefill
 import com.mowtiie.mesgard.ui.server.ServerSetupRoute
+import com.mowtiie.mesgard.ui.server.ServerStartupViewModel
 import com.mowtiie.mesgard.ui.server.parseSetupLink
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 import com.mowtiie.mesgard.ui.theme.isDark
@@ -49,6 +53,8 @@ class MainActivity : FragmentActivity() {
     @Inject
     internal lateinit var serverConfigStore: ServerConfigStore
 
+    private val serverStartup: ServerStartupViewModel by viewModels()
+
     private var conversationToOpen by mutableStateOf<String?>(null)
     private var setupPrefill by mutableStateOf<ServerSetupPrefill?>(null)
     private var isChangingServer by mutableStateOf(false)
@@ -61,21 +67,14 @@ class MainActivity : FragmentActivity() {
         setContent {
             val settings by deviceSettings.settings.collectAsStateWithLifecycle()
             val darkTheme = settings.themeMode.isDark(isSystemInDarkTheme())
-            DisposableEffect(darkTheme) {
-                enableEdgeToEdge(
-                    statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme },
-                    navigationBarStyle = SystemBarStyle.auto(LIGHT_SCRIM, DARK_SCRIM) { darkTheme },
-                )
-                onDispose {}
-            }
+            EdgeToEdgeEffect(darkTheme)
+            val startupProblem by serverStartup.problem.collectAsStateWithLifecycle()
             MesgardTheme(darkTheme = darkTheme, contrast = settings.contrast, dynamicColor = settings.dynamicColor) {
-                if (serverConfigStore.current == null || isChangingServer || setupPrefill != null) {
+                if (needsServerSetup(startupProblem)) {
                     ServerSetupRoute(
                         prefill = setupPrefill,
-                        onFinished = {
-                            isChangingServer = false
-                            setupPrefill = null
-                        },
+                        startupProblem = startupProblem,
+                        onFinished = ::onServerSetupFinished,
                     )
                 } else {
                     MesgardApp(
@@ -91,6 +90,26 @@ class MainActivity : FragmentActivity() {
                 deviceSettings.settings.collect { applyScreenPrivacy(it.screenPrivacyEnabled) }
             }
         }
+    }
+
+    @Composable
+    private fun EdgeToEdgeEffect(darkTheme: Boolean) {
+        DisposableEffect(darkTheme) {
+            enableEdgeToEdge(
+                statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme },
+                navigationBarStyle = SystemBarStyle.auto(LIGHT_SCRIM, DARK_SCRIM) { darkTheme },
+            )
+            onDispose {}
+        }
+    }
+
+    private fun needsServerSetup(startupProblem: ServerSetupError?): Boolean =
+        serverConfigStore.current == null || isChangingServer || setupPrefill != null || startupProblem != null
+
+    private fun onServerSetupFinished() {
+        isChangingServer = false
+        setupPrefill = null
+        serverStartup.onProblemHandled()
     }
 
     override fun onNewIntent(intent: Intent) {

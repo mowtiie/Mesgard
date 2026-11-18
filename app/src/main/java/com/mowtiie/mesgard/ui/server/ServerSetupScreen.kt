@@ -45,12 +45,14 @@ private const val ACCESS_KEY_MAX_LINES = 4
 @Composable
 internal fun ServerSetupRoute(
     prefill: ServerSetupPrefill?,
+    startupProblem: ServerSetupError?,
     onFinished: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ServerSetupViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(prefill) { prefill?.let(viewModel::onPrefill) }
+    LaunchedEffect(startupProblem) { startupProblem?.let(viewModel::onStartupProblem) }
     LaunchedEffect(uiState.isFinished) {
         if (uiState.isFinished) {
             viewModel.onFinishedHandled()
@@ -77,7 +79,7 @@ internal fun ServerSetupScreen(
     modifier: Modifier = Modifier,
 ) {
     CenteredForm(modifier = modifier) {
-        SetupHeader(uiState.isFromLink)
+        SetupHeader(uiState)
         AddressField(uiState, onAddressChanged)
         AccessKeyField(uiState, onAccessKeyChanged, onConnectClicked)
         if (uiState.error == ServerSetupError.SIGN_OUT_FIRST) SignOutFirstNotice()
@@ -91,14 +93,14 @@ internal fun ServerSetupScreen(
 }
 
 @Composable
-private fun SetupHeader(isFromLink: Boolean) {
+private fun SetupHeader(uiState: ServerSetupUiState) {
     Column(
         verticalArrangement = Arrangement.spacedBy(FieldSpacing / 2),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AuthHeader(R.string.server_setup_title)
         Text(
-            text = stringResource(if (isFromLink) R.string.server_setup_link_warning else R.string.server_setup_help),
+            text = stringResource(uiState.helpResource()),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -176,20 +178,6 @@ private fun ConnectButton(uiState: ServerSetupUiState, onClick: () -> Unit) {
             Text(stringResource(R.string.server_setup_connect))
         }
     }
-}
-
-@StringRes
-internal fun ServerSetupError.messageResource(): Int = when (this) {
-    ServerSetupError.ADDRESS_EMPTY -> R.string.server_setup_error_address_empty
-    ServerSetupError.ADDRESS_INVALID -> R.string.server_setup_error_address_invalid
-    ServerSetupError.ADDRESS_NOT_SECURE -> R.string.server_setup_error_address_not_secure
-    ServerSetupError.KEY_EMPTY -> R.string.server_setup_error_key_empty
-    ServerSetupError.KEY_MALFORMED -> R.string.server_setup_error_key_malformed
-    ServerSetupError.KEY_SECRET -> R.string.server_setup_error_key_secret
-    ServerSetupError.SIGN_OUT_FIRST -> R.string.server_setup_error_sign_out_first
-    ServerSetupError.UNREACHABLE -> R.string.server_setup_error_unreachable
-    ServerSetupError.KEY_REJECTED -> R.string.server_setup_error_key_rejected
-    ServerSetupError.NOT_A_SERVER -> R.string.server_setup_error_not_a_server
 }
 
 @Preview(showBackground = true)

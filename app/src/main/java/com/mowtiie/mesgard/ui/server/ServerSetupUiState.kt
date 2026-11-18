@@ -1,6 +1,8 @@
 package com.mowtiie.mesgard.ui.server
 
 import android.net.Uri
+import androidx.annotation.StringRes
+import com.mowtiie.mesgard.R
 
 internal enum class ServerSetupError {
     ADDRESS_EMPTY,
@@ -21,6 +23,7 @@ internal data class ServerSetupUiState(
     val canCancel: Boolean = false,
     val isChecking: Boolean = false,
     val isFromLink: Boolean = false,
+    val hasStartupProblem: Boolean = false,
     val isFinished: Boolean = false,
     val error: ServerSetupError? = null,
 ) {
@@ -58,4 +61,25 @@ internal fun parseSetupLink(uri: Uri?): ServerSetupPrefill? {
     val address = uri.getQueryParameter("url")
     val accessKey = uri.getQueryParameter("key")
     return if (address.isNullOrBlank() || accessKey.isNullOrBlank()) null else ServerSetupPrefill(address, accessKey)
+}
+
+@StringRes
+internal fun ServerSetupUiState.helpResource(): Int = when {
+    hasStartupProblem -> R.string.server_setup_help_problem
+    isFromLink -> R.string.server_setup_link_warning
+    else -> R.string.server_setup_help
+}
+
+@StringRes
+internal fun ServerSetupError.messageResource(): Int = when (this) {
+    ServerSetupError.ADDRESS_EMPTY -> R.string.server_setup_error_address_empty
+    ServerSetupError.ADDRESS_INVALID -> R.string.server_setup_error_address_invalid
+    ServerSetupError.ADDRESS_NOT_SECURE -> R.string.server_setup_error_address_not_secure
+    ServerSetupError.KEY_EMPTY -> R.string.server_setup_error_key_empty
+    ServerSetupError.KEY_MALFORMED -> R.string.server_setup_error_key_malformed
+    ServerSetupError.KEY_SECRET -> R.string.server_setup_error_key_secret
+    ServerSetupError.SIGN_OUT_FIRST -> R.string.server_setup_error_sign_out_first
+    ServerSetupError.UNREACHABLE -> R.string.server_setup_error_unreachable
+    ServerSetupError.KEY_REJECTED -> R.string.server_setup_error_key_rejected
+    ServerSetupError.NOT_A_SERVER -> R.string.server_setup_error_not_a_server
 }
