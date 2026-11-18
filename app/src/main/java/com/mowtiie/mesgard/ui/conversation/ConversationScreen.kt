@@ -63,6 +63,7 @@ internal fun ConversationScreenRoute(
     downloadsViewModel: AttachmentDownloadsViewModel = hiltViewModel(),
     failedMessagesViewModel: FailedMessagesViewModel = hiltViewModel(),
     actionsViewModel: ConversationActionsViewModel = hiltViewModel(),
+    editViewModel: MessageEditViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
@@ -78,8 +79,15 @@ internal fun ConversationScreenRoute(
         )
     }
     messageActions.readers?.let { MessageInfoSheet(it, onDismiss = actionsViewModel::onInfoDismissed) }
+    val edit by editViewModel.uiState.collectAsStateWithLifecycle()
     ConversationScreen(
-        uiState = uiState.copy(error = uiState.error ?: messageActions.error),
+        uiState = uiState.copy(error = uiState.error ?: messageActions.error ?: edit.error),
+        edit = edit,
+        editActions = EditActions(
+            onTextChanged = editViewModel::onTextChanged,
+            onCancel = editViewModel::onEditCancelled,
+            onSave = editViewModel::onSaveClicked,
+        ),
         downloads = downloads,
         onBack = onBack,
         onDraftChanged = viewModel::onDraftChanged,
@@ -89,6 +97,7 @@ internal fun ConversationScreenRoute(
             onDiscard = failedMessagesViewModel::onDiscardClicked,
             onDelete = actionsViewModel::onDeleteRequested,
             onInfo = actionsViewModel::onInfoRequested,
+            onEdit = editViewModel::onEditRequested,
             onAttachmentClick = downloadsViewModel::onAttachmentClicked,
             onImageShown = downloadsViewModel::onImageShown,
             onRetryDownload = downloadsViewModel::onRetryDownload,
@@ -102,6 +111,7 @@ internal fun ConversationScreenRoute(
         onErrorShown = {
             viewModel.onErrorShown()
             actionsViewModel.onErrorShown()
+            editViewModel.onErrorShown()
         },
         modifier = modifier,
     )
@@ -110,6 +120,8 @@ internal fun ConversationScreenRoute(
 @Composable
 internal fun ConversationScreen(
     uiState: ConversationUiState,
+    edit: MessageEditUiState,
+    editActions: EditActions,
     downloads: AttachmentDownloadsUiState,
     onBack: () -> Unit,
     onDraftChanged: (String) -> Unit,
@@ -183,7 +195,9 @@ internal fun ConversationScreen(
                 onLoadOlder = onLoadOlder,
                 modifier = Modifier.weight(1f),
             )
-            if (uiState.canPost) {
+            if (edit.isEditing) {
+                EditComposer(edit, editActions)
+            } else if (uiState.canPost) {
                 MessageComposer(
                     draft = uiState.draft,
                     attachments = uiState.attachments,

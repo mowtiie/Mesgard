@@ -55,6 +55,32 @@ class OfflineFirstMessageActionsRepositoryTest {
     )
 
     @Test
+    fun `edit stores the message the server answers with and trims the text`() = runTest {
+        val dao = databaseRule.database.messageDao()
+        dao.upsert(messageEntity("mine", CONVERSATION_ID, 1_000L))
+        coEvery { remoteSource.edit("mine", "New text") } returns
+            messageDto("mine", CONVERSATION_ID).copy(body = "New text")
+
+        val result = repository.edit("mine", "  New text  ")
+
+        assertEquals(RefreshResult.Success, result)
+        assertEquals("New text", dao.findById("mine")?.body)
+    }
+
+    @Test
+    fun `edit keeps the old text when the server cannot be reached`() = runTest {
+        val dao = databaseRule.database.messageDao()
+        dao.upsert(messageEntity("mine", CONVERSATION_ID, 1_000L))
+        val before = dao.findById("mine")?.body
+        coEvery { remoteSource.edit(any(), any()) } throws IOException("offline")
+
+        val result = repository.edit("mine", "New text")
+
+        assertEquals(RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE), result)
+        assertEquals(before, dao.findById("mine")?.body)
+    }
+
+    @Test
     fun `readers lists who read the message with the time`() = runTest {
         coEvery { remoteSource.fetchReaders("mine", MESSAGE_READERS_LIMIT) } returns listOf(
             ReceiptDto("u1", "2026-11-18T08:00:00+00:00", ReaderProfileDto("Ana")),

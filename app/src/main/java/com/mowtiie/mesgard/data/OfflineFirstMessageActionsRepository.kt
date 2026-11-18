@@ -33,6 +33,10 @@ internal class OfflineFirstMessageActionsRepository @Inject constructor(
             is RemoteOutcome.Failure -> ReadersResult.Failure(outcome.error)
         }
 
+    override suspend fun edit(messageId: String, body: String): RefreshResult = attemptRemote(TAG) {
+        database.storeMessages(listOf(remoteSource.edit(messageId, body.trim())))
+    }.toRefreshResult()
+
     override suspend fun delete(messageId: String): RefreshResult {
         val localPaths = database.attachmentDao().findByMessage(messageId).mapNotNull { it.localPath }
         return attemptRemote(TAG) {

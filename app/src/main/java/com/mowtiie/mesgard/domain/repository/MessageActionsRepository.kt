@@ -10,6 +10,9 @@ internal interface MessageActionsRepository {
     /** Who has read the message, for its sender. */
     suspend fun readers(messageId: String): ReadersResult
 
+    /** Changes the text of a message the person sent. The earlier text is kept for administrators. */
+    suspend fun edit(messageId: String, body: String): RefreshResult
+
     /** Deletes the message for everyone. Their devices keep a note that it was deleted. */
     suspend fun delete(messageId: String): RefreshResult
 }

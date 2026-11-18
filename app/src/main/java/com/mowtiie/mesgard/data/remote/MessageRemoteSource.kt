@@ -33,6 +33,9 @@ internal interface MessageRemoteSource {
     /** The people who have read the message, the latest first. Only its sender can see them. */
     suspend fun fetchReaders(messageId: String, limit: Int): List<ReceiptDto>
 
+    /** Changes the text of the message. The server stamps the time and archives the earlier text. */
+    suspend fun edit(messageId: String, body: String): MessageDto
+
     /** Soft deletes the message. The server blanks the text and archives the original for administrators. */
     suspend fun delete(messageId: String): MessageDto
 
@@ -77,6 +80,15 @@ internal class SupabaseMessageRemoteSource @Inject constructor(private val clien
             order("read_at", Order.DESCENDING)
             limit(limit.toLong())
         }.decodeList<ReceiptDto>()
+
+    override suspend fun edit(messageId: String, body: String): MessageDto {
+        val rows = client.from(MESSAGES_TABLE).update({ set("body", body) }) {
+            select(MESSAGE_COLUMNS)
+            filter { eq("id", messageId) }
+        }.decodeList<MessageDto>()
+        require(rows.isNotEmpty()) { "No message was changed" }
+        return rows.first()
+    }
 
     override suspend fun delete(messageId: String): MessageDto {
         val rows = client.from(MESSAGES_TABLE).update({ set("deleted_at", "now") }) {
