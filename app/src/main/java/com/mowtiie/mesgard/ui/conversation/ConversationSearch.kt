@@ -19,6 +19,7 @@ internal data class ConversationSearch(
     val onHitSelected: (SearchHit) -> Unit = {},
     val onJumpHandled: () -> Unit = {},
     val onClosed: () -> Unit = {},
+    val onJumpTo: (String) -> Unit = {},
 )
 
 /** The actions of the conversation bar: the search button and the menu with mute. */

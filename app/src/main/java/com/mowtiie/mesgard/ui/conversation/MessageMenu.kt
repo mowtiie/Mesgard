@@ -29,6 +29,7 @@ internal fun MessageMenu(
                 },
             )
         }
+        if (canReply && actions.canPin) PinMenuItem(message.id, message.id in actions.pinnedIds, actions, onDismiss)
         if (canCopy) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.message_copy)) },

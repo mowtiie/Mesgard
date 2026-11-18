@@ -149,6 +149,8 @@
     <string name="audit_member_role_changed">%1$s changed the role of %2$s from %3$s to %4$s</string>
     <string name="audit_password_reset">%1$s reset the password of %2$s</string>
     <string name="audit_member_erased">%1$s erased the personal data of %2$s</string>
+    <string name="audit_message_pinned">%1$s pinned a message</string>
+    <string name="audit_message_unpinned">%1$s unpinned a message</string>
     <string name="audit_mfa_reset">%1$s reset the two-step verification of %2$s</string>
     <string name="audit_login_disabled">%1$s disabled the login of %2$s</string>
     <string name="audit_group_created">%1$s created the group %2$s</string>
@@ -320,6 +322,12 @@
     <string name="message_edited">Edited</string>
     <string name="message_deleted">This message was deleted</string>
     <string name="message_delete">Delete</string>
+    <string name="message_pin">Pin</string>
+    <string name="message_unpin">Unpin</string>
+    <string name="pinned_message_title">Pinned message</string>
+    <string name="pinned_message_count">Pinned message %1$d of %2$d</string>
+    <string name="pinned_message_show">Show the pinned message</string>
+    <string name="pin_error_too_many">A conversation can have at most 5 pinned messages. Unpin one first.</string>
     <string name="mention_choose">Mention %1$s</string>
     <string name="message_reply">Reply</string>
     <string name="message_replying_to">Replying to %1$s</string>

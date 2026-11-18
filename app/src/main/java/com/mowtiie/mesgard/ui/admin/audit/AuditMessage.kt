@@ -44,6 +44,8 @@ private val Templates = mapOf(
         listOf(Slot.ACTOR, Slot.PERSON, Slot.FROM_ROLE, Slot.TO_ROLE),
     ),
     "announcements.enabled" to Template(R.string.audit_announcements_enabled, listOf(Slot.ACTOR)),
+    "message.pinned" to Template(R.string.audit_message_pinned, listOf(Slot.ACTOR)),
+    "message.unpinned" to Template(R.string.audit_message_unpinned, listOf(Slot.ACTOR)),
 )
 
 /**

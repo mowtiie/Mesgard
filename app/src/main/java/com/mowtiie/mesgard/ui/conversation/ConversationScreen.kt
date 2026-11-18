@@ -46,6 +46,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.MentionCandidate
+import com.mowtiie.mesgard.domain.model.PinnedMessage
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
@@ -66,11 +67,13 @@ internal fun ConversationScreenRoute(
     replyViewModel: ReplyViewModel = hiltViewModel(),
     mentionViewModel: MentionViewModel = hiltViewModel(),
     searchViewModel: ConversationSearchViewModel = hiltViewModel(),
+    pinsViewModel: PinsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
     LifecycleResumeEffect(viewModel) {
         viewModel.onVisibilityChanged(true)
+        pinsViewModel.onRefresh()
         onPauseOrDispose { viewModel.onVisibilityChanged(false) }
     }
     val messageActions by actionsViewModel.uiState.collectAsStateWithLifecycle()
@@ -85,8 +88,10 @@ internal fun ConversationScreenRoute(
     val reply by replyViewModel.target.collectAsStateWithLifecycle()
     val mentions by mentionViewModel.uiState.collectAsStateWithLifecycle()
     val searchState by searchViewModel.uiState.collectAsStateWithLifecycle()
+    val pins by pinsViewModel.uiState.collectAsStateWithLifecycle()
     ConversationScreen(
-        uiState = uiState.copy(error = uiState.error ?: messageActions.error ?: edit.error),
+        uiState = uiState.copy(error = uiState.error ?: messageActions.error ?: edit.error ?: pins.error),
+        pins = pins.pins,
         edit = edit,
         reply = reply,
         onReplyDropped = replyViewModel::onReplyDropped,
@@ -115,6 +120,7 @@ internal fun ConversationScreenRoute(
             onHitSelected = searchViewModel::onHitSelected,
             onJumpHandled = searchViewModel::onJumpHandled,
             onClosed = searchViewModel::onClosed,
+            onJumpTo = searchViewModel::onJumpRequested,
         ),
         actions = MessageActions(
             onRetry = failedMessagesViewModel::onRetryClicked,
@@ -123,6 +129,10 @@ internal fun ConversationScreenRoute(
             onInfo = actionsViewModel::onInfoRequested,
             onEdit = editViewModel::onEditRequested,
             onReply = replyViewModel::onReplyRequested,
+            onPin = pinsViewModel::onPin,
+            onUnpin = pinsViewModel::onUnpin,
+            canPin = pins.canPin,
+            pinnedIds = pins.pinnedIds,
             onAttachmentClick = downloadsViewModel::onAttachmentClicked,
             onImageShown = downloadsViewModel::onImageShown,
             onRetryDownload = downloadsViewModel::onRetryDownload,
@@ -137,6 +147,7 @@ internal fun ConversationScreenRoute(
             viewModel.onErrorShown()
             actionsViewModel.onErrorShown()
             editViewModel.onErrorShown()
+            pinsViewModel.onErrorShown()
         },
         modifier = modifier,
     )
@@ -152,6 +163,7 @@ internal fun ConversationScreen(
     mentions: MentionUiState,
     onMentionSelected: (MentionCandidate) -> Unit,
     search: ConversationSearch,
+    pins: List<PinnedMessage>,
     downloads: AttachmentDownloadsUiState,
     onBack: () -> Unit,
     onDraftChanged: (String) -> Unit,
@@ -238,6 +250,7 @@ internal fun ConversationScreen(
                 )
                 return@Column
             }
+            PinnedMessageBar(pins, onJump = search.onJumpTo)
             MessageList(
                 uiState = uiState,
                 downloads = downloads,
@@ -396,6 +409,7 @@ private fun LazyListState.isNearEnd(): Boolean {
 private fun ConversationError.messageResource(): Int = when (this) {
     ConversationError.NETWORK_UNAVAILABLE -> R.string.refresh_error_network_unavailable
     ConversationError.UNKNOWN -> R.string.refresh_error_unknown
+    ConversationError.TOO_MANY_PINS -> R.string.pin_error_too_many
     ConversationError.MESSAGE_TOO_LONG -> R.string.conversation_error_message_too_long
     ConversationError.NOT_SIGNED_IN -> R.string.conversation_error_not_signed_in
     ConversationError.CONVERSATION_UNAVAILABLE -> R.string.conversation_error_unavailable

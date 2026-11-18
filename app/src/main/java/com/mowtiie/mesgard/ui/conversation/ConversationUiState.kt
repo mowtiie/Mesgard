@@ -16,6 +16,7 @@ internal enum class ConversationError {
     ATTACHMENT_UNREADABLE,
     DOWNLOAD_NETWORK_UNAVAILABLE,
     DOWNLOAD_UNKNOWN,
+    TOO_MANY_PINS,
 }
 
 internal data class ConversationUiState(

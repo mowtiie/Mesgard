@@ -76,6 +76,9 @@ internal class ConversationSearchViewModel @Inject constructor(
 
     fun onJumpHandled() = mutableUiState.update { it.copy(jumpTo = null) }
 
+    /** Takes the list to a message that is not a search result, such as a pinned one. */
+    fun onJumpRequested(messageId: String) = mutableUiState.update { it.copy(jumpTo = messageId) }
+
     /** Leaving the search forgets it, but not a jump that is still on its way to the message. */
     fun onClosed() {
         search?.cancel()

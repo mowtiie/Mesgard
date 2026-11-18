@@ -34,6 +34,12 @@ class AuditMessageTest {
     }
 
     @Test
+    fun `describes pinning and unpinning a message`() {
+        assertEquals(R.string.audit_message_pinned, describe("message.pinned", "m1").resource)
+        assertEquals(listOf("Admin Cruz"), describe("message.unpinned", "m1").arguments)
+    }
+
+    @Test
     fun `uses a placeholder for someone who is no longer known`() {
         val message = describe("member.removed", target = "gone")
 
