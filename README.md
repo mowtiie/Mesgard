@@ -57,6 +57,8 @@ A free, open-source messaging app for any organization: a company, a school, a c
 
 Never paste a secret or `service_role` key into the app. It accepts only the public key.
 
+**Want phones to connect without typing anything?** Build the app yourself with your server built in: put `supabase.url` and `supabase.anonKey` (the public key) in `local.properties`, or set `SUPABASE_URL` and `SUPABASE_ANON_KEY`, then build. The app opens straight to the Sign in screen. If the server cannot be used (wrong key, not a Supabase server, or no answer while the phone is online), it opens the setup screen instead and says what went wrong.
+
 ### From GitHub, without installing anything
 
 Not run on GitHub yet, so treat it as untested.
@@ -188,7 +190,7 @@ node --test scripts/server/                    # server tool tests
 ```
 
 - **Local accounts:** from `supabase/seed.sql`, for example `admin@rnhs.test` with password `password123`. Never seed or reset a real project.
-- **Point a build at a server:** set `supabase.url` and `supabase.anonKey` in `local.properties`. Debug builds allow plain `http` for the local stack.
+- **Point a build at a server:** set `supabase.url` and `supabase.anonKey` in `local.properties` (or the `SUPABASE_URL` and `SUPABASE_ANON_KEY` environment variables). While signed out, the app checks that server at start and shows the setup screen with the reason if it fails. Debug builds allow plain `http` for the local stack. The public GitHub release has no server built in.
 - **New server feature the app needs:** raise `api_level` in `server_info()` and `REQUIRED_API_LEVEL` in the same change. Migrations are only added, never edited.
 - **New table or function:** it needs Row Level Security, the "Require two-step verification" policy and `private.require_mfa()`. The database tests fail if one is missing.
 
