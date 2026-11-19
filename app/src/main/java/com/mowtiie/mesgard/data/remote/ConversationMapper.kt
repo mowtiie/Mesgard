@@ -14,6 +14,10 @@ internal fun ConversationSummaryDto.toEntity(isMuted: Boolean = false) = Convers
     unreadCount = unreadCount,
     canPost = canPost,
     isMuted = isMuted,
+    pinnedAtEpochMillis = pinnedAt?.let(::parseEpochMillis),
+    archivedAtEpochMillis = archivedAt?.let(::parseEpochMillis),
+    markedUnread = markedUnread,
+    hiddenBeforeEpochMillis = hiddenBefore?.let(::parseEpochMillis),
 )
 
 internal fun ConversationSummaryDto.toLastMessageEntity(): MessageEntity? {

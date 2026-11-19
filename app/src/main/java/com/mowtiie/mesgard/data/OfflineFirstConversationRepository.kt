@@ -31,6 +31,9 @@ internal class OfflineFirstConversationRepository @Inject constructor(
     override fun observeConversations(): Flow<List<ConversationSummary>> =
         conversationDao.observeList(CONVERSATION_PAGE_SIZE).map { items -> items.map(::toSummary) }
 
+    override fun observeArchived(): Flow<List<ConversationSummary>> =
+        conversationDao.observeArchived(CONVERSATION_PAGE_SIZE).map { items -> items.map(::toSummary) }
+
     override fun observeAnnouncements(): Flow<ConversationSummary?> =
         conversationDao.observeAnnouncements().map { item -> item?.let(::toSummary) }
 
@@ -73,5 +76,8 @@ internal class OfflineFirstConversationRepository @Inject constructor(
         unreadCount = item.unreadCount,
         canPost = item.canPost,
         isMuted = item.isMuted,
+        isPinned = item.pinnedAtEpochMillis != null,
+        isArchived = item.archivedAtEpochMillis != null,
+        isMarkedUnread = item.markedUnread,
     )
 }

@@ -45,6 +45,7 @@ internal interface MessageDao {
         LEFT JOIN messages AS r ON r.id = m.reply_to_id
         LEFT JOIN profiles AS rp ON rp.id = r.sender_id
         WHERE m.conversation_id = :conversationId
+            AND m.created_at > COALESCE((SELECT hidden_before FROM conversations WHERE id = m.conversation_id), -1)
         ORDER BY m.created_at DESC, m.id DESC
         LIMIT :limit
         """,

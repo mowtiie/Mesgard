@@ -9,4 +9,7 @@ internal data class ConversationSummary(
     val unreadCount: Int,
     val canPost: Boolean,
     val isMuted: Boolean = false,
+    val isPinned: Boolean = false,
+    val isArchived: Boolean = false,
+    val isMarkedUnread: Boolean = false,
 )

@@ -19,6 +19,7 @@ class ConversationDaoTest {
     val databaseRule = InMemoryDatabaseRule()
 
     private val conversationDao get() = databaseRule.database.conversationDao()
+    private val preferencesDao get() = databaseRule.database.conversationPreferencesDao()
     private val messageDao get() = databaseRule.database.messageDao()
 
     @Test
@@ -60,6 +61,94 @@ class ConversationDaoTest {
             assertEquals("announcements", awaitItem()?.id)
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `lists pinned conversations first, then the rest by activity`() = runTest {
+        conversationDao.upsertAll(
+            listOf(
+                conversationEntity("quiet", pinnedAt = OLDER),
+                conversationEntity("active"),
+                conversationEntity("pinned-later", pinnedAt = NEWER),
+            ),
+        )
+        messageDao.upsertAll(listOf(messageEntity(id = "m1", conversationId = "active", createdAt = NEWER)))
+
+        conversationDao.observeList(PAGE_SIZE).test {
+            assertEquals(listOf("pinned-later", "quiet", "active"), awaitItem().map { it.id })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `archived conversations leave the list and have their own`() = runTest {
+        conversationDao.upsertAll(listOf(conversationEntity("open"), conversationEntity("shelved", archivedAt = OLDER)))
+
+        conversationDao.observeList(PAGE_SIZE).test {
+            assertEquals(listOf("open"), awaitItem().map { it.id })
+            cancelAndIgnoreRemainingEvents()
+        }
+        conversationDao.observeArchived(PAGE_SIZE).test {
+            assertEquals(listOf("shelved"), awaitItem().map { it.id })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a conversation deleted for me stays away until a newer message arrives`() = runTest {
+        conversationDao.upsertAll(listOf(conversationEntity("chat")))
+        messageDao.upsertAll(listOf(messageEntity(id = "m1", conversationId = "chat", createdAt = OLDER)))
+        preferencesDao.hide("chat", hiddenBefore = OLDER)
+
+        conversationDao.observeList(PAGE_SIZE).test {
+            assertEquals(emptyList<String>(), awaitItem().map { it.id })
+            messageDao.upsertAll(listOf(messageEntity(id = "m2", conversationId = "chat", createdAt = NEWER)))
+            assertEquals(listOf("chat"), awaitItem().map { it.id })
+            cancelAndIgnoreRemainingEvents()
+        }
+        messageDao.observeTimeline("chat", PAGE_SIZE).test {
+            assertEquals(listOf("m2"), awaitItem().map { it.id })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `hiding a conversation also unpins, unarchives and clears what was unread`() = runTest {
+        conversationDao.upsertAll(
+            listOf(conversationEntity("chat", pinnedAt = OLDER, archivedAt = OLDER, unreadCount = 3)),
+        )
+
+        preferencesDao.hide("chat", hiddenBefore = NEWER)
+
+        val row = preferencesDao.find(listOf("chat")).single()
+        assertNull(row.pinnedAt)
+        assertNull(row.archivedAt)
+        assertEquals(0, row.unreadCount)
+        assertEquals(NEWER, row.hiddenBefore)
+    }
+
+    @Test
+    fun `restoring puts the earlier preferences back`() = runTest {
+        conversationDao.upsertAll(listOf(conversationEntity("chat", pinnedAt = OLDER, unreadCount = 2)))
+        val before = preferencesDao.find(listOf("chat")).single()
+        preferencesDao.hide("chat", hiddenBefore = NEWER)
+
+        preferencesDao.restore(before)
+
+        assertEquals(before, preferencesDao.find(listOf("chat")).single())
+    }
+
+    @Test
+    fun `counts the pinned conversations outside a selection`() = runTest {
+        conversationDao.upsertAll(
+            listOf(
+                conversationEntity("a", pinnedAt = OLDER),
+                conversationEntity("b", pinnedAt = OLDER),
+                conversationEntity("c"),
+            ),
+        )
+
+        assertEquals(1, preferencesDao.countPinnedExcept(listOf("a", "c")))
     }
 
     @Test

@@ -16,4 +16,8 @@ internal data class ConversationSummaryDto(
     @SerialName("last_message_sender_id") val lastMessageSenderId: String? = null,
     @SerialName("last_message_body") val lastMessageBody: String? = null,
     @SerialName("last_message_created_at") val lastMessageCreatedAt: String? = null,
+    @SerialName("pinned_at") val pinnedAt: String? = null,
+    @SerialName("archived_at") val archivedAt: String? = null,
+    @SerialName("marked_unread") val markedUnread: Boolean = false,
+    @SerialName("hidden_before") val hiddenBefore: String? = null,
 )

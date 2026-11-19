@@ -13,6 +13,9 @@ internal data class ConversationListItem(
     val unreadCount: Int,
     val canPost: Boolean,
     val isMuted: Boolean,
+    val pinnedAtEpochMillis: Long?,
+    val archivedAtEpochMillis: Long?,
+    val markedUnread: Boolean,
     val lastMessageBody: String?,
     val activityAtEpochMillis: Long,
 )
@@ -20,6 +23,8 @@ internal data class ConversationListItem(
 private const val CONVERSATION_ITEM_SELECT = """
     SELECT c.id AS id, c.type AS type, c.title AS title, c.unread_count AS unreadCount,
         c.can_post AS canPost, c.is_muted AS isMuted,
+        c.pinned_at AS pinnedAtEpochMillis, c.archived_at AS archivedAtEpochMillis,
+        c.marked_unread AS markedUnread,
         m.body AS lastMessageBody, COALESCE(m.created_at, c.created_at) AS activityAtEpochMillis
     FROM conversations AS c
     LEFT JOIN messages AS m ON m.id = (
@@ -32,12 +37,24 @@ internal interface ConversationDao {
     @Query(
         """
         $CONVERSATION_ITEM_SELECT
-        WHERE c.type <> 'ANNOUNCEMENT'
-        ORDER BY activityAtEpochMillis DESC, c.id DESC
+        WHERE c.type <> 'ANNOUNCEMENT' AND c.archived_at IS NULL
+            AND (c.hidden_before IS NULL OR m.created_at > c.hidden_before)
+        ORDER BY (c.pinned_at IS NULL), c.pinned_at DESC, activityAtEpochMillis DESC, c.id DESC
         LIMIT :limit
         """,
     )
     fun observeList(limit: Int): Flow<List<ConversationListItem>>
+
+    @Query(
+        """
+        $CONVERSATION_ITEM_SELECT
+        WHERE c.type <> 'ANNOUNCEMENT' AND c.archived_at IS NOT NULL
+            AND (c.hidden_before IS NULL OR m.created_at > c.hidden_before)
+        ORDER BY activityAtEpochMillis DESC, c.id DESC
+        LIMIT :limit
+        """,
+    )
+    fun observeArchived(limit: Int): Flow<List<ConversationListItem>>
 
     @Query("$CONVERSATION_ITEM_SELECT WHERE c.type = 'ANNOUNCEMENT' ORDER BY c.created_at LIMIT 1")
     fun observeAnnouncements(): Flow<ConversationListItem?>

@@ -15,4 +15,8 @@ internal data class ConversationEntity(
     @ColumnInfo(name = "unread_count") val unreadCount: Int,
     @ColumnInfo(name = "can_post", defaultValue = "1") val canPost: Boolean = true,
     @ColumnInfo(name = "is_muted", defaultValue = "0") val isMuted: Boolean = false,
+    @ColumnInfo(name = "pinned_at") val pinnedAtEpochMillis: Long? = null,
+    @ColumnInfo(name = "archived_at") val archivedAtEpochMillis: Long? = null,
+    @ColumnInfo(name = "marked_unread", defaultValue = "0") val markedUnread: Boolean = false,
+    @ColumnInfo(name = "hidden_before") val hiddenBeforeEpochMillis: Long? = null,
 )

@@ -37,6 +37,9 @@ internal fun conversationEntity(
     title: String? = "Title $id",
     createdAt: Long = 0L,
     unreadCount: Int = 0,
+    pinnedAt: Long? = null,
+    archivedAt: Long? = null,
+    hiddenBefore: Long? = null,
 ) = ConversationEntity(
     id = id,
     orgId = TEST_ORG_ID,
@@ -44,6 +47,9 @@ internal fun conversationEntity(
     title = title,
     createdAtEpochMillis = createdAt,
     unreadCount = unreadCount,
+    pinnedAtEpochMillis = pinnedAt,
+    archivedAtEpochMillis = archivedAt,
+    hiddenBeforeEpochMillis = hiddenBefore,
 )
 
 internal fun summaryDto(

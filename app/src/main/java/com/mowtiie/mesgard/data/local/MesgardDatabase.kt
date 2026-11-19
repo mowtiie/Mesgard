@@ -15,7 +15,7 @@ import androidx.room.RoomDatabase
         AccountMembershipEntity::class,
         AttachmentEntity::class,
     ],
-    version = 12,
+    version = 13,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -28,12 +28,15 @@ import androidx.room.RoomDatabase
         AutoMigration(from = 9, to = 10),
         AutoMigration(from = 10, to = 11),
         AutoMigration(from = 11, to = 12),
+        AutoMigration(from = 12, to = 13),
     ],
 )
 internal abstract class MesgardDatabase : RoomDatabase() {
     abstract fun messageDao(): MessageDao
 
     abstract fun conversationDao(): ConversationDao
+
+    abstract fun conversationPreferencesDao(): ConversationPreferencesDao
 
     abstract fun profileDao(): ProfileDao
 
