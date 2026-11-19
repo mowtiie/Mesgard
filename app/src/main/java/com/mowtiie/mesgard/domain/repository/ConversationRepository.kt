@@ -13,4 +13,10 @@ internal interface ConversationRepository {
     fun observeConversation(conversationId: String): Flow<ConversationSummary?>
 
     suspend fun refresh(): RefreshResult
+
+    /**
+     * Refreshes the list and then the latest messages of the most recent conversations with unread messages, so they
+     * open without a gap after the connection was down.
+     */
+    suspend fun refreshAfterReconnect(): RefreshResult
 }

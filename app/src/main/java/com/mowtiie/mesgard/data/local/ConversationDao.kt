@@ -59,6 +59,16 @@ internal interface ConversationDao {
     @Query("$CONVERSATION_ITEM_SELECT WHERE c.id = :conversationId")
     fun observeById(conversationId: String): Flow<ConversationListItem?>
 
+    @Query(
+        """
+        SELECT c.id FROM conversations AS c
+        WHERE c.unread_count > 0 AND c.archived_at IS NULL
+        ORDER BY (SELECT MAX(created_at) FROM messages WHERE conversation_id = c.id) DESC, c.id DESC
+        LIMIT :limit
+        """,
+    )
+    suspend fun findRecentIdsWithUnread(limit: Int): List<String>
+
     @Query("SELECT org_id FROM conversations WHERE id = :conversationId")
     suspend fun findOrgId(conversationId: String): String?
 

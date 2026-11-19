@@ -57,6 +57,7 @@ class RealtimeMessageSyncTest {
             refreshed.complete(Unit)
             RefreshResult.Success
         }
+        coEvery { refreshAfterReconnect() } returns RefreshResult.Success
     }
     private val authRepository = mockk<AuthRepository> { every { currentUserId } returns CURRENT_USER_ID }
     private val sync by lazy {
@@ -193,7 +194,7 @@ class RealtimeMessageSyncTest {
         source.emit(RealtimeEvent.Connected)
         runCurrent()
 
-        coVerify(exactly = 0) { conversationRepository.refresh() }
+        coVerify(exactly = 0) { conversationRepository.refreshAfterReconnect() }
     }
 
     @Test
@@ -208,7 +209,7 @@ class RealtimeMessageSyncTest {
         runCurrent()
 
         withContext(Dispatchers.Default) { withTimeout(TIMEOUT_MS) { reconnected.await() } }
-        coVerify(exactly = 1) { conversationRepository.refresh() }
+        coVerify(exactly = 1) { conversationRepository.refreshAfterReconnect() }
     }
 
     @Test

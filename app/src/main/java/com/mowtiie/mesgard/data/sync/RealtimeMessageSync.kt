@@ -103,7 +103,7 @@ internal class RealtimeMessageSync @Inject constructor(
         val isReconnection = hasConnected
         hasConnected = true
         if (!isReconnection) return
-        conversationRepository.refresh()
+        conversationRepository.refreshAfterReconnect()
         mutableReconnections.tryEmit(Unit)
     }
 

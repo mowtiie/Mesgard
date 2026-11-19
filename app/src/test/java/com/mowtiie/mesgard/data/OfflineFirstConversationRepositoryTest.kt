@@ -6,10 +6,13 @@ import com.mowtiie.mesgard.data.remote.ConversationRemoteSource
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
+import com.mowtiie.mesgard.domain.repository.MessageRepository
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
 import com.mowtiie.mesgard.testing.conversationEntity
 import com.mowtiie.mesgard.testing.summaryDto
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
@@ -32,8 +35,40 @@ class OfflineFirstConversationRepositoryTest {
         coEvery { remoteSource.fetchMutedConversationIds(any()) } returns emptySet()
     }
 
+    private val messageRepository = mockk<MessageRepository> {
+        coEvery { refresh(any()) } returns RefreshResult.Success
+    }
     private val repository by lazy {
-        OfflineFirstConversationRepository(databaseRule.database, remoteSource, authRepository)
+        OfflineFirstConversationRepository(databaseRule.database, remoteSource, authRepository, messageRepository)
+    }
+
+    @Test
+    fun `after a reconnection the ten newest conversations with unread messages get their latest messages`() = runTest {
+        val summaries = (1..12).map { day ->
+            summaryDto("c$day", lastMessageCreatedAt = "2026-11-%02dT08:00:00+00:00".format(day))
+        }
+        coEvery { remoteSource.fetchSummaries() } returns summaries
+
+        repository.refreshAfterReconnect()
+
+        coVerifyOrder {
+            messageRepository.refresh("c12")
+            messageRepository.refresh("c11")
+        }
+        coVerify(exactly = 10) { messageRepository.refresh(any()) }
+        coVerify(exactly = 0) { messageRepository.refresh("c1") }
+        coVerify(exactly = 0) { messageRepository.refresh("c2") }
+    }
+
+    @Test
+    fun `no conversation is caught up when the list could not be refreshed`() = runTest {
+        databaseRule.database.conversationDao().upsertAll(listOf(conversationEntity("unread", unreadCount = 2)))
+        coEvery { remoteSource.fetchSummaries() } throws IOException("offline")
+
+        val result = repository.refreshAfterReconnect()
+
+        assertEquals(RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE), result)
+        coVerify(exactly = 0) { messageRepository.refresh(any()) }
     }
 
     @Test

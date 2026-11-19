@@ -13,16 +13,19 @@ import com.mowtiie.mesgard.domain.model.ConversationSummary
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
+import com.mowtiie.mesgard.domain.repository.MessageRepository
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 private const val TAG = "ConversationRepository"
+private const val CATCH_UP_LIMIT = 10
 
 internal class OfflineFirstConversationRepository @Inject constructor(
     private val database: MesgardDatabase,
     private val remoteSource: ConversationRemoteSource,
     private val authRepository: AuthRepository,
+    private val messageRepository: MessageRepository,
 ) : ConversationRepository {
     private val conversationDao = database.conversationDao()
     private val messageDao = database.messageDao()
@@ -37,6 +40,14 @@ internal class OfflineFirstConversationRepository @Inject constructor(
         conversationDao.observeById(conversationId).map { item -> item?.let(::toSummary) }
 
     override suspend fun refresh(): RefreshResult = attemptRemote(TAG) { storeSummaries() }.toRefreshResult()
+
+    override suspend fun refreshAfterReconnect(): RefreshResult {
+        val result = refresh()
+        if (result is RefreshResult.Success) {
+            conversationDao.findRecentIdsWithUnread(CATCH_UP_LIMIT).forEach { messageRepository.refresh(it) }
+        }
+        return result
+    }
 
     private suspend fun storeSummaries() {
         val summaries = remoteSource.fetchSummaries()
