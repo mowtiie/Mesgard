@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.mowtiie.mesgard.domain.attachment.MAX_ATTACHMENTS_PER_MESSAGE
-import com.mowtiie.mesgard.domain.model.MessageStatus
 import com.mowtiie.mesgard.domain.model.PageResult
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
@@ -164,8 +163,7 @@ internal class ConversationViewModel @Inject constructor(
     }
 
     private suspend fun markReadWhileVisible() {
-        val newestIncomingId = messageRepository.observeMessages(conversationId, MESSAGE_PAGE_SIZE)
-            .map { messages -> messages.firstOrNull { !it.isOwn && it.status == MessageStatus.SENT }?.id }
+        val newestIncomingId = messageRepository.observeNewestIncomingId(conversationId)
         combine(isVisible, newestIncomingId) { visible, id -> id.takeIf { visible } }
             .filterNotNull()
             .distinctUntilChanged()

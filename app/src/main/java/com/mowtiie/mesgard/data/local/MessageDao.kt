@@ -66,7 +66,7 @@ internal interface MessageDao {
         LIMIT 1
         """,
     )
-    suspend fun findNewestIncomingId(conversationId: String, currentUserId: String): String?
+    fun observeNewestIncomingId(conversationId: String, currentUserId: String): Flow<String?>
 
     @Query(
         "DELETE FROM messages WHERE conversation_id = :conversationId AND status = 'SENT' AND created_at < :before",

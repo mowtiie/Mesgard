@@ -12,6 +12,9 @@ internal const val MESSAGE_PAGE_SIZE = 50
 internal interface MessageRepository {
     fun observeMessages(conversationId: String, limit: Int): Flow<List<Message>>
 
+    /** The newest sent message from someone else, which is what marking the conversation as read goes up to. */
+    fun observeNewestIncomingId(conversationId: String): Flow<String?>
+
     suspend fun refresh(conversationId: String): RefreshResult
 
     suspend fun loadOlder(conversationId: String): PageResult

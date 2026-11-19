@@ -28,6 +28,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -63,6 +64,9 @@ class ConversationViewModelTest {
     }
     private val messageRepository = mockk<MessageRepository> {
         every { observeMessages(CONVERSATION_ID, any()) } returns messages
+        every { observeNewestIncomingId(CONVERSATION_ID) } returns messages.map { list ->
+            list.firstOrNull { !it.isOwn && it.status == MessageStatus.SENT }?.id
+        }
         coEvery { refresh(CONVERSATION_ID) } returns RefreshResult.Success
         coEvery { markConversationRead(CONVERSATION_ID) } returns RefreshResult.Success
     }

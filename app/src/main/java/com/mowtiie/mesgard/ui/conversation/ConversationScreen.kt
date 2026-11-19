@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -90,6 +91,24 @@ internal fun ConversationScreenRoute(
     val mentions by mentionViewModel.uiState.collectAsStateWithLifecycle()
     val searchState by searchViewModel.uiState.collectAsStateWithLifecycle()
     val pins by pinsViewModel.uiState.collectAsStateWithLifecycle()
+    // Remembered, so typing in the composer does not rebuild every message bubble.
+    val bubbleActions = remember(pins.canPin, pins.pinnedIds) {
+        MessageActions(
+            onRetry = failedMessagesViewModel::onRetryClicked,
+            onDiscard = failedMessagesViewModel::onDiscardClicked,
+            onDelete = actionsViewModel::onDeleteRequested,
+            onInfo = actionsViewModel::onInfoRequested,
+            onEdit = editViewModel::onEditRequested,
+            onReply = replyViewModel::onReplyRequested,
+            onPin = pinsViewModel::onPin,
+            onUnpin = pinsViewModel::onUnpin,
+            canPin = pins.canPin,
+            pinnedIds = pins.pinnedIds,
+            onAttachmentClick = downloadsViewModel::onAttachmentClicked,
+            onImageShown = downloadsViewModel::onImageShown,
+            onRetryDownload = downloadsViewModel::onRetryDownload,
+        )
+    }
     ConversationScreen(
         uiState = uiState.copy(error = uiState.error ?: messageActions.error ?: edit.error ?: pins.error),
         pins = pins.pins,
@@ -123,21 +142,7 @@ internal fun ConversationScreenRoute(
             onClosed = searchViewModel::onClosed,
             onJumpTo = searchViewModel::onJumpRequested,
         ),
-        actions = MessageActions(
-            onRetry = failedMessagesViewModel::onRetryClicked,
-            onDiscard = failedMessagesViewModel::onDiscardClicked,
-            onDelete = actionsViewModel::onDeleteRequested,
-            onInfo = actionsViewModel::onInfoRequested,
-            onEdit = editViewModel::onEditRequested,
-            onReply = replyViewModel::onReplyRequested,
-            onPin = pinsViewModel::onPin,
-            onUnpin = pinsViewModel::onUnpin,
-            canPin = pins.canPin,
-            pinnedIds = pins.pinnedIds,
-            onAttachmentClick = downloadsViewModel::onAttachmentClicked,
-            onImageShown = downloadsViewModel::onImageShown,
-            onRetryDownload = downloadsViewModel::onRetryDownload,
-        ),
+        actions = bubbleActions,
         onAttachmentsPicked = viewModel::onAttachmentsPicked,
         onAttachmentRemoved = viewModel::onAttachmentRemoved,
         onAttachmentOpened = downloadsViewModel::onAttachmentOpened,
@@ -210,6 +215,9 @@ internal fun ConversationScreen(
     var viewedImageId by rememberSaveable { mutableStateOf<String?>(null) }
     val viewedImage = uiState.messages.flatMap { it.attachments }.firstOrNull { it.id == viewedImageId }
 
+    val messageActions = remember(actions, copyMessage) {
+        actions.copy(onCopy = copyMessage, onImageClick = { viewedImageId = it.id })
+    }
     val title = uiState.title ?: uiState.type?.let { stringResource(it.fallbackTitleResource()) }.orEmpty()
     TitledScreen(
         title = title,
@@ -255,7 +263,7 @@ internal fun ConversationScreen(
             MessageList(
                 uiState = uiState,
                 downloads = downloads,
-                actions = actions.copy(onCopy = copyMessage, onImageClick = { viewedImageId = it.id }),
+                actions = messageActions,
                 jumpTo = search.state.jumpTo,
                 onJumpHandled = search.onJumpHandled,
                 onJumpFailed = {
@@ -336,12 +344,15 @@ private fun MessageList(
         if (index >= 0) listState.showAtTop(index)
     }
 
-    val jumpingActions = actions.copy(
-        onReplyClick = { id ->
-            val index = timeline.indexOfFirst { it is TimelineItem.Bubble && it.message.id == id }
-            if (index >= 0) scope.launch { listState.animateScrollToItem(index) }
-        },
-    )
+    val currentTimeline by rememberUpdatedState(timeline)
+    val jumpingActions = remember(actions) {
+        actions.copy(
+            onReplyClick = { id ->
+                val index = currentTimeline.indexOfFirst { it is TimelineItem.Bubble && it.message.id == id }
+                if (index >= 0) scope.launch { listState.animateScrollToItem(index) }
+            },
+        )
+    }
 
     ShowTypingBubbleEffect(uiState.visibleTypingNames.isNotEmpty(), listState)
 
@@ -430,10 +441,12 @@ private fun rememberCopyMessage(snackbarHostState: SnackbarHostState): (String) 
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
     val copiedMessage = stringResource(R.string.message_copied)
-    return { text ->
-        scope.launch {
-            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(null, text)))
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) snackbarHostState.showSnackbar(copiedMessage)
+    return remember(clipboard, scope, copiedMessage, snackbarHostState) {
+        { text ->
+            scope.launch {
+                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(null, text)))
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) snackbarHostState.showSnackbar(copiedMessage)
+            }
         }
     }
 }

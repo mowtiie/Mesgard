@@ -5,6 +5,7 @@ import com.mowtiie.mesgard.domain.model.MessageStatus
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
 import com.mowtiie.mesgard.testing.TEST_SENDER_ID
 import com.mowtiie.mesgard.testing.messageEntity
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -132,7 +133,7 @@ class MessageDaoTest {
     }
 
     @Test
-    fun `findNewestIncomingId skips the messages of the current user`() = runTest {
+    fun `observeNewestIncomingId skips the messages of the current user`() = runTest {
         messageDao.upsertAll(
             listOf(
                 messageEntity("theirs", CONVERSATION_ID, OLDER).copy(senderId = "other"),
@@ -140,7 +141,7 @@ class MessageDaoTest {
             ),
         )
 
-        assertEquals("theirs", messageDao.findNewestIncomingId(CONVERSATION_ID, currentUserId = "me"))
+        assertEquals("theirs", messageDao.observeNewestIncomingId(CONVERSATION_ID, currentUserId = "me").first())
     }
 
     @Test

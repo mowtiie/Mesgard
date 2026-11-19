@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +41,7 @@ private val RowSpacing = 2.dp
 private val GroupSpacing = 8.dp
 
 /** What the user can do with a message or one of its attachments. */
+@Immutable
 internal data class MessageActions(
     val onRetry: (String) -> Unit = {},
     val onDiscard: (String) -> Unit = {},

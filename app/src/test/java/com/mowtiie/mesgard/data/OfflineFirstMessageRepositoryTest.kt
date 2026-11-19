@@ -434,6 +434,19 @@ class OfflineFirstMessageRepositoryTest {
     }
 
     @Test
+    fun `observeNewestIncomingId follows the newest sent message from someone else`() = runTest {
+        val dao = databaseRule.database.messageDao()
+        dao.upsert(messageEntity("old", CONVERSATION_ID, 1_000L))
+        dao.upsert(messageEntity("mine", CONVERSATION_ID, 3_000L).copy(senderId = CURRENT_USER_ID))
+
+        repository.observeNewestIncomingId(CONVERSATION_ID).test {
+            assertEquals("old", awaitItem())
+            dao.upsert(messageEntity("new", CONVERSATION_ID, 2_000L))
+            assertEquals("new", awaitItem())
+        }
+    }
+
+    @Test
     fun `markConversationRead does not call the server when there is no incoming message`() = runTest {
         databaseRule.database.messageDao()
             .upsert(messageEntity("mine", CONVERSATION_ID, 1_000L).copy(senderId = CURRENT_USER_ID))

@@ -37,6 +37,9 @@ import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 
 private const val TAG = "MessageRepository"
 
@@ -63,7 +66,10 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         val attachmentsByMessage = attachments.groupBy { it.messageId }
         val names = contacts.associate { it.userId to it.displayName } + profiles.associate { it.id to it.displayName }
         items.map { toMessage(it, currentUserId, attachmentsByMessage[it.id].orEmpty(), names) }
-    }
+    }.distinctUntilChanged()
+
+    override fun observeNewestIncomingId(conversationId: String): Flow<String?> =
+        authRepository.currentUserId?.let { messageDao.observeNewestIncomingId(conversationId, it) } ?: flowOf(null)
 
     override suspend fun refresh(conversationId: String): RefreshResult = attemptRemote(TAG) {
         storeLatestPage(conversationId, remoteSource.fetchLatest(conversationId))
@@ -78,7 +84,7 @@ internal class OfflineFirstMessageRepository @Inject constructor(
                 latest.size < MESSAGE_PAGE_SIZE
             } else {
                 val older = remoteSource.fetchOlder(conversationId, beforeEpochMillis = oldest + 1)
-                storeMessages(older)
+                database.storeMessages(older)
                 older.size < MESSAGE_PAGE_SIZE
             }
         }
@@ -149,7 +155,7 @@ internal class OfflineFirstMessageRepository @Inject constructor(
     override suspend fun markConversationRead(conversationId: String): RefreshResult {
         conversationDao.clearUnreadCount(conversationId)
         val newestIncomingId = authRepository.currentUserId
-            ?.let { messageDao.findNewestIncomingId(conversationId, it) }
+            ?.let { messageDao.observeNewestIncomingId(conversationId, it).first() }
         if (newestIncomingId == null) return RefreshResult.Success
         return attemptRemote(TAG) {
             remoteSource.markConversationRead(conversationId, newestIncomingId)
@@ -159,12 +165,10 @@ internal class OfflineFirstMessageRepository @Inject constructor(
     private suspend fun storeLatestPage(conversationId: String, page: List<MessageDto>) {
         database.withTransaction {
             val gapStart = messageDao.findGapStart(page)
-            storeMessages(page)
+            database.storeMessages(page)
             if (gapStart != null) messageDao.deleteSentOlderThan(conversationId, gapStart)
         }
     }
-
-    private suspend fun storeMessages(messages: List<MessageDto>) = database.storeMessages(messages)
 }
 
 /**
