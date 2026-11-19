@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.mowtiie.mesgard.data.local.MessageDao
 import com.mowtiie.mesgard.data.local.MessageEntity
@@ -25,10 +26,16 @@ internal class SendMessageWorker @AssistedInject constructor(
     private val messageDao: MessageDao,
     private val deliverer: MessageDeliverer,
 ) : CoroutineWorker(context, parameters) {
+    /**
+     * Every outcome ends the job with success except a retry, because a failed job would cancel the messages
+     * queued behind it. A message that cannot be sent is marked FAILED instead, and the person can retry it.
+     */
     override suspend fun doWork(): Result {
-        val message = inputData.getString(KEY_MESSAGE_ID)?.let { messageDao.findById(it) } ?: return Result.failure()
+        val message = inputData.getString(KEY_MESSAGE_ID)?.let { messageDao.findById(it) } ?: return Result.success()
         return if (message.status == MessageStatus.SENT) Result.success() else send(message)
     }
+
+    override suspend fun getForegroundInfo(): ForegroundInfo = applicationContext.sendingForegroundInfo()
 
     private suspend fun send(message: MessageEntity): Result = try {
         messageDao.markSent(message.id, deliverer.deliver(message))
@@ -55,7 +62,7 @@ internal class SendMessageWorker @AssistedInject constructor(
 
     private suspend fun failPermanently(messageId: String): Result {
         messageDao.updateStatus(messageId, MessageStatus.FAILED)
-        return Result.failure()
+        return Result.success()
     }
 
     companion object {

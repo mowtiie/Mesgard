@@ -137,13 +137,14 @@ internal class OfflineFirstMessageRepository @Inject constructor(
             messageDao.upsert(message)
             attachmentDao.upsertAll(attachments)
         }
-        sendScheduler.schedule(message.id)
+        sendScheduler.schedule(message.id, message.conversationId)
         return SendResult.Queued
     }
 
     override suspend fun retry(messageId: String) {
+        val message = messageDao.findById(messageId) ?: return
         messageDao.updateStatus(messageId, MessageStatus.PENDING)
-        sendScheduler.schedule(messageId)
+        sendScheduler.schedule(messageId, message.conversationId)
     }
 
     override suspend fun discard(messageId: String) {

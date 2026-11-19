@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Mesgard</string>
     <string name="notification_channel_messages">Messages</string>
+    <string name="notification_channel_sending">Sending</string>
+    <string name="notification_sending_message">Sending message</string>
     <string name="notification_new_message">New message</string>
     <string name="notification_you">You</string>
     <plurals name="notification_conversations">

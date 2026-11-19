@@ -82,7 +82,7 @@ class OfflineFirstMessageRepositoryTest {
         assertEquals("Hello", stored.body)
         assertEquals(CURRENT_USER_ID, stored.senderId)
         assertEquals(NOW, stored.createdAtEpochMillis)
-        verify(exactly = 1) { sendScheduler.schedule(stored.id) }
+        verify(exactly = 1) { sendScheduler.schedule(stored.id, CONVERSATION_ID) }
     }
 
     @Test
@@ -98,7 +98,7 @@ class OfflineFirstMessageRepositoryTest {
         assertEquals("photo.jpg", attachment.fileName)
         assertEquals("/files/photo", attachment.localPath)
         assertEquals("$CONVERSATION_ID/${message.id}/${attachment.id}", attachment.storagePath)
-        verify(exactly = 1) { sendScheduler.schedule(message.id) }
+        verify(exactly = 1) { sendScheduler.schedule(message.id, CONVERSATION_ID) }
     }
 
     @Test
@@ -211,13 +211,13 @@ class OfflineFirstMessageRepositoryTest {
         assertEquals(SendResult.Rejected(SendRejection.ATTACHMENT_TOO_LARGE), result)
         assertTrue(pendingMessages().isEmpty())
         verify { attachmentImporter.delete("/files/first") }
-        verify(exactly = 0) { sendScheduler.schedule(any()) }
+        verify(exactly = 0) { sendScheduler.schedule(any(), any()) }
     }
 
     @Test
     fun `send rejects an empty message`() = runTest {
         assertEquals(SendResult.Rejected(SendRejection.EMPTY_MESSAGE), repository.send(CONVERSATION_ID, "   "))
-        verify(exactly = 0) { sendScheduler.schedule(any()) }
+        verify(exactly = 0) { sendScheduler.schedule(any(), any()) }
     }
 
     @Test
@@ -239,7 +239,7 @@ class OfflineFirstMessageRepositoryTest {
         val result = repository.send("unknown", "Hello")
 
         assertEquals(SendResult.Rejected(SendRejection.CONVERSATION_UNAVAILABLE), result)
-        verify(exactly = 0) { sendScheduler.schedule(any()) }
+        verify(exactly = 0) { sendScheduler.schedule(any(), any()) }
     }
 
     @Test
@@ -250,7 +250,7 @@ class OfflineFirstMessageRepositoryTest {
         repository.retry("failed")
 
         assertEquals(MessageStatus.PENDING, dao.findById("failed")?.status)
-        verify(exactly = 1) { sendScheduler.schedule("failed") }
+        verify(exactly = 1) { sendScheduler.schedule("failed", CONVERSATION_ID) }
     }
 
     @Test

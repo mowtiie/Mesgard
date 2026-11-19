@@ -100,7 +100,7 @@ class SendMessageWorkerTest {
 
         val result = worker(runAttemptCount = LAST_ATTEMPT_INDEX).doWork()
 
-        assertEquals(Result.failure(), result)
+        assertEquals(Result.success(), result)
         assertEquals(MessageStatus.FAILED, databaseRule.database.messageDao().findById(MESSAGE_ID)?.status)
     }
 
@@ -111,7 +111,7 @@ class SendMessageWorkerTest {
 
         val result = worker().doWork()
 
-        assertEquals(Result.failure(), result)
+        assertEquals(Result.success(), result)
         assertEquals(MessageStatus.FAILED, databaseRule.database.messageDao().findById(MESSAGE_ID)?.status)
     }
 
@@ -122,7 +122,7 @@ class SendMessageWorkerTest {
 
         val result = worker().doWork()
 
-        assertEquals(Result.failure(), result)
+        assertEquals(Result.success(), result)
         assertEquals(MessageStatus.FAILED, databaseRule.database.messageDao().findById(MESSAGE_ID)?.status)
     }
 
@@ -187,7 +187,7 @@ class SendMessageWorkerTest {
         storeAttachment(localPath = raw.absolutePath)
         coEvery { importer.optimize(any(), any(), any()) } throws IllegalArgumentException("Cannot shrink")
 
-        assertEquals(Result.failure(), worker().doWork())
+        assertEquals(Result.success(), worker().doWork())
         assertEquals(MessageStatus.FAILED, databaseRule.database.messageDao().findById(MESSAGE_ID)?.status)
     }
 
@@ -207,13 +207,13 @@ class SendMessageWorkerTest {
         storePending()
         storeAttachment(localPath = File(temporaryFolder.root, "missing").absolutePath)
 
-        assertEquals(Result.failure(), worker().doWork())
+        assertEquals(Result.success(), worker().doWork())
         assertEquals(MessageStatus.FAILED, databaseRule.database.messageDao().findById(MESSAGE_ID)?.status)
     }
 
     @Test
-    fun `fails when the message does not exist`() = runTest {
-        assertEquals(Result.failure(), worker(messageId = "missing").doWork())
+    fun `does nothing when the message does not exist`() = runTest {
+        assertEquals(Result.success(), worker(messageId = "missing").doWork())
     }
 
     private suspend fun storePending() {
