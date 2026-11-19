@@ -266,6 +266,15 @@
     <string name="account_email">Email</string>
     <string name="tab_chats">Chats</string>
     <string name="tab_contacts">Contacts</string>
+    <string name="tab_announcements">Announcements</string>
+    <string name="announcements_title">Announcements</string>
+    <string name="announcements_new">New announcement</string>
+    <string name="announcements_empty">No announcements yet</string>
+    <string name="announcements_empty_hint">Announcements from your organization appear here.</string>
+    <plurals name="announcement_attachments">
+        <item quantity="one">%d attachment</item>
+        <item quantity="other">%d attachments</item>
+    </plurals>
     <string name="account_details">Details</string>
     <string name="account_open">Open account</string>
     <string name="account_mfa">Two-step verification</string>

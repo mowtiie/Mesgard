@@ -31,6 +31,9 @@ internal class OfflineFirstConversationRepository @Inject constructor(
     override fun observeConversations(): Flow<List<ConversationSummary>> =
         conversationDao.observeList(CONVERSATION_PAGE_SIZE).map { items -> items.map(::toSummary) }
 
+    override fun observeAnnouncements(): Flow<ConversationSummary?> =
+        conversationDao.observeAnnouncements().map { item -> item?.let(::toSummary) }
+
     override fun observeConversation(conversationId: String): Flow<ConversationSummary?> =
         conversationDao.observeById(conversationId).map { item -> item?.let(::toSummary) }
 

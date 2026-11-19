@@ -11,6 +11,7 @@ import com.mowtiie.mesgard.R
 
 internal enum class MainDestination(val route: Any, @StringRes val labelResource: Int) {
     CHATS(ChatsRoute, R.string.tab_chats),
+    ANNOUNCEMENTS(AnnouncementsRoute, R.string.tab_announcements),
     CONTACTS(ContactsRoute, R.string.tab_contacts),
     SETTINGS(SettingsRoute, R.string.tab_settings),
 }
@@ -20,6 +21,12 @@ internal fun MainDestinationIcon(destination: MainDestination, selected: Boolean
     when (destination) {
         MainDestination.CHATS -> Icon(
             painter = painterResource(if (selected) R.drawable.ic_chat else R.drawable.ic_chat_outline),
+            contentDescription = null,
+        )
+        MainDestination.ANNOUNCEMENTS -> Icon(
+            painter = painterResource(
+                if (selected) R.drawable.ic_campaign else R.drawable.ic_campaign_outline,
+            ),
             contentDescription = null,
         )
         MainDestination.CONTACTS -> Icon(
