@@ -321,7 +321,8 @@
     <string name="message_waiting_for_server">Waiting for server</string>
     <string name="offline_banner">No network connection. Messages will send when you are back online.</string>
     <string name="sign_in_offline_banner">No network connection. Connect to sign in.</string>
-    <string name="server_unreachable_banner">Unable to reach the server. Retrying.</string>
+    <string name="server_unreachable_banner">Unable to reach the server.</string>
+    <string name="connection_retry">Retry</string>
     <string name="message_not_sent">Not sent</string>
     <string name="message_retry">Retry</string>
     <string name="message_discard">Discard</string>

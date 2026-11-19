@@ -221,6 +221,27 @@ class RealtimeMessageSyncTest {
     }
 
     @Test
+    fun `reconnecting subscribes again right away`() = runTest {
+        startSync()
+
+        sync.reconnect()
+        runCurrent()
+
+        assertEquals(2, source.subscriptions)
+    }
+
+    @Test
+    fun `reconnecting does nothing once it is stopped`() = runTest {
+        startSync()
+        sync.stop()
+
+        sync.reconnect()
+        runCurrent()
+
+        assertEquals(1, source.subscriptions)
+    }
+
+    @Test
     fun `ignores events after it is stopped`() = runTest {
         startSync()
         sync.stop()

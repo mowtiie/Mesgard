@@ -7,6 +7,7 @@ import com.mowtiie.mesgard.domain.sync.RealtimeSync
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceTimeBy
@@ -26,9 +27,16 @@ class ConnectivityViewModelTest {
     private val monitor = object : ConnectivityMonitor {
         override val isOnline = online
     }
-    private val realtimeSync = mockk<RealtimeSync> { every { isConnected } returns serverConnected }
+    private val realtimeSync = mockk<RealtimeSync>(relaxed = true) { every { isConnected } returns serverConnected }
 
     private fun viewModel() = ConnectivityViewModel(monitor, realtimeSync)
+
+    @Test
+    fun `retrying asks the realtime connection to reconnect at once`() {
+        viewModel().onRetryClicked()
+
+        verify(exactly = 1) { realtimeSync.reconnect() }
+    }
 
     @Test
     fun `is online while the device has a network and the server is reachable`() = runTest {

@@ -17,8 +17,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.common.AuthHeader
 import com.mowtiie.mesgard.ui.common.CenteredForm
-import com.mowtiie.mesgard.ui.connectivity.ConnectionBanner
-import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 @Composable
@@ -47,9 +45,7 @@ internal fun MfaCodeScreen(
     }
     CenteredForm(
         modifier = modifier,
-        banner = {
-            ConnectionBanner(status = LocalConnectionStatus.current, offlineMessage = R.string.mfa_offline_banner)
-        },
+        offlineMessage = R.string.mfa_offline_banner,
     ) {
         AuthHeader(R.string.mfa_code_title)
         Text(

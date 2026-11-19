@@ -21,8 +21,10 @@ internal const val OFFLINE_DELAY_MS = 1_000L
 internal const val SERVER_UNREACHABLE_DELAY_MS = 3_000L
 
 @HiltViewModel
-internal class ConnectivityViewModel @Inject constructor(monitor: ConnectivityMonitor, realtimeSync: RealtimeSync) :
-    ViewModel() {
+internal class ConnectivityViewModel @Inject constructor(
+    monitor: ConnectivityMonitor,
+    private val realtimeSync: RealtimeSync,
+) : ViewModel() {
     /**
      * A problem is reported only after it has lasted for a moment, so a brief network change or a reconnection
      * shows nothing. Recovery is reported at once.
@@ -49,4 +51,6 @@ internal class ConnectivityViewModel @Inject constructor(monitor: ConnectivityMo
             started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
             initialValue = ConnectionStatus.ONLINE,
         )
+
+    fun onRetryClicked() = realtimeSync.reconnect()
 }

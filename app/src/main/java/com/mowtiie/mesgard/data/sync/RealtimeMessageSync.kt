@@ -52,6 +52,7 @@ internal class RealtimeMessageSync @Inject constructor(
     private val mutableReconnections = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val mutableConnected = MutableStateFlow(true)
     private var job: Job? = null
+    private var scope: CoroutineScope? = null
     private var hasConnected = false
 
     override val reconnections: SharedFlow<Unit> = mutableReconnections.asSharedFlow()
@@ -60,6 +61,18 @@ internal class RealtimeMessageSync @Inject constructor(
     override fun start(scope: CoroutineScope) {
         if (job?.isActive == true) return
         hasConnected = false
+        this.scope = scope
+        subscribe(scope)
+    }
+
+    override fun reconnect() {
+        val scope = scope ?: return
+        if (job == null) return
+        job?.cancel()
+        subscribe(scope)
+    }
+
+    private fun subscribe(scope: CoroutineScope) {
         job = scope.launch {
             source.events()
                 .retryWhen { cause, attempt ->

@@ -36,8 +36,6 @@ import com.mowtiie.mesgard.ui.admin.sensitiveClip
 import com.mowtiie.mesgard.ui.common.AuthHeader
 import com.mowtiie.mesgard.ui.common.CenteredForm
 import com.mowtiie.mesgard.ui.common.SecureWindowEffect
-import com.mowtiie.mesgard.ui.connectivity.ConnectionBanner
-import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 import kotlinx.coroutines.launch
 
@@ -96,9 +94,7 @@ internal fun MfaEnrollmentScreen(
     CenteredForm(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        banner = {
-            ConnectionBanner(status = LocalConnectionStatus.current, offlineMessage = R.string.mfa_offline_banner)
-        },
+        offlineMessage = R.string.mfa_offline_banner,
     ) {
         AuthHeader(R.string.mfa_enroll_title)
         when {

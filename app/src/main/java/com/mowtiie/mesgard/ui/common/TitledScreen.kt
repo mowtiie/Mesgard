@@ -16,8 +16,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
-import com.mowtiie.mesgard.ui.connectivity.ConnectionBanner
-import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
+import com.mowtiie.mesgard.ui.connectivity.ConnectionSnackbarHost
 
 /**
  * A small top app bar with a serif headline. [actions] are the trailing icon buttons; when [searchBar] is given it
@@ -51,10 +50,14 @@ internal fun TitledScreen(
                         scrollBehavior = scrollBehavior,
                     )
                 }
-                ConnectionBanner(status = LocalConnectionStatus.current)
             }
         },
-        snackbarHost = snackbarHost,
+        snackbarHost = {
+            Column {
+                snackbarHost()
+                ConnectionSnackbarHost()
+            }
+        },
         floatingActionButton = floatingActionButton,
         content = content,
     )

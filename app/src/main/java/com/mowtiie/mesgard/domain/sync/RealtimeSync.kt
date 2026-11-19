@@ -12,5 +12,8 @@ internal interface RealtimeSync {
 
     fun start(scope: CoroutineScope)
 
+    /** Subscribes again at once instead of waiting for the next retry. Does nothing while stopped. */
+    fun reconnect()
+
     fun stop()
 }

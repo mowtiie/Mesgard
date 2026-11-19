@@ -45,8 +45,6 @@ import com.mowtiie.mesgard.domain.model.SignInError
 import com.mowtiie.mesgard.ui.common.AuthHeader
 import com.mowtiie.mesgard.ui.common.CenteredForm
 import com.mowtiie.mesgard.ui.common.ServerCard
-import com.mowtiie.mesgard.ui.connectivity.ConnectionBanner
-import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.server.ServerStatusNotice
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
@@ -97,9 +95,7 @@ internal fun SignInScreen(
     CenteredForm(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        banner = {
-            ConnectionBanner(status = LocalConnectionStatus.current, offlineMessage = R.string.sign_in_offline_banner)
-        },
+        offlineMessage = R.string.sign_in_offline_banner,
     ) {
         SignInForm(
             uiState = uiState,

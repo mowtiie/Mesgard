@@ -15,6 +15,7 @@ import com.mowtiie.mesgard.ui.auth.MfaEnrollmentRoute
 import com.mowtiie.mesgard.ui.auth.PasswordChangeRoute
 import com.mowtiie.mesgard.ui.auth.SignInRoute
 import com.mowtiie.mesgard.ui.connectivity.ConnectivityViewModel
+import com.mowtiie.mesgard.ui.connectivity.LocalConnectionRetry
 import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.lock.LockScreenRoute
 import com.mowtiie.mesgard.ui.navigation.MesgardNavHost
@@ -36,6 +37,7 @@ internal fun MesgardApp(
     val serverStatus by serverStatusViewModel.status.collectAsStateWithLifecycle()
     CompositionLocalProvider(
         LocalConnectionStatus provides connectionStatus,
+        LocalConnectionRetry provides connectivityViewModel::onRetryClicked,
         LocalServerStatus provides serverStatus,
     ) {
         when (val state = authState) {
