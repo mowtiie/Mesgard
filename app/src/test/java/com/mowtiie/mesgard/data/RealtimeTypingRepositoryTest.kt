@@ -67,6 +67,29 @@ class RealtimeTypingRepositoryTest {
         databaseRule.database.profileDao().upsertAll(listOf(ProfileEntity(id, name)))
 
     @Test
+    fun `lists who is typing in the watched conversations and leaves out the quiet ones`() = runTest {
+        storeProfile("ana", "Ana")
+
+        repository.observeTypingIn(setOf("c1", "c2")).test {
+            assertEquals(emptyMap<String, List<String>>(), awaitItem())
+            incoming.emit("ana")
+            testScheduler.runCurrent()
+            val typing = expectMostRecentItem()
+            assertEquals(setOf("c1", "c2"), typing.keys)
+            assertEquals(listOf("Ana"), typing["c1"])
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `watching no conversation opens nothing`() = runTest {
+        repository.observeTypingIn(emptySet()).test {
+            assertEquals(emptyMap<String, List<String>>(), awaitItem())
+            awaitComplete()
+        }
+    }
+
+    @Test
     fun `emits the name of a participant who is typing`() = runTest {
         storeProfile("ana", "Ana")
 

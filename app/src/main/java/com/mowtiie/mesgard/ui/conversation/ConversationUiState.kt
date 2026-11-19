@@ -37,6 +37,10 @@ internal data class ConversationUiState(
     val canSend: Boolean
         get() = (draft.isNotBlank() || attachments.isNotEmpty()) && draft.trim().length <= MAX_MESSAGE_LENGTH
 
+    /** Nobody sees typing in a conversation they can only read. */
+    val visibleTypingNames: List<String>
+        get() = if (canPost) typingNames else emptyList()
+
     val showSenderNames: Boolean
         get() = type != null && type != ConversationType.DIRECT
 

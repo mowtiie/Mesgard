@@ -214,7 +214,7 @@ internal fun ConversationScreen(
     TitledScreen(
         title = title,
         modifier = modifier,
-        subtitle = if (uiState.canPost && uiState.typingNames.isNotEmpty()) typingText(uiState.typingNames) else null,
+        subtitle = uiState.visibleTypingNames.takeIf { it.isNotEmpty() }?.let { typingText(it) },
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(
@@ -343,8 +343,11 @@ private fun MessageList(
         },
     )
 
+    ShowTypingBubbleEffect(uiState.visibleTypingNames.isNotEmpty(), listState)
+
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(state = listState, reverseLayout = true, modifier = Modifier.fillMaxSize()) {
+            typingBubbleItem(uiState.visibleTypingNames)
             items(timeline, key = { it.key }) { item ->
                 when (item) {
                     is TimelineItem.Bubble -> MessageBubble(

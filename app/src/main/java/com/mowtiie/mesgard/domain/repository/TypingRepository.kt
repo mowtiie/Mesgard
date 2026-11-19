@@ -9,4 +9,10 @@ internal interface TypingRepository {
      * interval). The connection lasts as long as the flow is collected.
      */
     fun observeTypingNames(conversationId: String, ownTyping: Flow<Unit>): Flow<List<String>>
+
+    /**
+     * Emits who is typing in each of the conversations, leaving out the ones where nobody is. It only listens, and the
+     * connections last as long as the flow is collected, so the caller passes a few conversations at a time.
+     */
+    fun observeTypingIn(conversationIds: Set<String>): Flow<Map<String, List<String>>>
 }

@@ -11,6 +11,7 @@ internal fun SelectableConversationRow(
     selection: ConversationSelectionUiState,
     callbacks: SelectionCallbacks,
     onOpen: (String) -> Unit,
+    typingNames: List<String> = emptyList(),
 ) {
     ConversationRow(
         conversation = conversation,
@@ -18,5 +19,6 @@ internal fun SelectableConversationRow(
         onClick = { if (selection.isActive) callbacks.onToggled(conversation.id) else onOpen(conversation.id) },
         isSelected = conversation.id in selection.selectedIds,
         onLongClick = { callbacks.onToggled(conversation.id) },
+        typingNames = typingNames,
     )
 }

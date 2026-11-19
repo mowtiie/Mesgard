@@ -6,11 +6,13 @@ import com.mowtiie.mesgard.domain.model.ConversationType
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
+import com.mowtiie.mesgard.domain.repository.TypingRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -26,6 +28,10 @@ class ConversationListViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val conversations = MutableStateFlow(emptyList<ConversationSummary>())
+    private val typing = MutableStateFlow(emptyMap<String, List<String>>())
+    private val typingRepository = mockk<TypingRepository> {
+        every { observeTypingIn(any()) } returns typing
+    }
     private val repository = mockk<ConversationRepository> {
         every { observeConversations() } returns conversations
         every { observeArchived() } returns MutableStateFlow(emptyList())
@@ -34,7 +40,7 @@ class ConversationListViewModelTest {
 
     @Test
     fun `refreshes the conversations when it is created`() = runTest {
-        ConversationListViewModel(repository).uiState.test {
+        ConversationListViewModel(repository, typingRepository).uiState.test {
             awaitItem()
             cancelAndIgnoreRemainingEvents()
         }
@@ -43,10 +49,32 @@ class ConversationListViewModelTest {
     }
 
     @Test
+    fun `shows who is typing in the conversations at the top of the list`() = runTest {
+        conversations.value = listOf(summary("chat"))
+        typing.value = mapOf("chat" to listOf("Ana"))
+
+        ConversationListViewModel(repository, typingRepository).uiState.test {
+            assertEquals(listOf("Ana"), expectMostRecentItem().typing["chat"])
+        }
+    }
+
+    @Test
+    fun `only the first conversations are watched for typing`() = runTest {
+        conversations.value = (1..40).map { summary("c$it") }
+        val watched = slot<Set<String>>()
+        every { typingRepository.observeTypingIn(capture(watched)) } returns typing
+
+        ConversationListViewModel(repository, typingRepository).uiState.test {
+            expectMostRecentItem()
+            assertEquals(15, watched.captured.size)
+        }
+    }
+
+    @Test
     fun `exposes the stored conversations`() = runTest {
         conversations.value = listOf(summary("chat"))
 
-        ConversationListViewModel(repository).uiState.test {
+        ConversationListViewModel(repository, typingRepository).uiState.test {
             val state = expectMostRecentItem()
             assertEquals(listOf("chat"), state.conversations.map { it.id })
             assertTrue(state.isLoaded)
@@ -56,7 +84,7 @@ class ConversationListViewModelTest {
 
     @Test
     fun `shows the empty message once loaded without conversations`() = runTest {
-        ConversationListViewModel(repository).uiState.test {
+        ConversationListViewModel(repository, typingRepository).uiState.test {
             assertTrue(expectMostRecentItem().showEmptyMessage)
         }
     }
@@ -66,7 +94,7 @@ class ConversationListViewModelTest {
         conversations.value = listOf(summary("chat"))
         coEvery { repository.refresh() } returns RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
 
-        ConversationListViewModel(repository).uiState.test {
+        ConversationListViewModel(repository, typingRepository).uiState.test {
             val state = expectMostRecentItem()
             assertEquals(RefreshError.NETWORK_UNAVAILABLE, state.refreshError)
             assertEquals(1, state.conversations.size)
@@ -76,7 +104,7 @@ class ConversationListViewModelTest {
     @Test
     fun `clears the refresh error once it has been shown`() = runTest {
         coEvery { repository.refresh() } returns RefreshResult.Failure(RefreshError.UNKNOWN)
-        val viewModel = ConversationListViewModel(repository)
+        val viewModel = ConversationListViewModel(repository, typingRepository)
 
         viewModel.uiState.test {
             assertEquals(RefreshError.UNKNOWN, expectMostRecentItem().refreshError)
@@ -90,7 +118,7 @@ class ConversationListViewModelTest {
         val pending = CompletableDeferred<RefreshResult>()
         coEvery { repository.refresh() } coAnswers { pending.await() }
 
-        ConversationListViewModel(repository).uiState.test {
+        ConversationListViewModel(repository, typingRepository).uiState.test {
             assertTrue(expectMostRecentItem().isRefreshing)
             pending.complete(RefreshResult.Success)
             val finished = awaitItem()
@@ -102,7 +130,7 @@ class ConversationListViewModelTest {
     @Test
     fun `filters the conversations by title ignoring case`() = runTest {
         conversations.value = listOf(summary("a", title = "Grade 10 Section A"), summary("b", title = "Staff Room"))
-        val viewModel = ConversationListViewModel(repository)
+        val viewModel = ConversationListViewModel(repository, typingRepository)
 
         viewModel.uiState.test {
             viewModel.onQueryChanged("GRADE")
@@ -118,7 +146,7 @@ class ConversationListViewModelTest {
             summary("a", preview = "Bring your proposals"),
             summary("b", preview = "See you Monday"),
         )
-        val viewModel = ConversationListViewModel(repository)
+        val viewModel = ConversationListViewModel(repository, typingRepository)
 
         viewModel.uiState.test {
             viewModel.onQueryChanged("proposal")
@@ -129,7 +157,7 @@ class ConversationListViewModelTest {
     @Test
     fun `a blank query shows every conversation`() = runTest {
         conversations.value = listOf(summary("a"), summary("b"))
-        val viewModel = ConversationListViewModel(repository)
+        val viewModel = ConversationListViewModel(repository, typingRepository)
 
         viewModel.uiState.test {
             viewModel.onQueryChanged("   ")
@@ -140,7 +168,7 @@ class ConversationListViewModelTest {
     @Test
     fun `shows no results when nothing matches and keeps the search field`() = runTest {
         conversations.value = listOf(summary("a", title = "Staff Room"))
-        val viewModel = ConversationListViewModel(repository)
+        val viewModel = ConversationListViewModel(repository, typingRepository)
 
         viewModel.uiState.test {
             viewModel.onQueryChanged("zzz")
@@ -153,14 +181,16 @@ class ConversationListViewModelTest {
 
     @Test
     fun `hides the search field when there are no conversations and no query`() = runTest {
-        ConversationListViewModel(repository).uiState.test { assertFalse(expectMostRecentItem().showSearch) }
+        ConversationListViewModel(repository, typingRepository).uiState.test {
+            assertFalse(expectMostRecentItem().showSearch)
+        }
     }
 
     @Test
     fun `ignores a refresh request while a refresh is in progress`() = runTest {
         val pending = CompletableDeferred<RefreshResult>()
         coEvery { repository.refresh() } coAnswers { pending.await() }
-        val viewModel = ConversationListViewModel(repository)
+        val viewModel = ConversationListViewModel(repository, typingRepository)
 
         viewModel.onRefresh()
         pending.complete(RefreshResult.Success)

@@ -167,7 +167,14 @@ private fun ConversationList(
             item(key = "no-results") { NoResultsState(Modifier.fillParentMaxSize()) }
         }
         items(uiState.conversations, key = { it.id }) { conversation ->
-            SelectableConversationRow(conversation, nowEpochMillis, selection, selectionCallbacks, onConversationClick)
+            SelectableConversationRow(
+                conversation,
+                nowEpochMillis,
+                selection,
+                selectionCallbacks,
+                onConversationClick,
+                typingNames = uiState.typing[conversation.id].orEmpty(),
+            )
         }
     }
 }

@@ -8,6 +8,8 @@ internal data class ConversationListUiState(
     val conversations: List<ConversationSummary> = emptyList(),
     val totalConversations: Int = 0,
     val archivedCount: Int = 0,
+    /** Who is typing in each conversation, for the conversations at the top of the list. */
+    val typing: Map<String, List<String>> = emptyMap(),
     val query: String = "",
     val isLoaded: Boolean = false,
     val isRefreshing: Boolean = false,

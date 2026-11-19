@@ -45,6 +45,7 @@ internal fun ConversationRow(
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
     onLongClick: () -> Unit = {},
+    typingNames: List<String> = emptyList(),
 ) {
     val title = conversation.title ?: stringResource(conversation.type.fallbackTitleResource())
     val hasUnread = conversation.hasUnread
@@ -74,6 +75,7 @@ internal fun ConversationRow(
         supportingContent = {
             Text(
                 text = when {
+                    typingNames.isNotEmpty() -> typingPreview(conversation.type, typingNames)
                     conversation.lastMessagePreview == null -> stringResource(R.string.conversation_no_messages)
                     conversation.lastMessagePreview.isBlank() -> stringResource(
                         R.string.conversation_attachment_preview,

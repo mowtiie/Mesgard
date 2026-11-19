@@ -17,8 +17,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -41,6 +45,14 @@ internal class RealtimeTypingRepository @Inject constructor(
             Log.i(TAG, "Typing indicators are unavailable", exception)
             emit(emptyList())
         }
+    }
+
+    override fun observeTypingIn(conversationIds: Set<String>): Flow<Map<String, List<String>>> {
+        if (conversationIds.isEmpty()) return flowOf(emptyMap())
+        val perConversation = conversationIds.map { id ->
+            observeTypingNames(id, emptyFlow()).onStart { emit(emptyList()) }.map { names -> id to names }
+        }
+        return combine(perConversation) { pairs -> pairs.filter { it.second.isNotEmpty() }.toMap() }
     }
 
     private fun typingNames(conversationId: String, userId: String, ownTyping: Flow<Unit>) = channelFlow {
