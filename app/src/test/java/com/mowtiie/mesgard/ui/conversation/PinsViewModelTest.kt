@@ -2,7 +2,6 @@ package com.mowtiie.mesgard.ui.conversation
 
 import androidx.lifecycle.SavedStateHandle
 import com.mowtiie.mesgard.domain.model.PinnedMessage
-import com.mowtiie.mesgard.domain.model.PinsOutcome
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.MAX_PINNED_MESSAGES
@@ -28,16 +27,19 @@ class PinsViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val canPin = MutableStateFlow(true)
-    private val repository = mockk<PinRepository> { every { observeCanPin("c1") } returns canPin }
+    private val pins = MutableStateFlow(emptyList<PinnedMessage>())
+    private val repository = mockk<PinRepository> {
+        every { observeCanPin("c1") } returns canPin
+        every { observePins("c1") } returns pins
+        coEvery { refresh("c1") } returns RefreshResult.Success
+    }
     private val viewModel by lazy { PinsViewModel(SavedStateHandle(mapOf("conversationId" to "c1")), repository) }
 
     private fun pin(number: Int) = PinnedMessage("m$number", "Ana", "Pinned $number")
 
     @Test
-    fun `refreshing shows the pinned messages, and knows who may pin`() {
-        coEvery { repository.fetch("c1") } returns PinsOutcome.Loaded(listOf(pin(2), pin(1)))
-
-        viewModel.onRefresh()
+    fun `shows the stored pins at once, and knows who may pin`() {
+        pins.value = listOf(pin(2), pin(1))
 
         assertEquals(listOf("m2", "m1"), viewModel.uiState.value.pins.map { it.messageId })
         assertEquals(setOf("m1", "m2"), viewModel.uiState.value.pinnedIds)
@@ -47,33 +49,38 @@ class PinsViewModelTest {
     }
 
     @Test
-    fun `a refresh that fails keeps the pins already shown`() {
-        coEvery { repository.fetch("c1") } returnsMany listOf(
-            PinsOutcome.Loaded(listOf(pin(1))),
-            PinsOutcome.Failure(RefreshError.NETWORK_UNAVAILABLE),
-        )
-
-        viewModel.onRefresh()
-        viewModel.onRefresh()
-
+    fun `a change of the stored pins shows without a refresh`() {
+        viewModel
+        pins.value = listOf(pin(1))
         assertEquals(listOf("m1"), viewModel.uiState.value.pins.map { it.messageId })
+
+        pins.value = emptyList()
+        assertEquals(emptyList<String>(), viewModel.uiState.value.pins.map { it.messageId })
     }
 
     @Test
-    fun `pinning saves it and then shows the new list`() {
-        coEvery { repository.fetch("c1") } returns PinsOutcome.Loaded(listOf(pin(3)))
+    fun `refreshing asks the repository and never shows an error for a phone without a connection`() {
+        coEvery { repository.refresh("c1") } returns RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
+
+        viewModel.onRefresh()
+
+        coVerify { repository.refresh("c1") }
+        assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `pinning saves it`() {
         coEvery { repository.pin("c1", "m3") } returns RefreshResult.Success
 
         viewModel.onPin("m3")
 
         coVerify { repository.pin("c1", "m3") }
-        assertEquals(listOf("m3"), viewModel.uiState.value.pins.map { it.messageId })
     }
 
     @Test
     fun `a sixth pin is refused before it is sent`() {
-        coEvery { repository.fetch("c1") } returns PinsOutcome.Loaded((1..MAX_PINNED_MESSAGES).map(::pin))
-        viewModel.onRefresh()
+        pins.value = (1..MAX_PINNED_MESSAGES).map(::pin)
+        viewModel
 
         viewModel.onPin("another")
 
@@ -83,7 +90,6 @@ class PinsViewModelTest {
 
     @Test
     fun `unpinning removes it and a failure shows the reason`() {
-        coEvery { repository.fetch("c1") } returns PinsOutcome.Loaded(emptyList())
         coEvery { repository.unpin("m1") } returns RefreshResult.Success
         coEvery { repository.unpin("m2") } returns RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
 

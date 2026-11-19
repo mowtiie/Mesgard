@@ -11,7 +11,11 @@ import kotlinx.serialization.Serializable
 private const val PINS_TABLE = "pinned_messages"
 
 @Serializable
-internal data class PinnedRowDto(@SerialName("message_id") val messageId: String, val messages: PinnedMessageDto)
+internal data class PinnedRowDto(
+    @SerialName("message_id") val messageId: String,
+    @SerialName("pinned_at") val pinnedAt: String,
+    val messages: PinnedMessageDto,
+)
 
 @Serializable
 internal data class PinnedMessageDto(val body: String, val sender: SenderNameDto)
@@ -36,7 +40,9 @@ internal interface PinRemoteSource {
 
 internal class SupabasePinRemoteSource @Inject constructor(private val client: SupabaseClient) : PinRemoteSource {
     override suspend fun fetch(conversationId: String): List<PinnedRowDto> = client.from(PINS_TABLE).select(
-        Columns.raw("message_id, messages!inner(body, sender:profiles!messages_sender_id_fkey(display_name))"),
+        Columns.raw(
+            "message_id, pinned_at, messages!inner(body, sender:profiles!messages_sender_id_fkey(display_name))",
+        ),
     ) {
         filter { eq("conversation_id", conversationId) }
         order("pinned_at", Order.DESCENDING)

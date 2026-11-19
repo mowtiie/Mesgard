@@ -1,6 +1,6 @@
 package com.mowtiie.mesgard.di
 
-import com.mowtiie.mesgard.data.RemotePinRepository
+import com.mowtiie.mesgard.data.OfflineFirstPinRepository
 import com.mowtiie.mesgard.data.remote.PinRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabasePinRemoteSource
 import com.mowtiie.mesgard.domain.repository.PinRepository
@@ -19,5 +19,5 @@ internal interface PinModule {
 
     @Binds
     @Singleton
-    fun bindPinRepository(repository: RemotePinRepository): PinRepository
+    fun bindPinRepository(repository: OfflineFirstPinRepository): PinRepository
 }

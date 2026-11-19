@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.mowtiie.mesgard.domain.model.PinnedMessage
-import com.mowtiie.mesgard.domain.model.PinsOutcome
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.MAX_PINNED_MESSAGES
 import com.mowtiie.mesgard.domain.repository.PinRepository
@@ -43,14 +42,14 @@ internal class PinsViewModel @Inject constructor(
                 mutableUiState.update { it.copy(canPin = canPin) }
             }
         }
+        viewModelScope.launch {
+            repository.observePins(conversationId).collect { pins -> mutableUiState.update { it.copy(pins = pins) } }
+        }
     }
 
+    /** The pins show from the phone at once. A phone without a connection keeps the pins it already has. */
     fun onRefresh() {
-        viewModelScope.launch {
-            // A phone without a connection keeps the pins it already shows.
-            val outcome = repository.fetch(conversationId)
-            if (outcome is PinsOutcome.Loaded) mutableUiState.update { it.copy(pins = outcome.pins) }
-        }
+        viewModelScope.launch { repository.refresh(conversationId) }
     }
 
     fun onPin(messageId: String) {
