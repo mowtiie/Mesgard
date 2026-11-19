@@ -17,6 +17,9 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import java.io.File
 import java.io.IOException
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,6 +33,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 private const val CONVERSATION_ID = "c1"
+private const val NOW = 1_800_000_000_000L
 
 @RunWith(RobolectricTestRunner::class)
 class OfflineFirstMessageActionsRepositoryTest {
@@ -37,7 +41,8 @@ class OfflineFirstMessageActionsRepositoryTest {
     val databaseRule = InMemoryDatabaseRule()
 
     private val remoteSource = mockk<MessageRemoteSource>()
-    private val repository by lazy { OfflineFirstMessageActionsRepository(databaseRule.database, remoteSource) }
+    private val repository by lazy { OfflineFirstMessageActionsRepository(databaseRule.database, remoteSource, clock) }
+    private val clock = Clock.fixed(Instant.ofEpochMilli(NOW), ZoneOffset.UTC)
 
     @Before
     fun storeConversation() = runTest {
@@ -78,6 +83,50 @@ class OfflineFirstMessageActionsRepositoryTest {
 
         assertEquals(RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE), result)
         assertEquals(before, dao.findById("mine")?.body)
+    }
+
+    @Test
+    fun `edit shows the new text before the server answers`() = runTest {
+        val dao = databaseRule.database.messageDao()
+        dao.upsert(messageEntity("mine", CONVERSATION_ID, 1_000L))
+        var shownWhileWaiting: String? = null
+        coEvery { remoteSource.edit("mine", "New text") } coAnswers {
+            shownWhileWaiting = dao.findById("mine")?.body
+            messageDto("mine", CONVERSATION_ID).copy(body = "New text")
+        }
+
+        repository.edit("mine", "New text")
+
+        assertEquals("New text", shownWhileWaiting)
+    }
+
+    @Test
+    fun `edit does not undo a newer change of the message when the server refuses`() = runTest {
+        val dao = databaseRule.database.messageDao()
+        dao.upsert(messageEntity("mine", CONVERSATION_ID, 1_000L))
+        coEvery { remoteSource.edit(any(), any()) } coAnswers {
+            dao.upsert(messageEntity("mine", CONVERSATION_ID, 1_000L).copy(body = "Edited elsewhere"))
+            throw IOException("offline")
+        }
+
+        repository.edit("mine", "New text")
+
+        assertEquals("Edited elsewhere", dao.findById("mine")?.body)
+    }
+
+    @Test
+    fun `delete shows the message as deleted before the server answers`() = runTest {
+        val dao = databaseRule.database.messageDao()
+        dao.upsert(messageEntity("mine", CONVERSATION_ID, 1_000L))
+        var deletedWhileWaiting: Long? = null
+        coEvery { remoteSource.delete("mine") } coAnswers {
+            deletedWhileWaiting = dao.findById("mine")?.deletedAtEpochMillis
+            messageDto("mine", CONVERSATION_ID, deletedAt = "2026-11-18T08:00:00+00:00")
+        }
+
+        repository.delete("mine")
+
+        assertEquals(NOW, deletedWhileWaiting)
     }
 
     @Test

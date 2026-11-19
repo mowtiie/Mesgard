@@ -52,12 +52,12 @@ internal class MessageEditViewModel @Inject constructor(private val repository: 
         val state = mutableUiState.value
         val messageId = state.messageId ?: return
         if (!state.canSave) return
-        mutableUiState.update { it.copy(isSaving = true) }
+        // The new text shows at once. When the server refuses it, the person is back in edit mode with their text.
+        mutableUiState.update { MessageEditUiState() }
         viewModelScope.launch {
-            when (val result = repository.edit(messageId, state.text)) {
-                RefreshResult.Success -> mutableUiState.update { MessageEditUiState() }
-                is RefreshResult.Failure ->
-                    mutableUiState.update { it.copy(isSaving = false, error = result.error.toError()) }
+            val result = repository.edit(messageId, state.text)
+            if (result is RefreshResult.Failure) {
+                mutableUiState.update { state.copy(isSaving = false, error = result.error.toError()) }
             }
         }
     }
