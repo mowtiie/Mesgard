@@ -1,8 +1,8 @@
 package com.mowtiie.mesgard.ui.common
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -15,7 +15,7 @@ import com.mowtiie.mesgard.R
 @Composable
 internal fun SearchAction(onClick: () -> Unit) {
     IconButton(onClick = onClick) {
-        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
+        Icon(Icons.Outlined.Search, contentDescription = stringResource(R.string.search))
     }
 }
 
@@ -24,7 +24,7 @@ internal fun SearchAction(onClick: () -> Unit) {
 internal fun RefreshMenuItem(enabled: Boolean, onClick: () -> Unit) {
     DropdownMenuItem(
         text = { Text(stringResource(R.string.refresh)) },
-        leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) },
+        leadingIcon = { Icon(Icons.Outlined.Refresh, contentDescription = null) },
         enabled = enabled,
         onClick = onClick,
     )

@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.automirrored.outlined.ExitToApp
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -70,19 +70,19 @@ internal fun SettingsScreen(
                 onClick = navigation.onOpenAppearance,
             )
             SettingsCategoryRow(
-                icon = { Icon(Icons.Default.Notifications, contentDescription = null) },
+                icon = { Icon(Icons.Outlined.Notifications, contentDescription = null) },
                 title = R.string.settings_notifications_title,
                 summary = notificationsSummary(uiState.pushDistributorName),
                 onClick = navigation.onOpenNotifications,
             )
             SettingsCategoryRow(
-                icon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                icon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                 title = R.string.settings_privacy_security,
                 summary = stringResource(securitySummary(uiState.settings).text),
                 onClick = navigation.onOpenSecurity,
             )
             SettingsCategoryRow(
-                icon = { Icon(Icons.Default.Info, contentDescription = null) },
+                icon = { Icon(Icons.Outlined.Info, contentDescription = null) },
                 title = R.string.about_title,
                 summary = stringResource(R.string.settings_about_summary, BuildConfig.VERSION_NAME),
                 onClick = navigation.onOpenAbout,
@@ -124,7 +124,7 @@ private fun notificationsSummary(distributorName: String?): String = if (distrib
 private fun SignOutRow(onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
-        leadingContent = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null) },
+        leadingContent = { Icon(Icons.AutoMirrored.Outlined.ExitToApp, contentDescription = null) },
         headlineContent = { Text(stringResource(R.string.sign_out_button)) },
     )
 }

@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,7 +21,7 @@ private val AvatarSize = 48.dp
 internal fun SelectedAvatar(modifier: Modifier = Modifier, size: Dp = AvatarSize) {
     Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary, modifier = modifier.size(size)) {
         Box(contentAlignment = Alignment.Center) {
-            Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+            Icon(Icons.Outlined.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
         }
     }
 }

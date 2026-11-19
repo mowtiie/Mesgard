@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.outlined.Send
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -73,7 +73,7 @@ internal fun MessageComposer(
             )
             FilledIconButton(onClick = onSendClicked, enabled = canSend) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    imageVector = Icons.AutoMirrored.Outlined.Send,
                     contentDescription = stringResource(R.string.send_message),
                 )
             }
@@ -120,7 +120,7 @@ private fun PickedAttachments(attachments: List<PickedAttachment>, onRemoved: (S
                 label = { Text(attachment.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 trailingIcon = {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = Icons.Outlined.Close,
                         contentDescription = stringResource(R.string.remove_attachment, attachment.name),
                         modifier = Modifier.size(RemoveIconSize),
                     )

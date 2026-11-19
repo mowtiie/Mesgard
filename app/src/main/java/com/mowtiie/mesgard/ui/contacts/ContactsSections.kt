@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
@@ -66,6 +66,6 @@ private fun ContactsSection.labelResource(): Int = when (this) {
 
 @Composable
 private fun ContactsSection.icon(): ImageVector = when (this) {
-    ContactsSection.PEOPLE -> Icons.Default.Person
+    ContactsSection.PEOPLE -> Icons.Outlined.Person
     ContactsSection.GROUPS -> ImageVector.vectorResource(R.drawable.ic_group)
 }

@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +46,7 @@ internal fun ReplyBar(target: ReplyTarget, onDrop: () -> Unit, modifier: Modifie
                 )
             }
             IconButton(onClick = onDrop) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.message_reply_cancel))
+                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.message_reply_cancel))
             }
         }
     }

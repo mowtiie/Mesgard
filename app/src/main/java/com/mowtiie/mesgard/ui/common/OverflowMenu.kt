@@ -2,7 +2,7 @@ package com.mowtiie.mesgard.ui.common
 
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,7 +24,7 @@ internal fun OverflowMenu(
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     IconButton(onClick = { isExpanded = true }, modifier = modifier) {
-        Icon(Icons.Default.MoreVert, contentDescription = description)
+        Icon(Icons.Outlined.MoreVert, contentDescription = description)
     }
     DropdownMenu(expanded = isExpanded, onDismissRequest = { isExpanded = false }) {
         content { isExpanded = false }

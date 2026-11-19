@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -92,7 +92,7 @@ internal fun AccountScreen(
         modifier = modifier,
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.navigate_back))
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.navigate_back))
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -109,7 +109,7 @@ internal fun AccountScreen(
                 onClick = onSignOutClicked,
                 modifier = Modifier.fillMaxWidth().padding(ButtonPadding),
             ) {
-                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
+                Icon(Icons.AutoMirrored.Outlined.ExitToApp, contentDescription = null)
                 Text(stringResource(R.string.sign_out_button), modifier = Modifier.padding(start = ButtonPadding / 2))
             }
         }

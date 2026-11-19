@@ -1,7 +1,7 @@
 package com.mowtiie.mesgard.ui.conversation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -49,7 +49,7 @@ internal fun ScrollToLatestButton(unseenCount: Int, onClick: () -> Unit, modifie
                 }
             },
         ) {
-            Icon(imageVector = Icons.Filled.KeyboardArrowDown, contentDescription = null)
+            Icon(imageVector = Icons.Outlined.KeyboardArrowDown, contentDescription = null)
         }
     }
 }

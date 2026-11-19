@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -90,7 +90,7 @@ internal fun AccountDetails(
                 account.email?.let { email ->
                     ListItem(
                         colors = transparentListItemColors(),
-                        leadingContent = { Icon(Icons.Default.Email, contentDescription = null) },
+                        leadingContent = { Icon(Icons.Outlined.Email, contentDescription = null) },
                         overlineContent = { Text(stringResource(R.string.account_email)) },
                         headlineContent = { Text(email) },
                     )
@@ -99,7 +99,7 @@ internal fun AccountDetails(
                 ListItem(
                     modifier = Modifier.clickable(role = Role.Button, onClick = onChangePassword),
                     colors = transparentListItemColors(),
-                    leadingContent = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    leadingContent = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                     headlineContent = { Text(stringResource(R.string.account_change_password)) },
                 )
             }

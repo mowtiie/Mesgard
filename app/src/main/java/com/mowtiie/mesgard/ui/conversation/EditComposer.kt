@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,7 +48,7 @@ internal fun EditComposer(state: MessageEditUiState, actions: EditActions, modif
                 )
                 IconButton(onClick = actions.onCancel, enabled = !state.isSaving) {
                     Icon(
-                        Icons.Default.Close,
+                        Icons.Outlined.Close,
                         contentDescription = stringResource(R.string.message_edit_cancel),
                     )
                 }
@@ -63,7 +63,7 @@ internal fun EditComposer(state: MessageEditUiState, actions: EditActions, modif
                 )
                 FilledIconButton(onClick = actions.onSave, enabled = state.canSave) {
                     Icon(
-                        Icons.Default.Check,
+                        Icons.Outlined.Check,
                         contentDescription = stringResource(R.string.message_edit_save),
                     )
                 }

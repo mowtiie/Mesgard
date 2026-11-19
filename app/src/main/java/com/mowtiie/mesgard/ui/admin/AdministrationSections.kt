@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -41,7 +41,7 @@ internal fun QuickActions(navigation: AdminNavigation) {
         horizontalArrangement = Arrangement.spacedBy(ButtonSpacing),
     ) {
         FilledTonalButton(onClick = navigation.onAddMember, modifier = Modifier.weight(1f)) {
-            Icon(Icons.Default.Add, contentDescription = null)
+            Icon(Icons.Outlined.Add, contentDescription = null)
             Text(stringResource(R.string.members_add), modifier = Modifier.padding(start = ButtonSpacing))
         }
         FilledTonalButton(onClick = navigation.onImportMembers, modifier = Modifier.weight(1f)) {
@@ -54,13 +54,13 @@ internal fun QuickActions(navigation: AdminNavigation) {
 internal fun ManageSection(uiState: AdministrationUiState, navigation: AdminNavigation) {
     SectionHeading(R.string.admin_section_manage)
     ManageRow(
-        icon = { Icon(Icons.Default.Person, contentDescription = null) },
+        icon = { Icon(Icons.Outlined.Person, contentDescription = null) },
         title = R.string.members_title,
         summary = membersSummary(uiState),
         onClick = navigation.onOpenMembers,
     )
     ManageRow(
-        icon = { Icon(Icons.Default.AccountCircle, contentDescription = null) },
+        icon = { Icon(Icons.Outlined.AccountCircle, contentDescription = null) },
         title = R.string.former_members_title,
         summary = stringResource(R.string.settings_former_members_summary),
         onClick = navigation.onOpenFormerMembers,
@@ -73,7 +73,7 @@ internal fun ManageSection(uiState: AdministrationUiState, navigation: AdminNavi
         onClick = navigation.onOpenGroups,
     )
     ManageRow(
-        icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
+        icon = { Icon(Icons.AutoMirrored.Outlined.List, contentDescription = null) },
         title = R.string.audit_title,
         summary = stringResource(R.string.settings_audit_summary),
         onClick = navigation.onOpenAuditLog,

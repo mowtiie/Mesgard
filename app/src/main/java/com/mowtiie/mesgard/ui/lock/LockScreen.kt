@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -71,7 +71,7 @@ internal fun LockScreen(onUnlockClicked: () -> Unit, modifier: Modifier = Modifi
             verticalArrangement = Arrangement.spacedBy(ContentSpacing, Alignment.CenterVertically),
         ) {
             Icon(
-                imageVector = Icons.Filled.Lock,
+                imageVector = Icons.Outlined.Lock,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(IconSize),

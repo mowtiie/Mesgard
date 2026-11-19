@@ -17,7 +17,7 @@ internal fun ArchivedRow(count: Int, onClick: () -> Unit) {
         modifier = androidx.compose.ui.Modifier.clickable(onClick = onClick),
         leadingContent = {
             Icon(
-                painter = painterResource(R.drawable.ic_archive),
+                painter = painterResource(R.drawable.ic_archive_outline),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )

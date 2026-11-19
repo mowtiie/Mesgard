@@ -291,7 +291,7 @@ private fun ContactRow(
                 if (contact.userId in uiState.onlineUserIds) OnlineLabel()
                 if (contact.isFavorite) {
                     Icon(
-                        Icons.Default.Star,
+                        Icons.Filled.Star,
                         contentDescription = stringResource(R.string.contact_favorite),
                         tint = MaterialTheme.colorScheme.primary,
                     )

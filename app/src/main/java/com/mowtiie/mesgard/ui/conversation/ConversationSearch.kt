@@ -1,7 +1,7 @@
 package com.mowtiie.mesgard.ui.conversation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -26,7 +26,7 @@ internal data class ConversationSearch(
 @Composable
 internal fun ConversationBarActions(isMuted: Boolean, onSearch: () -> Unit, onMuteChanged: (Boolean) -> Unit) {
     IconButton(onClick = onSearch) {
-        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.conversation_search))
+        Icon(Icons.Outlined.Search, contentDescription = stringResource(R.string.conversation_search))
     }
     OverflowMenu { dismiss ->
         MuteMenuItem(isMuted) {

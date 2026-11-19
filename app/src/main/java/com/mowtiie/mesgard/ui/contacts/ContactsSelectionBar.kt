@@ -2,9 +2,9 @@ package com.mowtiie.mesgard.ui.contacts
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -36,14 +36,14 @@ internal fun ContactsSelectionBar(
         title = { Text(pluralStringResource(R.plurals.selection_count, count, count)) },
         navigationIcon = {
             IconButton(onClick = callbacks.onClose) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.selection_close))
+                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.selection_close))
             }
         },
         actions = {
             state.single?.let { person ->
                 IconButton(onClick = { callbacks.onMessage(person) }) {
                     Icon(
-                        Icons.AutoMirrored.Filled.Send,
+                        Icons.AutoMirrored.Outlined.Send,
                         contentDescription = stringResource(R.string.conversation_start),
                     )
                 }
@@ -68,7 +68,7 @@ internal fun ContactsSelectionBar(
 private fun FavoriteButton(removes: Boolean, onClick: () -> Unit) {
     IconButton(onClick = onClick) {
         if (removes) {
-            Icon(Icons.Default.Star, contentDescription = stringResource(R.string.contact_unfavorite))
+            Icon(Icons.Filled.Star, contentDescription = stringResource(R.string.contact_unfavorite))
         } else {
             Icon(
                 painterResource(R.drawable.ic_star_outline),

@@ -2,8 +2,8 @@ package com.mowtiie.mesgard.ui.chats
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,14 +38,14 @@ internal fun SelectionAppBar(
         title = { Text(pluralStringResource(R.plurals.selection_count, count, count)) },
         navigationIcon = {
             IconButton(onClick = callbacks.onClose) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.selection_close))
+                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.selection_close))
             }
         },
         actions = {
             if (state.actions.archive == ArchiveAction.ARCHIVE) PinButton(state.actions.pin, callbacks.onPin)
             ArchiveButton(state.actions.archive, callbacks.onArchive)
             IconButton(onClick = callbacks.onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.conversation_delete))
+                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.conversation_delete))
             }
             OverflowMenu { dismiss ->
                 MuteItem(state.actions.mute) {
@@ -85,9 +85,9 @@ private fun PinButton(action: PinAction, onClick: () -> Unit) {
 private fun ArchiveButton(action: ArchiveAction, onClick: () -> Unit) {
     IconButton(onClick = onClick) {
         if (action == ArchiveAction.ARCHIVE) {
-            Icon(painterResource(R.drawable.ic_archive), stringResource(R.string.conversation_archive))
+            Icon(painterResource(R.drawable.ic_archive_outline), stringResource(R.string.conversation_archive))
         } else {
-            Icon(painterResource(R.drawable.ic_unarchive), stringResource(R.string.conversation_unarchive))
+            Icon(painterResource(R.drawable.ic_unarchive_outline), stringResource(R.string.conversation_unarchive))
         }
     }
 }
