@@ -9,6 +9,9 @@ import com.mowtiie.mesgard.data.remote.toContact
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.remote.toRefreshResult
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.MAX_FAVORITE_CONTACTS
+import com.mowtiie.mesgard.domain.model.PreferenceError
+import com.mowtiie.mesgard.domain.model.PreferenceResult
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.StartConversationResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
@@ -32,7 +35,9 @@ internal class OfflineFirstContactRepository @Inject constructor(
         contactDao.observeAll().map { contacts -> contacts.map { it.toContact() } }
 
     override suspend fun refresh(): RefreshResult = attemptRemote(TAG) {
-        val contacts = remoteSource.fetchContacts(authRepository.currentUserId).map { it.toEntity() }
+        val userId = authRepository.currentUserId
+        val favoriteIds = remoteSource.fetchFavoriteIds(userId)
+        val contacts = remoteSource.fetchContacts(userId).map { it.toEntity(isFavorite = it.userId in favoriteIds) }
         database.withTransaction {
             contactDao.deleteAll()
             contactDao.upsertAll(contacts)
@@ -44,6 +49,46 @@ internal class OfflineFirstContactRepository @Inject constructor(
         return when (created) {
             is RemoteOutcome.Failure -> StartConversationResult.Failure(created.error)
             is RemoteOutcome.Success -> openCreated(created.value)
+        }
+    }
+
+    override suspend fun setFavorite(contacts: Set<Contact>, favorite: Boolean): PreferenceResult {
+        val userId = authRepository.currentUserId
+        val changed = contacts.filter { it.isFavorite != favorite }
+        return when {
+            userId == null -> PreferenceResult.Failure(PreferenceError.UNKNOWN)
+            changed.isEmpty() -> PreferenceResult.Success
+            favorite && contactDao.countFavorites() + changed.size > MAX_FAVORITE_CONTACTS ->
+                PreferenceResult.Failure(PreferenceError.TOO_MANY_FAVORITES)
+            else -> applyFavorite(userId, changed.groupBy({ it.orgId }, { it.userId }), favorite)
+        }
+    }
+
+    private suspend fun applyFavorite(
+        userId: String,
+        idsByOrganization: Map<String, List<String>>,
+        favorite: Boolean,
+    ): PreferenceResult {
+        idsByOrganization.forEach { (orgId, ids) -> contactDao.updateFavorite(orgId, ids, favorite) }
+        val outcome = attemptRemote(TAG) {
+            idsByOrganization.forEach { (orgId, ids) ->
+                if (favorite) {
+                    remoteSource.addFavorites(
+                        orgId,
+                        userId,
+                        ids,
+                    )
+                } else {
+                    remoteSource.removeFavorites(orgId, userId, ids)
+                }
+            }
+        }
+        return when (outcome) {
+            is RemoteOutcome.Success -> PreferenceResult.Success
+            is RemoteOutcome.Failure -> {
+                idsByOrganization.forEach { (orgId, ids) -> contactDao.updateFavorite(orgId, ids, !favorite) }
+                PreferenceResult.Failure(outcome.error.toPreferenceError())
+            }
         }
     }
 

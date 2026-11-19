@@ -73,6 +73,30 @@ class ContactsViewModelTest {
     }
 
     @Test
+    fun `shows the favorites while nothing is typed, instead of the search prompt`() = runTest {
+        contacts.value = listOf(ana.copy(isFavorite = true), Contact("org", "ben", "Ben Cruz", OrgRole.MEMBER))
+
+        viewModel().uiState.test {
+            val state = expectMostRecentItem()
+            assertEquals(listOf("Ana"), state.favorites.map { it.displayName })
+            assertTrue(state.showFavorites)
+            assertFalse(state.showSearchPrompt)
+        }
+    }
+
+    @Test
+    fun `hides the favorites once a name is typed`() = runTest {
+        contacts.value = listOf(ana.copy(isFavorite = true))
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onQueryChanged("an")
+            assertFalse(awaitItem().showFavorites)
+        }
+    }
+
+    @Test
     fun `finds a person by typing part of the name`() = runTest {
         contacts.value = listOf(ana)
         val viewModel = viewModel()

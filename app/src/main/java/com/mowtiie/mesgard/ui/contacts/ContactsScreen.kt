@@ -2,13 +2,18 @@ package com.mowtiie.mesgard.ui.contacts
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -21,8 +26,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
@@ -165,21 +172,14 @@ internal fun ContactList(
             item(key = "no-results") { NoResultsState(Modifier.fillParentMaxSize()) }
         }
         if (section == ContactsSection.PEOPLE) {
+            if (uiState.showFavorites) {
+                item(key = "favorites-header") { FavoritesHeader() }
+                items(uiState.favorites, key = { "favorite:${it.orgId}:${it.userId}" }) { contact ->
+                    ContactRow(contact, uiState, onContactClicked)
+                }
+            }
             items(uiState.contacts, key = { "contact:${it.orgId}:${it.userId}" }) { contact ->
-                ListItem(
-                    modifier = Modifier.clickable(
-                        enabled = !uiState.isStartingConversation,
-                        onClickLabel = stringResource(R.string.conversation_start),
-                    ) { onContactClicked(contact) },
-                    leadingContent = { InitialAvatar(contact.displayName) },
-                    headlineContent = { Text(contact.displayName) },
-                    supportingContent = { Text(stringResource(contact.role.labelResource())) },
-                    trailingContent = if (contact.userId in uiState.onlineUserIds) {
-                        { OnlineLabel() }
-                    } else {
-                        null
-                    },
-                )
+                ContactRow(contact, uiState, onContactClicked)
             }
         } else {
             items(uiState.groups, key = { "group:${it.id}" }) { group ->
@@ -202,6 +202,41 @@ private fun ContactsError.messageResource(): Int = when (this) {
     ContactsError.REFRESH_UNKNOWN -> R.string.refresh_error_unknown
     ContactsError.START_NETWORK_UNAVAILABLE -> R.string.start_conversation_error_network_unavailable
     ContactsError.START_UNKNOWN -> R.string.start_conversation_error_unknown
+}
+
+@Composable
+private fun FavoritesHeader() {
+    Text(
+        text = stringResource(R.string.contacts_favorites),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    )
+}
+
+@Composable
+private fun ContactRow(contact: Contact, uiState: ContactsUiState, onContactClicked: (Contact) -> Unit) {
+    ListItem(
+        modifier = Modifier.clickable(
+            enabled = !uiState.isStartingConversation,
+            onClickLabel = stringResource(R.string.conversation_start),
+        ) { onContactClicked(contact) },
+        leadingContent = { InitialAvatar(contact.displayName) },
+        headlineContent = { Text(contact.displayName) },
+        supportingContent = { Text(stringResource(contact.role.labelResource())) },
+        trailingContent = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (contact.userId in uiState.onlineUserIds) OnlineLabel()
+                if (contact.isFavorite) {
+                    Icon(
+                        Icons.Default.Star,
+                        contentDescription = stringResource(R.string.contact_favorite),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        },
+    )
 }
 
 @Composable

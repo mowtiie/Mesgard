@@ -46,6 +46,7 @@ internal class ContactsViewModel @Inject constructor(
                     matchesQuery(it.displayName, local.query)
                 }
             },
+            favorites = allContacts.filter { it.isFavorite },
             groups = startableGroups.filter { matchesQuery(it.name, local.query) },
             totalContacts = allContacts.size,
             totalGroups = startableGroups.size,

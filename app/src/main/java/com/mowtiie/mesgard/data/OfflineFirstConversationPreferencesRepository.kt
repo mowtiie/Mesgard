@@ -123,7 +123,7 @@ private fun deleteChanges(hiddenAt: Long): JsonObject = JsonObject(
 private fun timestamp(epochMillis: Long?): JsonElement =
     epochMillis?.let { JsonPrimitive(Instant.ofEpochMilli(it).toString()) } ?: JsonNull
 
-private fun RefreshError.toPreferenceError() = when (this) {
+internal fun RefreshError.toPreferenceError() = when (this) {
     RefreshError.NETWORK_UNAVAILABLE -> PreferenceError.NETWORK_UNAVAILABLE
     RefreshError.UNKNOWN -> PreferenceError.UNKNOWN
 }

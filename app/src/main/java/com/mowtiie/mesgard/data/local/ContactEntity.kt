@@ -9,4 +9,5 @@ internal data class ContactEntity(
     @ColumnInfo(name = "user_id") val userId: String,
     @ColumnInfo(name = "display_name") val displayName: String,
     val role: String,
+    @ColumnInfo(name = "is_favorite", defaultValue = "0") val isFavorite: Boolean = false,
 )

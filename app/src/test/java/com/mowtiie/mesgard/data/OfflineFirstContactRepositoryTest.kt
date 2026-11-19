@@ -2,8 +2,11 @@ package com.mowtiie.mesgard.data
 
 import app.cash.turbine.test
 import com.mowtiie.mesgard.data.remote.ContactRemoteSource
+import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.domain.model.PreferenceError
+import com.mowtiie.mesgard.domain.model.PreferenceResult
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.StartConversationResult
@@ -20,6 +23,8 @@ import io.mockk.mockk
 import java.io.IOException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,13 +35,65 @@ class OfflineFirstContactRepositoryTest {
     @get:Rule
     val databaseRule = InMemoryDatabaseRule()
 
-    private val remoteSource = mockk<ContactRemoteSource>()
+    private val remoteSource = mockk<ContactRemoteSource>(relaxed = true) {
+        coEvery { fetchFavoriteIds(any()) } returns emptySet()
+    }
     private val conversationRepository = mockk<ConversationRepository>()
     private val authRepository = mockk<AuthRepository> { every { currentUserId } returns CURRENT_USER_ID }
     private val repository by lazy {
         OfflineFirstContactRepository(databaseRule.database, remoteSource, conversationRepository, authRepository)
     }
     private val ana = Contact(TEST_ORG_ID, "ana", "Ana", OrgRole.STAFF)
+
+    @Test
+    fun `refreshing marks the people on the favorites list`() = runTest {
+        coEvery { remoteSource.fetchContacts(CURRENT_USER_ID) } returns listOf(contactDto("ana"), contactDto("ben"))
+        coEvery { remoteSource.fetchFavoriteIds(CURRENT_USER_ID) } returns setOf("ben")
+
+        repository.refresh()
+
+        repository.observeContacts().test {
+            assertEquals(listOf(false, true), awaitItem().map { it.isFavorite })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `favoriting is applied at once and sent to the server`() = runTest {
+        databaseRule.database.contactDao().upsertAll(listOf(contactDto("ana").toEntity()))
+
+        val result = repository.setFavorite(setOf(ana), true)
+
+        assertEquals(PreferenceResult.Success, result)
+        coVerify { remoteSource.addFavorites(TEST_ORG_ID, CURRENT_USER_ID, listOf("ana")) }
+        repository.observeContacts().test {
+            assertTrue(awaitItem().single().isFavorite)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a refused favorite is taken back`() = runTest {
+        databaseRule.database.contactDao().upsertAll(listOf(contactDto("ana").toEntity()))
+        coEvery { remoteSource.addFavorites(any(), any(), any()) } throws IOException("offline")
+
+        val result = repository.setFavorite(setOf(ana), true)
+
+        assertEquals(PreferenceResult.Failure(PreferenceError.NETWORK_UNAVAILABLE), result)
+        repository.observeContacts().test {
+            assertFalse(awaitItem().single().isFavorite)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `removing a favorite is sent to the server`() = runTest {
+        databaseRule.database.contactDao().upsertAll(listOf(contactDto("ana").toEntity(isFavorite = true)))
+
+        repository.setFavorite(setOf(ana.copy(isFavorite = true)), false)
+
+        coVerify { remoteSource.removeFavorites(TEST_ORG_ID, CURRENT_USER_ID, listOf("ana")) }
+    }
 
     @Test
     fun `refresh stores the roster without the current user`() = runTest {

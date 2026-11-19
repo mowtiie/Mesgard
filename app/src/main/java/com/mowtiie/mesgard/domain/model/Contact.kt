@@ -7,7 +7,13 @@ internal enum class OrgRole {
     OTHER,
 }
 
-internal data class Contact(val orgId: String, val userId: String, val displayName: String, val role: OrgRole)
+internal data class Contact(
+    val orgId: String,
+    val userId: String,
+    val displayName: String,
+    val role: OrgRole,
+    val isFavorite: Boolean = false,
+)
 
 internal sealed interface StartConversationResult {
     data class Started(val conversationId: String) : StartConversationResult

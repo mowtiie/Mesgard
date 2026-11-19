@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.domain.repository
 
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.PreferenceResult
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.StartConversationResult
 import kotlinx.coroutines.flow.Flow
@@ -14,4 +15,7 @@ internal interface ContactRepository {
     suspend fun refresh(): RefreshResult
 
     suspend fun startDirectConversation(contact: Contact): StartConversationResult
+
+    /** Adds or removes favorites on the phone first, then on the server, and puts them back when it refuses. */
+    suspend fun setFavorite(contacts: Set<Contact>, favorite: Boolean): PreferenceResult
 }

@@ -22,6 +22,7 @@ internal enum class ContactsSection {
  */
 internal data class ContactsUiState(
     val contacts: List<Contact> = emptyList(),
+    val favorites: List<Contact> = emptyList(),
     val groups: List<Group> = emptyList(),
     val totalContacts: Int = 0,
     val totalGroups: Int = 0,
@@ -46,8 +47,16 @@ internal data class ContactsUiState(
     val showSearch: Boolean
         get() = totalContacts > 0 || totalGroups > 0 || isFiltering
 
+    /** While nothing is typed, the people on the favorites list are shown, so the common ones are one tap away. */
+    val showFavorites: Boolean
+        get() = !isFiltering && favorites.isNotEmpty() && section == ContactsSection.PEOPLE
+
     val showSearchPrompt: Boolean
-        get() = isLoaded && totalContacts > 0 && !isFiltering && section == ContactsSection.PEOPLE
+        get() = isLoaded &&
+            totalContacts > 0 &&
+            !isFiltering &&
+            favorites.isEmpty() &&
+            section == ContactsSection.PEOPLE
 
     val showEmptyMessage: Boolean
         get() = isLoaded && totalContacts == 0 && !isRefreshing && section == ContactsSection.PEOPLE

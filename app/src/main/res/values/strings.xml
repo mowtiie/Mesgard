@@ -392,6 +392,7 @@
         <item quantity="one">%d selected</item>
         <item quantity="other">%d selected</item>
     </plurals>
+    <string name="preference_error_too_many_favorites">You can have up to 50 favorites.</string>
     <string name="preference_error_too_many_pinned">You can pin up to 3 conversations.</string>
     <string name="message_delete_title">Delete this message?</string>
     <string name="message_delete_text">It is removed for everyone in the conversation. Administrators of your organization can still read the original.</string>
@@ -424,6 +425,8 @@
     <string name="contacts_section_people">People</string>
     <string name="contacts_section_groups">Groups</string>
     <string name="contacts_search_placeholder">Search by name</string>
+    <string name="contacts_favorites">Favorites</string>
+    <string name="contact_favorite">Favorite</string>
     <string name="contacts_search_prompt">Search for a person</string>
     <string name="contacts_search_prompt_hint">Type a name to find someone and start a conversation.</string>
     <string name="chats_search_placeholder">Search conversations</string>
