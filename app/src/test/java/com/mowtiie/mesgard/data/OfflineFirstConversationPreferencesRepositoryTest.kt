@@ -3,7 +3,6 @@ package com.mowtiie.mesgard.data
 import com.mowtiie.mesgard.data.remote.ConversationPreferencesRemoteSource
 import com.mowtiie.mesgard.domain.model.PreferenceError
 import com.mowtiie.mesgard.domain.model.PreferenceResult
-import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.MessageRepository
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
@@ -37,7 +36,7 @@ class OfflineFirstConversationPreferencesRepositoryTest {
     private val remote = mockk<ConversationPreferencesRemoteSource>(relaxed = true)
     private val authRepository = mockk<AuthRepository> { every { currentUserId } returns "me" }
     private val messageRepository = mockk<MessageRepository> {
-        coEvery { markConversationRead(any()) } returns RefreshResult.Success
+        coEvery { markConversationRead(any()) } returns Unit
     }
     private val repository by lazy {
         OfflineFirstConversationPreferencesRepository(databaseRule.database, remote, authRepository, messageRepository)

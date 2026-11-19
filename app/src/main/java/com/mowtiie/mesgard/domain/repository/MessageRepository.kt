@@ -32,5 +32,6 @@ internal interface MessageRepository {
     /** Removes a message that failed to send, with its attachment files. Other messages are left alone. */
     suspend fun discard(messageId: String)
 
-    suspend fun markConversationRead(conversationId: String): RefreshResult
+    /** Clears the unread count at once and tells the server when there is a connection, even after a restart. */
+    suspend fun markConversationRead(conversationId: String)
 }

@@ -68,7 +68,7 @@ class ConversationViewModelTest {
             list.firstOrNull { !it.isOwn && it.status == MessageStatus.SENT }?.id
         }
         coEvery { refresh(CONVERSATION_ID) } returns RefreshResult.Success
-        coEvery { markConversationRead(CONVERSATION_ID) } returns RefreshResult.Success
+        coEvery { markConversationRead(CONVERSATION_ID) } returns Unit
     }
 
     @Test

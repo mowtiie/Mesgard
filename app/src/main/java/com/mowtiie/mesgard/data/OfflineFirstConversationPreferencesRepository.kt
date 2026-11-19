@@ -10,7 +10,6 @@ import com.mowtiie.mesgard.domain.model.MAX_PINNED_CONVERSATIONS
 import com.mowtiie.mesgard.domain.model.PreferenceError
 import com.mowtiie.mesgard.domain.model.PreferenceResult
 import com.mowtiie.mesgard.domain.model.RefreshError
-import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ConversationPreferencesRepository
 import com.mowtiie.mesgard.domain.repository.MessageRepository
@@ -63,11 +62,8 @@ internal class OfflineFirstConversationPreferencesRepository @Inject constructor
             dao.updateMarkedUnread(conversationIds.toList(), false)
         }
         if (flagResult is PreferenceResult.Failure) return flagResult
-        val failure = conversationIds
-            .map { messageRepository.markConversationRead(it) }
-            .filterIsInstance<RefreshResult.Failure>()
-            .firstOrNull()
-        return failure?.let { PreferenceResult.Failure(it.error.toPreferenceError()) } ?: PreferenceResult.Success
+        conversationIds.forEach { messageRepository.markConversationRead(it) }
+        return PreferenceResult.Success
     }
 
     override suspend fun deleteForMe(conversationIds: Set<String>): PreferenceResult {

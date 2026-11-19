@@ -38,7 +38,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 
 private const val TAG = "MessageRepository"
@@ -152,14 +151,9 @@ internal class OfflineFirstMessageRepository @Inject constructor(
         if (messageDao.deleteFailed(messageId) > 0) localPaths.forEach { File(it).delete() }
     }
 
-    override suspend fun markConversationRead(conversationId: String): RefreshResult {
+    override suspend fun markConversationRead(conversationId: String) {
         conversationDao.clearUnreadCount(conversationId)
-        val newestIncomingId = authRepository.currentUserId
-            ?.let { messageDao.observeNewestIncomingId(conversationId, it).first() }
-        if (newestIncomingId == null) return RefreshResult.Success
-        return attemptRemote(TAG) {
-            remoteSource.markConversationRead(conversationId, newestIncomingId)
-        }.toRefreshResult()
+        sendScheduler.scheduleReadMarker(conversationId)
     }
 
     private suspend fun storeLatestPage(conversationId: String, page: List<MessageDto>) {

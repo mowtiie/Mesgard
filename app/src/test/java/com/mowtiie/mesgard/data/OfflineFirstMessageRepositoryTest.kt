@@ -28,7 +28,6 @@ import com.mowtiie.mesgard.testing.conversationEntity
 import com.mowtiie.mesgard.testing.messageDto
 import com.mowtiie.mesgard.testing.messageEntity
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -411,22 +410,13 @@ class OfflineFirstMessageRepositoryTest {
     }
 
     @Test
-    fun `markConversationRead clears the unread count and reports the newest incoming message`() = runTest {
+    fun `markConversationRead clears the unread count and queues the read marker`() = runTest {
         databaseRule.database.conversationDao()
             .upsertAll(listOf(conversationEntity(CONVERSATION_ID, unreadCount = 3)))
-        databaseRule.database.messageDao().upsertAll(
-            listOf(
-                messageEntity("old", CONVERSATION_ID, 1_000L),
-                messageEntity("new", CONVERSATION_ID, 2_000L),
-                messageEntity("mine", CONVERSATION_ID, 3_000L).copy(senderId = CURRENT_USER_ID),
-            ),
-        )
-        coEvery { remoteSource.markConversationRead(any(), any()) } returns Unit
 
-        val result = repository.markConversationRead(CONVERSATION_ID)
+        repository.markConversationRead(CONVERSATION_ID)
 
-        assertEquals(RefreshResult.Success, result)
-        coVerify { remoteSource.markConversationRead(CONVERSATION_ID, "new") }
+        verify { sendScheduler.scheduleReadMarker(CONVERSATION_ID) }
         databaseRule.database.conversationDao().observeById(CONVERSATION_ID).test {
             assertEquals(0, awaitItem()?.unreadCount)
             cancelAndIgnoreRemainingEvents()
@@ -444,28 +434,6 @@ class OfflineFirstMessageRepositoryTest {
             dao.upsert(messageEntity("new", CONVERSATION_ID, 2_000L))
             assertEquals("new", awaitItem())
         }
-    }
-
-    @Test
-    fun `markConversationRead does not call the server when there is no incoming message`() = runTest {
-        databaseRule.database.messageDao()
-            .upsert(messageEntity("mine", CONVERSATION_ID, 1_000L).copy(senderId = CURRENT_USER_ID))
-
-        val result = repository.markConversationRead(CONVERSATION_ID)
-
-        assertEquals(RefreshResult.Success, result)
-        coVerify(exactly = 0) { remoteSource.markConversationRead(any(), any()) }
-    }
-
-    @Test
-    fun `markConversationRead reports a network failure`() = runTest {
-        databaseRule.database.messageDao().upsert(messageEntity("new", CONVERSATION_ID, 2_000L))
-        coEvery { remoteSource.markConversationRead(any(), any()) } throws IOException("offline")
-
-        assertEquals(
-            RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE),
-            repository.markConversationRead(CONVERSATION_ID),
-        )
     }
 
     @Test
