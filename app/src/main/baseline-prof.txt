@@ -1,0 +1,33 @@
+# Baseline profile: the code that runs while the app starts and while chatting, so it is compiled ahead of time.
+# The APK is installed from GitHub, not from Play, so androidx.profileinstaller applies this file on first launch.
+# Hand written with wildcards. Replace it with a generated profile (a macrobenchmark on a device) when one exists.
+
+# Application, activity and the root composable
+HSPLcom/mowtiie/mesgard/MesgardApplication;->**(**)**
+HSPLcom/mowtiie/mesgard/MainActivity;->**(**)**
+HSPLcom/mowtiie/mesgard/ui/MesgardApp**;->**(**)**
+
+# Navigation, theme and shared composables
+HSPLcom/mowtiie/mesgard/ui/navigation/**;->**(**)**
+HSPLcom/mowtiie/mesgard/ui/theme/**;->**(**)**
+HSPLcom/mowtiie/mesgard/ui/common/**;->**(**)**
+HSPLcom/mowtiie/mesgard/ui/connectivity/**;->**(**)**
+
+# The two screens used all day: the conversation list and the conversation
+HSPLcom/mowtiie/mesgard/ui/chats/**;->**(**)**
+HSPLcom/mowtiie/mesgard/ui/conversation/**;->**(**)**
+
+# Local data, repositories and realtime sync
+HSPLcom/mowtiie/mesgard/data/local/**;->**(**)**
+HSPLcom/mowtiie/mesgard/data/OfflineFirst**;->**(**)**
+HSPLcom/mowtiie/mesgard/data/sync/**;->**(**)**
+HSPLcom/mowtiie/mesgard/data/remote/**;->**(**)**
+HSPLcom/mowtiie/mesgard/domain/model/**;->**(**)**
+
+# Classes, so they are loaded and verified before first use
+Lcom/mowtiie/mesgard/MesgardApplication;
+Lcom/mowtiie/mesgard/MainActivity;
+Lcom/mowtiie/mesgard/ui/navigation/**;
+Lcom/mowtiie/mesgard/ui/chats/**;
+Lcom/mowtiie/mesgard/ui/conversation/**;
+Lcom/mowtiie/mesgard/data/local/**;
