@@ -1,12 +1,19 @@
 package com.mowtiie.mesgard.ui.chats
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,19 +36,35 @@ import com.mowtiie.mesgard.ui.common.fallbackTitleResource
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val MutedIconSize = 16.dp
+private val SelectedAvatarSize = 48.dp
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun ConversationRow(
     conversation: ConversationSummary,
     nowEpochMillis: Long,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    onLongClick: () -> Unit = {},
 ) {
     val title = conversation.title ?: stringResource(conversation.type.fallbackTitleResource())
-    val hasUnread = conversation.unreadCount > 0
+    val hasUnread = conversation.hasUnread
     ListItem(
-        modifier = modifier.clickable(onClickLabel = stringResource(R.string.conversation_open), onClick = onClick),
-        leadingContent = { InitialAvatar(title) },
+        modifier = modifier
+            .combinedClickable(
+                onClickLabel = stringResource(R.string.conversation_open),
+                onLongClickLabel = stringResource(R.string.selection_select),
+                onLongClick = onLongClick,
+                onClick = onClick,
+            )
+            .semantics { selected = isSelected },
+        colors = if (isSelected) {
+            ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        } else {
+            ListItemDefaults.colors()
+        },
+        leadingContent = { if (isSelected) SelectedAvatar() else InitialAvatar(title) },
         headlineContent = {
             Text(
                 text = title,
@@ -85,11 +109,34 @@ private fun MutedIcon() {
     )
 }
 
+/** A conversation marked as unread has no count, so its badge is a plain dot. */
 @Composable
 private fun UnreadBadge(count: Int) {
+    if (count == 0) {
+        val description = stringResource(R.string.conversation_marked_unread)
+        Badge(modifier = Modifier.semantics { contentDescription = description })
+        return
+    }
     val description = pluralStringResource(R.plurals.conversation_unread_messages, count, count)
     Badge(modifier = Modifier.semantics { contentDescription = description }) {
         Text(formatUnreadCount(count))
+    }
+}
+
+@Composable
+private fun SelectedAvatar() {
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.size(SelectedAvatarSize),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary,
+            )
+        }
     }
 }
 

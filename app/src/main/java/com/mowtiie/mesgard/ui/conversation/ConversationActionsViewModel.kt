@@ -7,6 +7,7 @@ import androidx.navigation.toRoute
 import com.mowtiie.mesgard.domain.model.MessageReader
 import com.mowtiie.mesgard.domain.model.ReadersResult
 import com.mowtiie.mesgard.domain.model.RefreshResult
+import com.mowtiie.mesgard.domain.repository.ConversationPreferencesRepository
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MessageActionsRepository
 import com.mowtiie.mesgard.ui.navigation.ConversationRoute
@@ -15,6 +16,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -39,6 +41,7 @@ internal class ConversationActionsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val messageActions: MessageActionsRepository,
     private val conversationRepository: ConversationRepository,
+    private val preferences: ConversationPreferencesRepository,
 ) : ViewModel() {
     private val conversationId = savedStateHandle.toRoute<ConversationRoute>().conversationId
     private val mutableUiState = MutableStateFlow(ConversationActionsUiState())
@@ -69,6 +72,14 @@ internal class ConversationActionsViewModel @Inject constructor(
 
     fun onMuteChanged(muted: Boolean) {
         viewModelScope.launch { report(conversationRepository.setMuted(conversationId, muted)) }
+    }
+
+    /** Opening a conversation that was marked as unread reads it. */
+    fun onOpened() {
+        viewModelScope.launch {
+            val conversation = conversationRepository.observeConversation(conversationId).first()
+            if (conversation?.isMarkedUnread == true) preferences.markRead(setOf(conversationId))
+        }
     }
 
     fun onErrorShown() = mutableUiState.update { it.copy(error = null) }

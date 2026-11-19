@@ -359,6 +359,17 @@
     <string name="conversation_mute">Mute notifications</string>
     <string name="conversation_unmute">Unmute notifications</string>
     <string name="conversation_muted">Notifications muted</string>
+    <string name="conversation_mark_read">Mark as read</string>
+    <string name="conversation_mark_unread">Mark as unread</string>
+    <string name="conversation_marked_unread">Marked as unread</string>
+    <string name="selection_select">Select</string>
+    <string name="selection_select_all">Select all</string>
+    <string name="selection_close">Clear selection</string>
+    <plurals name="selection_count">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <string name="preference_error_too_many_pinned">You can pin up to 3 conversations.</string>
     <string name="message_delete_title">Delete this message?</string>
     <string name="message_delete_text">It is removed for everyone in the conversation. Administrators of your organization can still read the original.</string>
     <string name="conversation_empty">No messages yet</string>

@@ -1,16 +1,21 @@
 package com.mowtiie.mesgard.ui.conversation
 
 import androidx.lifecycle.SavedStateHandle
+import com.mowtiie.mesgard.domain.model.ConversationSummary
+import com.mowtiie.mesgard.domain.model.ConversationType
 import com.mowtiie.mesgard.domain.model.MessageReader
 import com.mowtiie.mesgard.domain.model.ReadersResult
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
+import com.mowtiie.mesgard.domain.repository.ConversationPreferencesRepository
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MessageActionsRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -26,13 +31,44 @@ class ConversationActionsViewModelTest {
 
     private val repository = mockk<MessageActionsRepository>()
     private val conversationRepository = mockk<ConversationRepository>()
+    private val preferences = mockk<ConversationPreferencesRepository>(relaxed = true)
     private val viewModel by lazy {
         ConversationActionsViewModel(
             SavedStateHandle(mapOf("conversationId" to "c1")),
             repository,
             conversationRepository,
+            preferences,
         )
     }
+
+    @Test
+    fun `opening a conversation marked as unread reads it`() = runTest {
+        every { conversationRepository.observeConversation("c1") } returns flowOf(summary(isMarkedUnread = true))
+
+        viewModel.onOpened()
+
+        coVerify { preferences.markRead(setOf("c1")) }
+    }
+
+    @Test
+    fun `opening an ordinary conversation changes nothing`() = runTest {
+        every { conversationRepository.observeConversation("c1") } returns flowOf(summary(isMarkedUnread = false))
+
+        viewModel.onOpened()
+
+        coVerify(exactly = 0) { preferences.markRead(any()) }
+    }
+
+    private fun summary(isMarkedUnread: Boolean) = ConversationSummary(
+        id = "c1",
+        type = ConversationType.DIRECT,
+        title = "Ana",
+        lastMessagePreview = null,
+        lastActivityAtEpochMillis = 1L,
+        unreadCount = 0,
+        canPost = true,
+        isMarkedUnread = isMarkedUnread,
+    )
 
     @Test
     fun `info loads who read the message and closes again`() = runTest {

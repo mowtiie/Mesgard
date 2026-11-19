@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.domain.model.PreferenceError
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.NoResultsState
@@ -38,10 +39,21 @@ internal fun ConversationListRoute(
     onConversationClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConversationListViewModel = hiltViewModel(),
+    selectionViewModel: ConversationSelectionViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val selection by selectionViewModel.uiState.collectAsStateWithLifecycle()
     ConversationListScreen(
         uiState = uiState,
+        selection = selection,
+        selectionCallbacks = SelectionCallbacks(
+            onToggled = selectionViewModel::onToggled,
+            onSelectAll = { selectionViewModel.onSelectAll(uiState.conversations.map { it.id }) },
+            onClose = selectionViewModel::onSelectionClosed,
+            onErrorShown = selectionViewModel::onErrorShown,
+            onMute = selectionViewModel::onMuteClicked,
+            onRead = selectionViewModel::onReadClicked,
+        ),
         scrollToTopRequests = scrollToTopRequests,
         onRefresh = viewModel::onRefresh,
         onQueryChanged = viewModel::onQueryChanged,
@@ -55,6 +67,8 @@ internal fun ConversationListRoute(
 @Composable
 internal fun ConversationListScreen(
     uiState: ConversationListUiState,
+    selection: ConversationSelectionUiState,
+    selectionCallbacks: SelectionCallbacks,
     scrollToTopRequests: Int,
     onRefresh: () -> Unit,
     onQueryChanged: (String) -> Unit,
@@ -70,6 +84,13 @@ internal fun ConversationListScreen(
         if (refreshErrorMessage != null) {
             snackbarHostState.showSnackbar(refreshErrorMessage)
             onRefreshErrorShown()
+        }
+    }
+    val selectionErrorMessage = selection.error?.let { stringResource(it.messageResource()) }
+    LaunchedEffect(selectionErrorMessage) {
+        if (selectionErrorMessage != null) {
+            snackbarHostState.showSnackbar(selectionErrorMessage)
+            selectionCallbacks.onErrorShown()
         }
     }
     LaunchedEffect(scrollToTopRequests) {
@@ -94,17 +115,21 @@ internal fun ConversationListScreen(
                 }
             }
         },
-        searchBar = if (isSearching) {
-            {
-                SearchAppBar(
-                    query = uiState.query,
-                    onQueryChange = onQueryChanged,
-                    onClose = closeSearch,
-                    placeholder = stringResource(R.string.chats_search_placeholder),
-                )
+        searchBar = when {
+            selection.isActive -> {
+                { SelectionAppBar(state = selection, callbacks = selectionCallbacks) }
             }
-        } else {
-            null
+            isSearching -> {
+                {
+                    SearchAppBar(
+                        query = uiState.query,
+                        onQueryChange = onQueryChanged,
+                        onClose = closeSearch,
+                        placeholder = stringResource(R.string.chats_search_placeholder),
+                    )
+                }
+            }
+            else -> null
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
@@ -113,7 +138,13 @@ internal fun ConversationListScreen(
             onRefresh = onRefresh,
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
-            ConversationList(uiState = uiState, listState = listState, onConversationClick = onConversationClick)
+            ConversationList(
+                uiState = uiState,
+                selection = selection,
+                selectionCallbacks = selectionCallbacks,
+                listState = listState,
+                onConversationClick = onConversationClick,
+            )
         }
     }
 }
@@ -121,6 +152,8 @@ internal fun ConversationListScreen(
 @Composable
 private fun ConversationList(
     uiState: ConversationListUiState,
+    selection: ConversationSelectionUiState,
+    selectionCallbacks: SelectionCallbacks,
     listState: LazyListState,
     onConversationClick: (String) -> Unit,
 ) {
@@ -143,10 +176,27 @@ private fun ConversationList(
             ConversationRow(
                 conversation = conversation,
                 nowEpochMillis = nowEpochMillis,
-                onClick = { onConversationClick(conversation.id) },
+                onClick = {
+                    if (selection.isActive) {
+                        selectionCallbacks.onToggled(
+                            conversation.id,
+                        )
+                    } else {
+                        onConversationClick(conversation.id)
+                    }
+                },
+                isSelected = conversation.id in selection.selectedIds,
+                onLongClick = { selectionCallbacks.onToggled(conversation.id) },
             )
         }
     }
+}
+
+@StringRes
+private fun PreferenceError.messageResource(): Int = when (this) {
+    PreferenceError.NETWORK_UNAVAILABLE -> R.string.refresh_error_network_unavailable
+    PreferenceError.TOO_MANY_PINNED -> R.string.preference_error_too_many_pinned
+    PreferenceError.UNKNOWN -> R.string.refresh_error_unknown
 }
 
 @StringRes

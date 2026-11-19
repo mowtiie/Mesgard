@@ -73,6 +73,7 @@ internal fun ConversationScreenRoute(
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
     LifecycleResumeEffect(viewModel) {
         viewModel.onVisibilityChanged(true)
+        actionsViewModel.onOpened()
         pinsViewModel.onRefresh()
         onPauseOrDispose { viewModel.onVisibilityChanged(false) }
     }
