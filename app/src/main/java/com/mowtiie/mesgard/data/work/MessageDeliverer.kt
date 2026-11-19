@@ -1,12 +1,15 @@
 package com.mowtiie.mesgard.data.work
 
 import com.mowtiie.mesgard.data.local.AttachmentDao
+import com.mowtiie.mesgard.data.local.AttachmentEntity
 import com.mowtiie.mesgard.data.local.ConversationDao
 import com.mowtiie.mesgard.data.local.MessageEntity
 import com.mowtiie.mesgard.data.remote.AttachmentRemoteSource
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.parseEpochMillis
 import com.mowtiie.mesgard.data.remote.toNewMessageDto
+import com.mowtiie.mesgard.domain.attachment.AttachmentImporter
+import com.mowtiie.mesgard.domain.attachment.UNOPTIMIZED_SUFFIX
 import java.io.File
 import java.io.FileNotFoundException
 import javax.inject.Inject
@@ -17,9 +20,10 @@ internal class MessageDeliverer @Inject constructor(
     private val attachmentDao: AttachmentDao,
     private val messageSource: MessageRemoteSource,
     private val attachmentSource: AttachmentRemoteSource,
+    private val importer: AttachmentImporter,
 ) {
     suspend fun deliver(message: MessageEntity): Long {
-        val attachments = attachmentDao.findByMessage(message.id)
+        val attachments = attachmentDao.findByMessage(message.id).map { shrinkIfPhoto(it) }
         if (attachments.isEmpty()) return deliverText(message)
         attachments.forEach { attachment ->
             val file = attachment.localPath?.let(::File)?.takeIf { it.isFile }
@@ -27,6 +31,20 @@ internal class MessageDeliverer @Inject constructor(
             attachmentSource.upload(attachment.storagePath, file, attachment.mimeType)
         }
         return parseEpochMillis(attachmentSource.sendWithAttachments(message, attachments))
+    }
+
+    /** A photo is shrunk here, off the screen, so the message appears as soon as it is sent. */
+    private suspend fun shrinkIfPhoto(attachment: AttachmentEntity): AttachmentEntity {
+        val rawPath = attachment.localPath?.takeIf { it.endsWith(UNOPTIMIZED_SUFFIX) } ?: return attachment
+        val shrunk = importer.optimize(attachment.id, rawPath, attachment.mimeType)
+        attachmentDao.updateFile(attachment.id, shrunk.localPath, shrunk.sizeBytes, shrunk.width, shrunk.height)
+        importer.delete(rawPath)
+        return attachment.copy(
+            localPath = shrunk.localPath,
+            sizeBytes = shrunk.sizeBytes,
+            width = shrunk.width,
+            height = shrunk.height,
+        )
     }
 
     private suspend fun deliverText(message: MessageEntity): Long {

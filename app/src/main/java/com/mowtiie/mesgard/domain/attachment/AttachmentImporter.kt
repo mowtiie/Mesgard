@@ -20,6 +20,12 @@ internal val ALLOWED_ATTACHMENT_TYPES = setOf(
     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 )
 
+/** A photo copied from the picker keeps this ending until it is shrunk, which happens when it is sent. */
+internal const val UNOPTIMIZED_SUFFIX = ".raw"
+
+/** A shrunk photo without metadata, ready to upload. */
+internal data class OptimizedFile(val localPath: String, val sizeBytes: Long, val width: Int?, val height: Int?)
+
 internal sealed interface ImportResult {
     data class Imported(
         val fileName: String,
@@ -40,8 +46,17 @@ internal enum class AttachmentRejection {
 }
 
 internal interface AttachmentImporter {
-    /** Copies the picked file into app storage under [attachmentId], shrinking images and removing their metadata. */
+    /**
+     * Copies the picked file into app storage under [attachmentId]. A photo is copied as it is, so the message
+     * can appear at once, and [optimize] shrinks it later.
+     */
     suspend fun import(uri: String, attachmentId: String): ImportResult
+
+    /**
+     * Shrinks the photo copied by [import] and removes its metadata, so the location and the camera details
+     * never leave the device. A photo that cannot be decoded throws [IllegalArgumentException].
+     */
+    suspend fun optimize(attachmentId: String, rawPath: String, mimeType: String): OptimizedFile
 
     fun delete(localPath: String)
 }

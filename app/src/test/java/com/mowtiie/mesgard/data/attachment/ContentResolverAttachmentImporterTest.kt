@@ -14,6 +14,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.mowtiie.mesgard.domain.attachment.AttachmentRejection
 import com.mowtiie.mesgard.domain.attachment.ImportResult
 import com.mowtiie.mesgard.domain.attachment.MAX_ATTACHMENT_BYTES
+import com.mowtiie.mesgard.domain.attachment.UNOPTIMIZED_SUFFIX
 import java.io.File
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -103,6 +104,37 @@ class ContentResolverAttachmentImporterTest {
 
         assertEquals(30 to 20, image.width to image.height)
         assertEquals(null to null, document.width to document.height)
+    }
+
+    @Test
+    fun `keeps a photo as picked until it is shrunk, so a message can appear at once`() = runTest {
+        val photo = pickPhoto(width = 2100, height = 50)
+
+        val image = importer.import(photo, "attachment-6") as ImportResult.Imported
+
+        assertTrue(image.localPath.endsWith(UNOPTIMIZED_SUFFIX))
+        assertEquals(2100 to 50, image.width to image.height)
+    }
+
+    @Test
+    fun `shrinks a photo that is larger than the limit and writes it without the raw suffix`() = runTest {
+        val image = importer.import(pickPhoto(width = 2100, height = 50), "attachment-7") as ImportResult.Imported
+
+        val shrunk = importer.optimize("attachment-7", image.localPath, "image/png")
+
+        assertFalse(shrunk.localPath.endsWith(UNOPTIMIZED_SUFFIX))
+        assertEquals(2048, maxOf(shrunk.width ?: 0, shrunk.height ?: 0))
+        assertTrue(File(shrunk.localPath).isFile)
+    }
+
+    private fun pickPhoto(width: Int, height: Int): String {
+        val photo = temporaryFolder.newFile().also { file ->
+            file.outputStream().use {
+                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).compress(PNG, 100, it)
+            }
+        }
+        PickerProvider.files["big.png"] = PickedFile(photo, "image/png", photo.length())
+        return "content://$AUTHORITY/big.png"
     }
 
     private fun pick(name: String, mimeType: String?, content: String, declaredSize: Long? = null): String {

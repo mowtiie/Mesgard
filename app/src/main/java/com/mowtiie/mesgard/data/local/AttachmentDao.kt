@@ -28,6 +28,14 @@ internal interface AttachmentDao {
 
     @Query("UPDATE attachments SET local_path = :localPath WHERE id = :attachmentId")
     suspend fun updateLocalPath(attachmentId: String, localPath: String)
+
+    @Query(
+        """
+        UPDATE attachments SET local_path = :localPath, size_bytes = :sizeBytes, width = :width, height = :height
+        WHERE id = :attachmentId
+        """,
+    )
+    suspend fun updateFile(attachmentId: String, localPath: String, sizeBytes: Long, width: Int?, height: Int?)
 }
 
 internal suspend fun AttachmentDao.upsertKeepingLocalPaths(attachments: List<AttachmentEntity>) {

@@ -12,6 +12,9 @@ import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.remote.AttachmentRemoteSource
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
 import com.mowtiie.mesgard.data.remote.NewMessageDto
+import com.mowtiie.mesgard.domain.attachment.AttachmentImporter
+import com.mowtiie.mesgard.domain.attachment.OptimizedFile
+import com.mowtiie.mesgard.domain.attachment.UNOPTIMIZED_SUFFIX
 import com.mowtiie.mesgard.domain.model.MessageStatus
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
 import com.mowtiie.mesgard.testing.TEST_ORG_ID
@@ -46,6 +49,7 @@ class SendMessageWorkerTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val remoteSource = mockk<MessageRemoteSource>()
     private val attachmentSource = mockk<AttachmentRemoteSource>()
+    private val importer = mockk<AttachmentImporter>(relaxed = true)
 
     @Before
     fun storeConversation() = runTest {
@@ -141,6 +145,53 @@ class SendMessageWorkerTest {
     }
 
     @Test
+    fun `shrinks a photo before uploading it and keeps the new file and size`() = runTest {
+        storePending()
+        val raw = temporaryFolder.newFile("attachment$UNOPTIMIZED_SUFFIX").apply { writeText("big photo") }
+        val shrunk = temporaryFolder.newFile("attachment").apply { writeText("small") }
+        storeAttachment(localPath = raw.absolutePath)
+        coEvery { importer.optimize("attachment", raw.absolutePath, "image/png") } returns
+            OptimizedFile(shrunk.absolutePath, 5L, 20, 10)
+        coEvery { attachmentSource.upload(any(), any(), any()) } returns Unit
+        coEvery { attachmentSource.sendWithAttachments(any(), any()) } returns SERVER_TIME
+
+        val result = worker().doWork()
+
+        assertEquals(Result.success(), result)
+        coVerify { attachmentSource.upload("chat/message/attachment", shrunk, "image/png") }
+        coVerify { importer.delete(raw.absolutePath) }
+        val stored = databaseRule.database.attachmentDao().findByIds(listOf("attachment")).single()
+        assertEquals(
+            listOf(shrunk.absolutePath, 5L, 20, 10),
+            listOf(stored.localPath, stored.sizeBytes, stored.width, stored.height),
+        )
+    }
+
+    @Test
+    fun `does not shrink a photo again when the send is retried`() = runTest {
+        storePending()
+        val file = temporaryFolder.newFile("attachment").apply { writeText("small") }
+        storeAttachment(localPath = file.absolutePath)
+        coEvery { attachmentSource.upload(any(), any(), any()) } returns Unit
+        coEvery { attachmentSource.sendWithAttachments(any(), any()) } returns SERVER_TIME
+
+        worker().doWork()
+
+        coVerify(exactly = 0) { importer.optimize(any(), any(), any()) }
+    }
+
+    @Test
+    fun `marks the message as failed when a photo cannot be decoded`() = runTest {
+        storePending()
+        val raw = temporaryFolder.newFile("attachment$UNOPTIMIZED_SUFFIX")
+        storeAttachment(localPath = raw.absolutePath)
+        coEvery { importer.optimize(any(), any(), any()) } throws IllegalArgumentException("Cannot shrink")
+
+        assertEquals(Result.failure(), worker().doWork())
+        assertEquals(MessageStatus.FAILED, databaseRule.database.messageDao().findById(MESSAGE_ID)?.status)
+    }
+
+    @Test
     fun `retries when an attachment cannot be uploaded because the server is unreachable`() = runTest {
         storePending()
         val file = temporaryFolder.newFile("photo")
@@ -206,6 +257,7 @@ class SendMessageWorkerTest {
                             database.attachmentDao(),
                             remoteSource,
                             attachmentSource,
+                            importer,
                         ),
                     )
                 },

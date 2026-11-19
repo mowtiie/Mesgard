@@ -2,7 +2,6 @@ package com.mowtiie.mesgard.data.attachment
 
 import android.content.Context
 import android.database.Cursor
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.mowtiie.mesgard.domain.attachment.ALLOWED_ATTACHMENT_TYPES
@@ -10,8 +9,11 @@ import com.mowtiie.mesgard.domain.attachment.AttachmentImporter
 import com.mowtiie.mesgard.domain.attachment.AttachmentRejection
 import com.mowtiie.mesgard.domain.attachment.ImportResult
 import com.mowtiie.mesgard.domain.attachment.MAX_ATTACHMENT_BYTES
+import com.mowtiie.mesgard.domain.attachment.OptimizedFile
+import com.mowtiie.mesgard.domain.attachment.UNOPTIMIZED_SUFFIX
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.IOException
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +23,7 @@ private const val DEFAULT_FILE_NAME = "attachment"
 private const val MAX_FILE_NAME_LENGTH = 255
 private val RE_ENCODED_IMAGE_TYPES = setOf("image/jpeg", "image/png", "image/webp")
 
-/** Animated GIFs and documents are copied unchanged. Photos go through [ImageReencoder]. */
+/** Animated GIFs and documents are copied unchanged. Photos are shrunk by [ImageReencoder] when they are sent. */
 internal class ContentResolverAttachmentImporter @Inject constructor(
     @ApplicationContext private val context: Context,
     private val imageReencoder: ImageReencoder,
@@ -43,14 +45,26 @@ internal class ContentResolverAttachmentImporter @Inject constructor(
         File(localPath).delete()
     }
 
-    private fun copy(source: Uri, mimeType: String, attachmentId: String): ImportResult {
-        val target = File(directory(), attachmentId)
-        return try {
-            if (mimeType in RE_ENCODED_IMAGE_TYPES) {
-                imageReencoder.reencode(source, mimeType, target)
-            } else {
-                writeCopy(source, target)
+    override suspend fun optimize(attachmentId: String, rawPath: String, mimeType: String): OptimizedFile =
+        withContext(Dispatchers.IO) {
+            val target = File(directory(), attachmentId)
+            try {
+                imageReencoder.reencode(Uri.fromFile(File(rawPath)), mimeType, target)
+            } catch (exception: FileNotFoundException) {
+                throw exception
+            } catch (exception: IOException) {
+                target.delete()
+                throw IllegalArgumentException("Cannot shrink the photo of attachment $attachmentId", exception)
             }
+            val size = readDisplaySize(target, mimeType)
+            OptimizedFile(target.absolutePath, target.length(), size?.first, size?.second)
+        }
+
+    private fun copy(source: Uri, mimeType: String, attachmentId: String): ImportResult {
+        val isPhoto = mimeType in RE_ENCODED_IMAGE_TYPES
+        val target = File(directory(), if (isPhoto) attachmentId + UNOPTIMIZED_SUFFIX else attachmentId)
+        return try {
+            writeCopy(source, target)
             describe(source, mimeType, target)
         } catch (_: IOException) {
             target.delete()
@@ -60,7 +74,7 @@ internal class ContentResolverAttachmentImporter @Inject constructor(
 
     private fun describe(source: Uri, mimeType: String, target: File): ImportResult {
         if (target.length() <= MAX_ATTACHMENT_BYTES) {
-            val size = imageSize(target, mimeType)
+            val size = readDisplaySize(target, mimeType)
             return ImportResult.Imported(
                 fileName = readName(source),
                 mimeType = mimeType,
@@ -72,13 +86,6 @@ internal class ContentResolverAttachmentImporter @Inject constructor(
         }
         target.delete()
         return ImportResult.Rejected(AttachmentRejection.TOO_LARGE)
-    }
-
-    private fun imageSize(file: File, mimeType: String): Pair<Int, Int>? {
-        if (!mimeType.startsWith("image/")) return null
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeFile(file.absolutePath, bounds)
-        return if (bounds.outWidth > 0 && bounds.outHeight > 0) bounds.outWidth to bounds.outHeight else null
     }
 
     private fun writeCopy(source: Uri, target: File) {
