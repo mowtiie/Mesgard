@@ -10,7 +10,6 @@ import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
 import com.mowtiie.mesgard.testing.conversationEntity
 import com.mowtiie.mesgard.testing.summaryDto
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
@@ -46,35 +45,6 @@ class OfflineFirstConversationRepositoryTest {
 
         repository.observeConversations().test {
             assertEquals(mapOf("quiet" to true, "loud" to false), awaitItem().associate { it.id to it.isMuted })
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `muting asks the server first and then marks the conversation`() = runTest {
-        databaseRule.database.conversationDao().upsertAll(listOf(conversationEntity("chat")))
-        coEvery { remoteSource.setMuted("chat", "me", true) } returns Unit
-
-        val result = repository.setMuted("chat", muted = true)
-
-        assertEquals(RefreshResult.Success, result)
-        coVerify { remoteSource.setMuted("chat", "me", true) }
-        repository.observeConversation("chat").test {
-            assertEquals(true, awaitItem()?.isMuted)
-            cancelAndIgnoreRemainingEvents()
-        }
-    }
-
-    @Test
-    fun `a mute the server did not accept is not marked on the device`() = runTest {
-        databaseRule.database.conversationDao().upsertAll(listOf(conversationEntity("chat")))
-        coEvery { remoteSource.setMuted("chat", "me", true) } throws IOException("offline")
-
-        val result = repository.setMuted("chat", muted = true)
-
-        assertEquals(RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE), result)
-        repository.observeConversation("chat").test {
-            assertEquals(false, awaitItem()?.isMuted)
             cancelAndIgnoreRemainingEvents()
         }
     }

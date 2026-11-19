@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.mowtiie.mesgard.domain.model.MessageReader
+import com.mowtiie.mesgard.domain.model.PreferenceError
+import com.mowtiie.mesgard.domain.model.PreferenceResult
 import com.mowtiie.mesgard.domain.model.ReadersResult
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.ConversationPreferencesRepository
@@ -35,7 +37,10 @@ internal data class ConversationActionsUiState(
     val error: ConversationError? = null,
 )
 
-/** What the user can do beyond reading and writing: delete a message they sent, after asking, and mute the chat. */
+/**
+ * What the user can do beyond reading and writing: delete a message they sent, after asking, and mute the chat,
+ * which shows at once and is taken back when the server refuses.
+ */
 @HiltViewModel
 internal class ConversationActionsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -71,7 +76,10 @@ internal class ConversationActionsViewModel @Inject constructor(
     fun onInfoDismissed() = mutableUiState.update { it.copy(readers = null) }
 
     fun onMuteChanged(muted: Boolean) {
-        viewModelScope.launch { report(conversationRepository.setMuted(conversationId, muted)) }
+        viewModelScope.launch {
+            val result = preferences.setMuted(setOf(conversationId), muted)
+            if (result is PreferenceResult.Failure) mutableUiState.update { it.copy(error = result.error.toError()) }
+        }
     }
 
     /** Opening a conversation that was marked as unread reads it. */
@@ -87,4 +95,9 @@ internal class ConversationActionsViewModel @Inject constructor(
     private fun report(result: RefreshResult) {
         if (result is RefreshResult.Failure) mutableUiState.update { it.copy(error = result.error.toError()) }
     }
+}
+
+private fun PreferenceError.toError() = when (this) {
+    PreferenceError.NETWORK_UNAVAILABLE -> ConversationError.NETWORK_UNAVAILABLE
+    else -> ConversationError.UNKNOWN
 }

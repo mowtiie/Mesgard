@@ -65,9 +65,6 @@ internal interface ConversationDao {
     @Query("UPDATE conversations SET unread_count = unread_count + 1 WHERE id = :conversationId")
     suspend fun incrementUnreadCount(conversationId: String)
 
-    @Query("UPDATE conversations SET is_muted = :isMuted WHERE id = :conversationId")
-    suspend fun updateMuted(conversationId: String, isMuted: Boolean)
-
     @Query("UPDATE conversations SET unread_count = 0 WHERE id = :conversationId")
     suspend fun clearUnreadCount(conversationId: String)
 

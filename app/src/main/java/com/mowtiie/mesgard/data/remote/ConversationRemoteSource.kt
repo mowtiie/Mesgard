@@ -19,8 +19,6 @@ internal interface ConversationRemoteSource {
 
     /** The conversations the user muted. The summaries do not say, and the user's own row is all that is read. */
     suspend fun fetchMutedConversationIds(userId: String): Set<String>
-
-    suspend fun setMuted(conversationId: String, userId: String, muted: Boolean)
 }
 
 internal class SupabaseConversationRemoteSource @Inject constructor(private val client: SupabaseClient) :
@@ -36,15 +34,6 @@ internal class SupabaseConversationRemoteSource @Inject constructor(private val 
                 eq("muted", true)
             }
         }.decodeList<MutedConversationDto>().map { it.conversationId }.toSet()
-
-    override suspend fun setMuted(conversationId: String, userId: String, muted: Boolean) {
-        client.from(PARTICIPANTS_TABLE).update({ set("muted", muted) }) {
-            filter {
-                eq("conversation_id", conversationId)
-                eq("user_id", userId)
-            }
-        }
-    }
 }
 
 @Serializable

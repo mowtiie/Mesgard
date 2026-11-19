@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import com.mowtiie.mesgard.domain.model.ConversationSummary
 import com.mowtiie.mesgard.domain.model.ConversationType
 import com.mowtiie.mesgard.domain.model.MessageReader
+import com.mowtiie.mesgard.domain.model.PreferenceError
+import com.mowtiie.mesgard.domain.model.PreferenceResult
 import com.mowtiie.mesgard.domain.model.ReadersResult
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
@@ -92,24 +94,25 @@ class ConversationActionsViewModelTest {
     }
 
     @Test
-    fun `muting and unmuting go to the server for this conversation`() = runTest {
-        coEvery { conversationRepository.setMuted("c1", any()) } returns RefreshResult.Success
+    fun `muting and unmuting change the preference of this conversation`() = runTest {
+        coEvery { preferences.setMuted(any(), any()) } returns PreferenceResult.Success
 
         viewModel.onMuteChanged(true)
         viewModel.onMuteChanged(false)
 
-        coVerify { conversationRepository.setMuted("c1", true) }
-        coVerify { conversationRepository.setMuted("c1", false) }
+        coVerify { preferences.setMuted(setOf("c1"), true) }
+        coVerify { preferences.setMuted(setOf("c1"), false) }
         assertNull(viewModel.uiState.value.error)
     }
 
     @Test
     fun `a mute that fails shows the reason`() = runTest {
-        coEvery { conversationRepository.setMuted("c1", true) } returns RefreshResult.Failure(RefreshError.UNKNOWN)
+        coEvery { preferences.setMuted(any(), any()) } returns
+            PreferenceResult.Failure(PreferenceError.NETWORK_UNAVAILABLE)
 
         viewModel.onMuteChanged(true)
 
-        assertEquals(ConversationError.UNKNOWN, viewModel.uiState.value.error)
+        assertEquals(ConversationError.NETWORK_UNAVAILABLE, viewModel.uiState.value.error)
     }
 
     @Test

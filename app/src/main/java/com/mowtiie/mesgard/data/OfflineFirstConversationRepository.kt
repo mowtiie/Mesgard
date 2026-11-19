@@ -10,7 +10,6 @@ import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.remote.toLastMessageEntity
 import com.mowtiie.mesgard.data.remote.toRefreshResult
 import com.mowtiie.mesgard.domain.model.ConversationSummary
-import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
@@ -49,14 +48,6 @@ internal class OfflineFirstConversationRepository @Inject constructor(
             messageDao.upsertAll(lastMessages)
             if (summaries.size < CONVERSATION_PAGE_SIZE) removeConversationsNoLongerShared(conversations.map { it.id })
         }
-    }
-
-    override suspend fun setMuted(conversationId: String, muted: Boolean): RefreshResult {
-        val userId = authRepository.currentUserId ?: return RefreshResult.Failure(RefreshError.UNKNOWN)
-        return attemptRemote(TAG) {
-            remoteSource.setMuted(conversationId, userId, muted)
-            conversationDao.updateMuted(conversationId, muted)
-        }.toRefreshResult()
     }
 
     private suspend fun removeConversationsNoLongerShared(currentIds: List<String>) {
