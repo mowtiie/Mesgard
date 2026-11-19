@@ -22,6 +22,8 @@ private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 internal data class ConversationSelectionUiState(
     val selected: List<ConversationSummary> = emptyList(),
     val error: PreferenceError? = null,
+    /** The conversations just archived, while Undo is offered. */
+    val undoArchive: Set<String> = emptySet(),
 ) {
     val isActive: Boolean
         get() = selected.isNotEmpty()
@@ -41,14 +43,24 @@ internal class ConversationSelectionViewModel @Inject constructor(
 ) : ViewModel() {
     private val selectedIds = MutableStateFlow(emptySet<String>())
     private val error = MutableStateFlow<PreferenceError?>(null)
+    private val undoArchive = MutableStateFlow(emptySet<String>())
+    private val report = { result: PreferenceResult ->
+        if (result is PreferenceResult.Failure) error.value = result.error
+    }
 
     /** A conversation that leaves the list, for example when it is archived elsewhere, leaves the selection too. */
     val uiState: StateFlow<ConversationSelectionUiState> = combine(
-        conversationRepository.observeConversations(),
+        combine(conversationRepository.observeConversations(), conversationRepository.observeArchived()) {
+                open,
+                archived,
+            ->
+            open + archived
+        },
         selectedIds,
         error,
-    ) { conversations, ids, currentError ->
-        ConversationSelectionUiState(conversations.filter { it.id in ids }, currentError)
+        undoArchive,
+    ) { conversations, ids, currentError, undo ->
+        ConversationSelectionUiState(conversations.filter { it.id in ids }, currentError, undo)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
@@ -75,6 +87,20 @@ internal class ConversationSelectionViewModel @Inject constructor(
         preferences.setPinned(ids, pinned = actions.pin == PinAction.PIN)
     }
 
+    fun onArchiveClicked() = apply { ids, actions ->
+        val archive = actions.archive == ArchiveAction.ARCHIVE
+        preferences.setArchived(ids, archive).also { result ->
+            if (archive && result is PreferenceResult.Success) undoArchive.value = ids
+        }
+    }
+
+    /** Archiving is undone when the snackbar action is taken, and forgotten when it goes away. */
+    fun onUndoArchiveHandled(undo: Boolean) {
+        val ids = undoArchive.value
+        undoArchive.value = emptySet()
+        if (undo && ids.isNotEmpty()) viewModelScope.launch { report(preferences.setArchived(ids, false)) }
+    }
+
     fun onReadClicked() = apply { ids, actions ->
         if (actions.read == ReadAction.MARK_READ) preferences.markRead(ids) else preferences.markUnread(ids)
     }
@@ -88,8 +114,7 @@ internal class ConversationSelectionViewModel @Inject constructor(
         if (!state.isActive) return
         selectedIds.value = emptySet()
         viewModelScope.launch {
-            val result = action(state.selectedIds, state.actions)
-            if (result is PreferenceResult.Failure) error.value = result.error
+            report(action(state.selectedIds, state.actions))
         }
     }
 }

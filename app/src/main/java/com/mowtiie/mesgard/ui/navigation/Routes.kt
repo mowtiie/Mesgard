@@ -12,6 +12,9 @@ internal data class ConversationRoute(val conversationId: String)
 internal data object ChatsRoute
 
 @Serializable
+internal data object ArchivedRoute
+
+@Serializable
 internal data object AnnouncementsRoute
 
 @Serializable

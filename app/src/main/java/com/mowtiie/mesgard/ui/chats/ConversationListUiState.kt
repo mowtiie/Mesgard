@@ -7,6 +7,7 @@ import com.mowtiie.mesgard.domain.model.RefreshError
 internal data class ConversationListUiState(
     val conversations: List<ConversationSummary> = emptyList(),
     val totalConversations: Int = 0,
+    val archivedCount: Int = 0,
     val query: String = "",
     val isLoaded: Boolean = false,
     val isRefreshing: Boolean = false,
@@ -20,6 +21,9 @@ internal data class ConversationListUiState(
 
     val showEmptyMessage: Boolean
         get() = isLoaded && totalConversations == 0 && !isRefreshing
+
+    val showArchivedRow: Boolean
+        get() = archivedCount > 0 && !isFiltering
 
     val showNoResults: Boolean
         get() = isFiltering && conversations.isEmpty()

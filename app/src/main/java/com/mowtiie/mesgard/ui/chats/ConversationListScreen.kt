@@ -8,8 +8,10 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,11 +21,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
-import com.mowtiie.mesgard.domain.model.PreferenceError
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.NoResultsState
@@ -37,6 +39,7 @@ import com.mowtiie.mesgard.ui.common.TitledScreen
 internal fun ConversationListRoute(
     scrollToTopRequests: Int,
     onConversationClick: (String) -> Unit,
+    onOpenArchived: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConversationListViewModel = hiltViewModel(),
     selectionViewModel: ConversationSelectionViewModel = hiltViewModel(),
@@ -52,6 +55,8 @@ internal fun ConversationListRoute(
             onClose = selectionViewModel::onSelectionClosed,
             onErrorShown = selectionViewModel::onErrorShown,
             onPin = selectionViewModel::onPinClicked,
+            onArchive = selectionViewModel::onArchiveClicked,
+            onUndoArchiveHandled = selectionViewModel::onUndoArchiveHandled,
             onMute = selectionViewModel::onMuteClicked,
             onRead = selectionViewModel::onReadClicked,
         ),
@@ -60,6 +65,7 @@ internal fun ConversationListRoute(
         onQueryChanged = viewModel::onQueryChanged,
         onRefreshErrorShown = viewModel::onRefreshErrorShown,
         onConversationClick = onConversationClick,
+        onOpenArchived = onOpenArchived,
         modifier = modifier,
     )
 }
@@ -75,6 +81,7 @@ internal fun ConversationListScreen(
     onQueryChanged: (String) -> Unit,
     onRefreshErrorShown: () -> Unit,
     onConversationClick: (String) -> Unit,
+    onOpenArchived: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -93,6 +100,14 @@ internal fun ConversationListScreen(
             snackbarHostState.showSnackbar(selectionErrorMessage)
             selectionCallbacks.onErrorShown()
         }
+    }
+    val archivedMessage =
+        pluralStringResource(R.plurals.archived_snackbar, selection.undoArchive.size, selection.undoArchive.size)
+    val undoLabel = stringResource(R.string.undo)
+    LaunchedEffect(selection.undoArchive) {
+        if (selection.undoArchive.isEmpty()) return@LaunchedEffect
+        val result = snackbarHostState.showSnackbar(archivedMessage, undoLabel, duration = SnackbarDuration.Long)
+        selectionCallbacks.onUndoArchiveHandled(result == SnackbarResult.ActionPerformed)
     }
     LaunchedEffect(scrollToTopRequests) {
         if (scrollToTopRequests > 0) listState.animateScrollToItem(0)
@@ -145,6 +160,7 @@ internal fun ConversationListScreen(
                 selectionCallbacks = selectionCallbacks,
                 listState = listState,
                 onConversationClick = onConversationClick,
+                onOpenArchived = onOpenArchived,
             )
         }
     }
@@ -157,9 +173,13 @@ private fun ConversationList(
     selectionCallbacks: SelectionCallbacks,
     listState: LazyListState,
     onConversationClick: (String) -> Unit,
+    onOpenArchived: () -> Unit,
 ) {
     val nowEpochMillis = System.currentTimeMillis()
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+        if (uiState.showArchivedRow) {
+            item(key = "archived") { ArchivedRow(uiState.archivedCount, onOpenArchived) }
+        }
         if (uiState.showEmptyMessage) {
             item(key = "empty") {
                 EmptyState(
@@ -174,30 +194,9 @@ private fun ConversationList(
             item(key = "no-results") { NoResultsState(Modifier.fillParentMaxSize()) }
         }
         items(uiState.conversations, key = { it.id }) { conversation ->
-            ConversationRow(
-                conversation = conversation,
-                nowEpochMillis = nowEpochMillis,
-                onClick = {
-                    if (selection.isActive) {
-                        selectionCallbacks.onToggled(
-                            conversation.id,
-                        )
-                    } else {
-                        onConversationClick(conversation.id)
-                    }
-                },
-                isSelected = conversation.id in selection.selectedIds,
-                onLongClick = { selectionCallbacks.onToggled(conversation.id) },
-            )
+            SelectableConversationRow(conversation, nowEpochMillis, selection, selectionCallbacks, onConversationClick)
         }
     }
-}
-
-@StringRes
-private fun PreferenceError.messageResource(): Int = when (this) {
-    PreferenceError.NETWORK_UNAVAILABLE -> R.string.refresh_error_network_unavailable
-    PreferenceError.TOO_MANY_PINNED -> R.string.preference_error_too_many_pinned
-    PreferenceError.UNKNOWN -> R.string.refresh_error_unknown
 }
 
 @StringRes

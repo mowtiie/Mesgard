@@ -12,6 +12,7 @@ class SelectionActionsTest {
         isMuted: Boolean = false,
         isMarkedUnread: Boolean = false,
         isPinned: Boolean = false,
+        isArchived: Boolean = false,
     ) = ConversationSummary(
         id = id,
         type = ConversationType.DIRECT,
@@ -23,6 +24,7 @@ class SelectionActionsTest {
         isMuted = isMuted,
         isMarkedUnread = isMarkedUnread,
         isPinned = isPinned,
+        isArchived = isArchived,
     )
 
     @Test
@@ -48,6 +50,21 @@ class SelectionActionsTest {
         assertEquals(
             PinAction.UNPIN,
             selectionActionsFor(listOf(conversation("a", isPinned = true), conversation("b", isPinned = true))).pin,
+        )
+    }
+
+    @Test
+    fun `archiving is offered until every selected conversation is archived`() {
+        assertEquals(ArchiveAction.ARCHIVE, selectionActionsFor(listOf(conversation())).archive)
+        assertEquals(
+            ArchiveAction.ARCHIVE,
+            selectionActionsFor(listOf(conversation("a", isArchived = true), conversation("b"))).archive,
+        )
+        assertEquals(
+            ArchiveAction.UNARCHIVE,
+            selectionActionsFor(
+                listOf(conversation("a", isArchived = true), conversation("b", isArchived = true)),
+            ).archive,
         )
     }
 

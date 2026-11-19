@@ -27,12 +27,14 @@ internal class ConversationListViewModel @Inject constructor(private val reposit
 
     val uiState: StateFlow<ConversationListUiState> = combine(
         repository.observeConversations(),
+        repository.observeArchived(),
         refreshState,
         query,
-    ) { conversations, refresh, currentQuery ->
+    ) { conversations, archived, refresh, currentQuery ->
         ConversationListUiState(
             conversations = conversations.filter { it.matches(currentQuery) },
             totalConversations = conversations.size,
+            archivedCount = archived.size,
             query = currentQuery,
             isLoaded = true,
             isRefreshing = refresh.isRefreshing,

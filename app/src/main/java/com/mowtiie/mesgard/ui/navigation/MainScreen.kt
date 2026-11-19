@@ -33,6 +33,7 @@ import com.mowtiie.mesgard.ui.settings.SettingsScreenRoute
 internal fun MainScreen(
     onSignOut: () -> Unit,
     onConversationClick: (String) -> Unit,
+    onOpenArchived: () -> Unit,
     settingsNavigation: SettingsNavigation,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
@@ -71,6 +72,7 @@ internal fun MainScreen(
                 ConversationListRoute(
                     scrollToTopRequests = chatsScrollToTopRequests,
                     onConversationClick = onConversationClick,
+                    onOpenArchived = onOpenArchived,
                 )
             }
             composable<AnnouncementsRoute> {

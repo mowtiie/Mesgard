@@ -28,6 +28,7 @@ class ConversationListViewModelTest {
     private val conversations = MutableStateFlow(emptyList<ConversationSummary>())
     private val repository = mockk<ConversationRepository> {
         every { observeConversations() } returns conversations
+        every { observeArchived() } returns MutableStateFlow(emptyList())
         coEvery { refresh() } returns RefreshResult.Success
     }
 

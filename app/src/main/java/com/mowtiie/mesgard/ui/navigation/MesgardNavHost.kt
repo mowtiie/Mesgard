@@ -23,6 +23,7 @@ import com.mowtiie.mesgard.ui.admin.groups.AddGroupMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupDetailScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupsScreenRoute
 import com.mowtiie.mesgard.ui.auth.MfaSetupScreenRoute
+import com.mowtiie.mesgard.ui.chats.ArchivedScreenRoute
 import com.mowtiie.mesgard.ui.conversation.ConversationScreenRoute
 import com.mowtiie.mesgard.ui.settings.AppearanceSettingsScreenRoute
 import com.mowtiie.mesgard.ui.settings.NotificationSettingsScreenRoute
@@ -49,6 +50,7 @@ internal fun MesgardNavHost(
             MainScreen(
                 onSignOut = onSignOut,
                 onConversationClick = { conversationId -> navController.navigate(ConversationRoute(conversationId)) },
+                onOpenArchived = { navController.navigate(ArchivedRoute) },
                 settingsNavigation = SettingsNavigation(
                     onOpenAccount = { navController.navigate(AccountRoute) },
                     onOpenAdministration = { navController.navigate(AdministrationRoute) },
@@ -138,6 +140,12 @@ internal fun MesgardNavHost(
         }
         composable<AddMemberRoute> {
             AddMemberScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<ArchivedRoute> {
+            ArchivedScreenRoute(
+                onBack = { navController.popBackStack() },
+                onConversationClick = { conversationId -> navController.navigate(ConversationRoute(conversationId)) },
+            )
         }
         composable<ConversationRoute> {
             ConversationScreenRoute(onBack = { navController.popBackStack() })

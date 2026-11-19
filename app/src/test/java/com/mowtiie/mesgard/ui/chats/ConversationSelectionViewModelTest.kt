@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -27,11 +28,16 @@ class ConversationSelectionViewModelTest {
     private val conversations = MutableStateFlow(
         listOf(summary("a"), summary("b", unreadCount = 2), summary("c", isMuted = true)),
     )
-    private val repository = mockk<ConversationRepository> { every { observeConversations() } returns conversations }
+    private val archived = MutableStateFlow(listOf(summary("z", isArchived = true)))
+    private val repository = mockk<ConversationRepository> {
+        every { observeConversations() } returns conversations
+        every { observeArchived() } returns archived
+    }
     private val preferences = mockk<ConversationPreferencesRepository>(relaxed = true) {
         coEvery { setMuted(any(), any()) } returns PreferenceResult.Success
         coEvery { markRead(any()) } returns PreferenceResult.Success
         coEvery { markUnread(any()) } returns PreferenceResult.Success
+        coEvery { setArchived(any(), any()) } returns PreferenceResult.Success
     }
     private val viewModel by lazy { ConversationSelectionViewModel(repository, preferences) }
 
@@ -115,6 +121,39 @@ class ConversationSelectionViewModelTest {
     }
 
     @Test
+    fun `archiving offers Undo, and Undo brings the conversations back`() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onSelectAll(listOf("a", "b"))
+            awaitItem()
+
+            viewModel.onArchiveClicked()
+            var state = awaitItem()
+            while (state.undoArchive.isEmpty()) state = awaitItem()
+            assertEquals(setOf("a", "b"), state.undoArchive)
+            coVerify { preferences.setArchived(setOf("a", "b"), true) }
+
+            viewModel.onUndoArchiveHandled(true)
+            assertTrue(awaitItem().undoArchive.isEmpty())
+            coVerify { preferences.setArchived(setOf("a", "b"), false) }
+        }
+    }
+
+    @Test
+    fun `an archived conversation can be selected and unarchived`() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onToggled("z")
+            assertEquals(ArchiveAction.UNARCHIVE, awaitItem().actions.archive)
+
+            viewModel.onArchiveClicked()
+            awaitItem()
+
+            coVerify { preferences.setArchived(setOf("z"), false) }
+        }
+    }
+
+    @Test
     fun `read and unread follow whether anything selected is unread`() = runTest {
         viewModel.uiState.test {
             awaitItem()
@@ -151,14 +190,16 @@ class ConversationSelectionViewModelTest {
         }
     }
 
-    private fun summary(id: String, unreadCount: Int = 0, isMuted: Boolean = false) = ConversationSummary(
-        id = id,
-        type = ConversationType.DIRECT,
-        title = id,
-        lastMessagePreview = null,
-        lastActivityAtEpochMillis = 1L,
-        unreadCount = unreadCount,
-        canPost = true,
-        isMuted = isMuted,
-    )
+    private fun summary(id: String, unreadCount: Int = 0, isMuted: Boolean = false, isArchived: Boolean = false) =
+        ConversationSummary(
+            id = id,
+            type = ConversationType.DIRECT,
+            title = id,
+            lastMessagePreview = null,
+            lastActivityAtEpochMillis = 1L,
+            unreadCount = unreadCount,
+            canPost = true,
+            isMuted = isMuted,
+            isArchived = isArchived,
+        )
 }

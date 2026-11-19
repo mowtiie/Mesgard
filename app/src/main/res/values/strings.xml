@@ -359,6 +359,16 @@
     <string name="conversation_mute">Mute notifications</string>
     <string name="conversation_unmute">Unmute notifications</string>
     <string name="conversation_muted">Notifications muted</string>
+    <string name="conversation_archive">Archive</string>
+    <string name="conversation_unarchive">Unarchive</string>
+    <string name="archived_title">Archived</string>
+    <string name="archived_empty">No archived conversations</string>
+    <string name="archived_empty_hint">Archive a conversation to keep it out of your list. A new message brings it back.</string>
+    <plurals name="archived_snackbar">
+        <item quantity="one">%d conversation archived</item>
+        <item quantity="other">%d conversations archived</item>
+    </plurals>
+    <string name="undo">Undo</string>
     <string name="conversation_pin">Pin conversation</string>
     <string name="conversation_unpin">Unpin conversation</string>
     <string name="conversation_pinned">Pinned</string>

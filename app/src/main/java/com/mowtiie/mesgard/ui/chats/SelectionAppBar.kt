@@ -3,9 +3,6 @@ package com.mowtiie.mesgard.ui.chats
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -44,10 +41,17 @@ internal fun SelectionAppBar(
             }
         },
         actions = {
-            PinButton(state.actions.pin, callbacks.onPin)
-            MuteButton(state.actions.mute, callbacks.onMute)
-            ReadButton(state.actions.read, callbacks.onRead)
+            if (state.actions.archive == ArchiveAction.ARCHIVE) PinButton(state.actions.pin, callbacks.onPin)
+            ArchiveButton(state.actions.archive, callbacks.onArchive)
             OverflowMenu { dismiss ->
+                MuteItem(state.actions.mute) {
+                    dismiss()
+                    callbacks.onMute()
+                }
+                ReadItem(state.actions.read) {
+                    dismiss()
+                    callbacks.onRead()
+                }
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.selection_select_all)) },
                     onClick = {
@@ -74,23 +78,30 @@ private fun PinButton(action: PinAction, onClick: () -> Unit) {
 }
 
 @Composable
-private fun MuteButton(action: MuteAction, onClick: () -> Unit) {
+private fun ArchiveButton(action: ArchiveAction, onClick: () -> Unit) {
     IconButton(onClick = onClick) {
-        if (action == MuteAction.MUTE) {
-            Icon(painterResource(R.drawable.ic_notifications_off), stringResource(R.string.conversation_mute))
+        if (action == ArchiveAction.ARCHIVE) {
+            Icon(painterResource(R.drawable.ic_archive), stringResource(R.string.conversation_archive))
         } else {
-            Icon(Icons.Default.Notifications, stringResource(R.string.conversation_unmute))
+            Icon(painterResource(R.drawable.ic_unarchive), stringResource(R.string.conversation_unarchive))
         }
     }
 }
 
 @Composable
-private fun ReadButton(action: ReadAction, onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        if (action == ReadAction.MARK_READ) {
-            Icon(Icons.Default.Done, stringResource(R.string.conversation_mark_read))
-        } else {
-            Icon(Icons.Default.Email, stringResource(R.string.conversation_mark_unread))
-        }
+private fun MuteItem(action: MuteAction, onClick: () -> Unit) {
+    val label = if (action == MuteAction.MUTE) R.string.conversation_mute else R.string.conversation_unmute
+    DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = onClick)
+}
+
+@Composable
+private fun ReadItem(action: ReadAction, onClick: () -> Unit) {
+    val label = if (action ==
+        ReadAction.MARK_READ
+    ) {
+        R.string.conversation_mark_read
+    } else {
+        R.string.conversation_mark_unread
     }
+    DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = onClick)
 }
