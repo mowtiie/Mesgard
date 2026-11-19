@@ -14,7 +14,6 @@ class ConversationTitlesTest {
     @Test
     fun `other conversations keep their own fallback titles`() {
         assertEquals(R.string.conversation_title_group, ConversationType.GROUP.fallbackTitleResource())
-        assertEquals(R.string.conversation_title_announcement, ConversationType.ANNOUNCEMENT.fallbackTitleResource())
     }
 
     @Test
@@ -23,9 +22,8 @@ class ConversationTitlesTest {
     }
 
     @Test
-    fun `announcements and unknown conversations keep the staff only notice`() {
-        assertEquals(R.string.announcement_read_only, ConversationType.ANNOUNCEMENT.readOnlyMessageResource())
-        assertEquals(R.string.announcement_read_only, ConversationType.GROUP.readOnlyMessageResource())
-        assertEquals(R.string.announcement_read_only, (null as ConversationType?).readOnlyMessageResource())
+    fun `groups and unknown conversations keep the moderators only notice`() {
+        assertEquals(R.string.group_read_only, ConversationType.GROUP.readOnlyMessageResource())
+        assertEquals(R.string.group_read_only, (null as ConversationType?).readOnlyMessageResource())
     }
 }

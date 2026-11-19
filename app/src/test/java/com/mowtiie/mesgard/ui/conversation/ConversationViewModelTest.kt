@@ -101,11 +101,11 @@ class ConversationViewModelTest {
     }
 
     @Test
-    fun `shows sender names in group and announcement conversations but not in direct ones`() = runTest {
+    fun `shows sender names in group conversations but not in direct ones`() = runTest {
         conversation.value = summary(type = ConversationType.DIRECT)
         viewModel().uiState.test { assertFalse(expectMostRecentItem().showSenderNames) }
 
-        conversation.value = summary(type = ConversationType.ANNOUNCEMENT)
+        conversation.value = summary(type = ConversationType.GROUP)
         viewModel().uiState.test { assertTrue(expectMostRecentItem().showSenderNames) }
     }
 

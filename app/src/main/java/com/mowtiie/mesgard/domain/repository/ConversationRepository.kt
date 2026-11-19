@@ -10,9 +10,6 @@ internal interface ConversationRepository {
     /** The conversations the person archived. They are not part of [observeConversations]. */
     fun observeArchived(): Flow<List<ConversationSummary>>
 
-    /** The announcement conversation of the organization, which is not part of [observeConversations]. */
-    fun observeAnnouncements(): Flow<ConversationSummary?>
-
     fun observeConversation(conversationId: String): Flow<ConversationSummary?>
 
     suspend fun refresh(): RefreshResult

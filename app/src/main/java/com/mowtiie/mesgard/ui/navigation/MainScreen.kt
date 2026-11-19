@@ -1,6 +1,5 @@
 package com.mowtiie.mesgard.ui.navigation
 
-import androidx.compose.material3.Badge
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
@@ -10,8 +9,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -21,10 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.mowtiie.mesgard.ui.announcements.AnnouncementsScreenRoute
-import com.mowtiie.mesgard.ui.announcements.AnnouncementsViewModel
 import com.mowtiie.mesgard.ui.chats.ConversationListRoute
-import com.mowtiie.mesgard.ui.chats.formatUnreadCount
 import com.mowtiie.mesgard.ui.contacts.ContactsScreenRoute
 import com.mowtiie.mesgard.ui.settings.SettingsNavigation
 import com.mowtiie.mesgard.ui.settings.SettingsScreenRoute
@@ -37,12 +31,10 @@ internal fun MainScreen(
     settingsNavigation: SettingsNavigation,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    announcementsViewModel: AnnouncementsViewModel = hiltViewModel(),
 ) {
     RequestNotificationPermissionOnce()
     val backStackEntry by navController.currentBackStackEntryAsState()
     var chatsScrollToTopRequests by rememberSaveable { mutableIntStateOf(0) }
-    val announcements by announcementsViewModel.uiState.collectAsStateWithLifecycle()
     NavigationSuiteScaffold(
         modifier = modifier,
         navigationSuiteItems = {
@@ -58,11 +50,6 @@ internal fun MainScreen(
                     },
                     icon = { MainDestinationIcon(destination, selected) },
                     label = { Text(stringResource(destination.labelResource)) },
-                    badge = {
-                        if (destination == MainDestination.ANNOUNCEMENTS && announcements.unreadCount > 0) {
-                            Badge { Text(formatUnreadCount(announcements.unreadCount)) }
-                        }
-                    },
                 )
             }
         },
@@ -73,12 +60,6 @@ internal fun MainScreen(
                     scrollToTopRequests = chatsScrollToTopRequests,
                     onConversationClick = onConversationClick,
                     onOpenArchived = onOpenArchived,
-                )
-            }
-            composable<AnnouncementsRoute> {
-                AnnouncementsScreenRoute(
-                    viewModel = announcementsViewModel,
-                    onOpenConversation = onConversationClick,
                 )
             }
             composable<ContactsRoute> { ContactsScreenRoute(onConversationStarted = onConversationClick) }

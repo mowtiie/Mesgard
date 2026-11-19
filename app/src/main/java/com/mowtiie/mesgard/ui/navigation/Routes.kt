@@ -15,9 +15,6 @@ internal data object ChatsRoute
 internal data object ArchivedRoute
 
 @Serializable
-internal data object AnnouncementsRoute
-
-@Serializable
 internal data object ContactsRoute
 
 @Serializable

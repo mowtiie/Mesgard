@@ -270,15 +270,6 @@
     <string name="account_email">Email</string>
     <string name="tab_chats">Chats</string>
     <string name="tab_contacts">Contacts</string>
-    <string name="tab_announcements">Announcements</string>
-    <string name="announcements_title">Announcements</string>
-    <string name="announcements_new">New announcement</string>
-    <string name="announcements_empty">No announcements yet</string>
-    <string name="announcements_empty_hint">Announcements from your organization appear here.</string>
-    <plurals name="announcement_attachments">
-        <item quantity="one">%d attachment</item>
-        <item quantity="other">%d attachments</item>
-    </plurals>
     <string name="account_details">Details</string>
     <string name="account_open">Open account</string>
     <string name="account_mfa">Two-step verification</string>
@@ -296,7 +287,6 @@
     <string name="tab_settings">Settings</string>
     <string name="conversation_title_former_member">Former member</string>
     <string name="conversation_title_group">Group chat</string>
-    <string name="conversation_title_announcement">Announcements</string>
     <string name="conversation_no_messages">No messages yet</string>
     <string name="conversation_attachment_preview">Attachment</string>
     <string name="conversation_list_empty">No conversations yet</string>
@@ -402,7 +392,7 @@
     <string name="message_delete_text">It is removed for everyone in the conversation. Administrators of your organization can still read the original.</string>
     <string name="conversation_empty">No messages yet</string>
     <string name="conversation_empty_hint">Send the first message to start the conversation.</string>
-    <string name="announcement_read_only">Only staff and administrators can post here.</string>
+    <string name="group_read_only">Only moderators can post here.</string>
     <string name="direct_read_only">This person is no longer in the organization. You cannot send messages here.</string>
     <string name="conversation_error_message_too_long">The message is too long.</string>
     <string name="conversation_error_not_signed_in">Sign in again to send messages.</string>

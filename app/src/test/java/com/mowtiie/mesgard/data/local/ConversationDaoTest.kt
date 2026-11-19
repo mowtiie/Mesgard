@@ -39,10 +39,10 @@ class ConversationDaoTest {
     }
 
     @Test
-    fun `keeps the announcements conversation out of the list of conversations`() = runTest {
+    fun `lists group conversations like any other`() = runTest {
         conversationDao.upsertAll(
             listOf(
-                conversationEntity("announcements", type = ConversationType.ANNOUNCEMENT),
+                conversationEntity("announcements", type = ConversationType.GROUP),
                 conversationEntity("recent"),
             ),
         )
@@ -54,11 +54,7 @@ class ConversationDaoTest {
         )
 
         conversationDao.observeList(PAGE_SIZE).test {
-            assertEquals(listOf("recent"), awaitItem().map { it.id })
-            cancelAndIgnoreRemainingEvents()
-        }
-        conversationDao.observeAnnouncements().test {
-            assertEquals("announcements", awaitItem()?.id)
+            assertEquals(listOf("recent", "announcements"), awaitItem().map { it.id })
             cancelAndIgnoreRemainingEvents()
         }
     }

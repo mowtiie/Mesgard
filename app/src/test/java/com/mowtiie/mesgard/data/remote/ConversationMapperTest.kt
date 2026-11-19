@@ -11,7 +11,7 @@ import org.junit.Test
 class ConversationMapperTest {
     @Test
     fun `maps the conversation type regardless of case`() {
-        assertEquals(ConversationType.ANNOUNCEMENT, summaryDto("a", type = "announcement").toEntity().type)
+        assertEquals(ConversationType.GROUP, summaryDto("a", type = "group").toEntity().type)
     }
 
     @Test(expected = IllegalArgumentException::class)
