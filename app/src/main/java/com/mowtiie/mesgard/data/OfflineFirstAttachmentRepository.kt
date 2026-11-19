@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.data
 
 import android.content.Context
+import com.mowtiie.mesgard.data.attachment.AttachmentCache
 import com.mowtiie.mesgard.data.attachment.attachmentDirectory
 import com.mowtiie.mesgard.data.local.AttachmentDao
 import com.mowtiie.mesgard.data.local.AttachmentEntity
@@ -22,6 +23,7 @@ private const val PARTIAL_FILE_SUFFIX = ".part"
 internal class OfflineFirstAttachmentRepository @Inject constructor(
     private val attachmentDao: AttachmentDao,
     private val remoteSource: AttachmentRemoteSource,
+    private val cache: AttachmentCache,
     @ApplicationContext private val context: Context,
 ) : AttachmentRepository {
     override suspend fun download(attachmentId: String): DownloadResult {
@@ -35,24 +37,28 @@ internal class OfflineFirstAttachmentRepository @Inject constructor(
     }
 
     private suspend fun fetch(attachment: AttachmentEntity): DownloadResult {
-        val outcome = attemptRemote(TAG) {
-            val bytes = remoteSource.download(attachment.storagePath)
-            withContext(Dispatchers.IO) { store(attachment.id, bytes) }
-        }
+        val outcome = attemptRemote(TAG) { downloadToFile(attachment) }
         return when (outcome) {
             is RemoteOutcome.Success -> {
                 attachmentDao.updateLocalPath(attachment.id, outcome.value)
+                cache.trim(keepAttachmentId = attachment.id)
                 DownloadResult.Downloaded(outcome.value)
             }
             is RemoteOutcome.Failure -> DownloadResult.Failure(outcome.error)
         }
     }
 
-    private fun store(attachmentId: String, bytes: ByteArray): String {
-        val target = File(context.attachmentDirectory(), attachmentId)
-        val partial = File(target.parentFile, attachmentId + PARTIAL_FILE_SUFFIX)
-        partial.writeBytes(bytes)
-        check(partial.renameTo(target)) { "Cannot store the file of attachment $attachmentId" }
+    private suspend fun downloadToFile(attachment: AttachmentEntity): String {
+        val target = File(context.attachmentDirectory(), attachment.id)
+        val partial = File(target.parentFile, attachment.id + PARTIAL_FILE_SUFFIX)
+        try {
+            remoteSource.download(attachment.storagePath, partial)
+            withContext(Dispatchers.IO) {
+                check(partial.renameTo(target)) { "Cannot store the file of attachment ${attachment.id}" }
+            }
+        } finally {
+            partial.delete()
+        }
         return target.absolutePath
     }
 }

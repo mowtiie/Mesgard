@@ -4,8 +4,11 @@ import com.mowtiie.mesgard.data.local.AttachmentEntity
 import com.mowtiie.mesgard.data.local.MessageEntity
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.storage.UploadData
 import io.github.jan.supabase.storage.storage
 import io.ktor.http.ContentType
+import io.ktor.util.cio.readChannel
+import io.ktor.util.cio.writeChannel
 import java.io.File
 import javax.inject.Inject
 import kotlinx.serialization.json.JsonPrimitive
@@ -19,7 +22,8 @@ private const val SEND_MESSAGE_FUNCTION = "send_message"
 internal interface AttachmentRemoteSource {
     suspend fun upload(storagePath: String, file: File, mimeType: String)
 
-    suspend fun download(storagePath: String): ByteArray
+    /** Streams the object into [target], so a large file is never held in memory. A partial file is left on failure. */
+    suspend fun download(storagePath: String, target: File)
 
     /** Stores the message with its already uploaded attachments in one transaction and returns its creation time. */
     suspend fun sendWithAttachments(message: MessageEntity, attachments: List<AttachmentEntity>): String
@@ -28,14 +32,20 @@ internal interface AttachmentRemoteSource {
 internal class SupabaseAttachmentRemoteSource @Inject constructor(private val client: SupabaseClient) :
     AttachmentRemoteSource {
     override suspend fun upload(storagePath: String, file: File, mimeType: String) {
-        client.storage.from(ATTACHMENT_BUCKET).upload(storagePath, file.readBytes()) {
+        client.storage.from(ATTACHMENT_BUCKET).upload(storagePath, UploadData(file.readChannel(), file.length())) {
             upsert = true
             contentType = ContentType.parse(mimeType)
         }
     }
 
-    override suspend fun download(storagePath: String): ByteArray =
-        client.storage.from(ATTACHMENT_BUCKET).downloadAuthenticated(storagePath)
+    override suspend fun download(storagePath: String, target: File) {
+        val channel = target.writeChannel()
+        try {
+            client.storage.from(ATTACHMENT_BUCKET).downloadAuthenticated(storagePath, channel)
+        } finally {
+            channel.flushAndClose()
+        }
+    }
 
     override suspend fun sendWithAttachments(message: MessageEntity, attachments: List<AttachmentEntity>): String =
         client.postgrest.rpc(

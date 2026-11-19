@@ -29,6 +29,20 @@ internal interface AttachmentDao {
     @Query("UPDATE attachments SET local_path = :localPath WHERE id = :attachmentId")
     suspend fun updateLocalPath(attachmentId: String, localPath: String)
 
+    /** Files on the phone that belong to sent messages, so they can be downloaded again, the oldest message first. */
+    @Query(
+        """
+        SELECT a.* FROM attachments AS a
+        JOIN messages AS m ON m.id = a.message_id
+        WHERE a.local_path IS NOT NULL AND m.status = 'SENT'
+        ORDER BY m.created_at ASC, a.id ASC
+        """,
+    )
+    suspend fun findStoredOldestFirst(): List<AttachmentEntity>
+
+    @Query("UPDATE attachments SET local_path = NULL WHERE id = :attachmentId")
+    suspend fun clearLocalPath(attachmentId: String)
+
     @Query(
         """
         UPDATE attachments SET local_path = :localPath, size_bytes = :sizeBytes, width = :width, height = :height

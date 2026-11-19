@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.data
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
+import com.mowtiie.mesgard.data.attachment.AttachmentCache
 import com.mowtiie.mesgard.data.attachment.attachmentDirectory
 import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.remote.AttachmentRemoteSource
@@ -34,7 +35,12 @@ class OfflineFirstAttachmentRepositoryTest {
     private val application = ApplicationProvider.getApplicationContext<Application>()
     private val remoteSource = mockk<AttachmentRemoteSource>()
     private val repository by lazy {
-        OfflineFirstAttachmentRepository(databaseRule.database.attachmentDao(), remoteSource, application)
+        OfflineFirstAttachmentRepository(
+            databaseRule.database.attachmentDao(),
+            remoteSource,
+            AttachmentCache(databaseRule.database.attachmentDao()),
+            application,
+        )
     }
 
     @Before
@@ -46,7 +52,9 @@ class OfflineFirstAttachmentRepositoryTest {
     @Test
     fun `downloads an attachment, stores the file and remembers its path`() = runTest {
         storeAttachment()
-        coEvery { remoteSource.download("conversation/message/a1") } returns "image-bytes".toByteArray()
+        coEvery { remoteSource.download("conversation/message/a1", any()) } answers {
+            secondArg<File>().writeText("image-bytes")
+        }
 
         val result = repository.download("a1") as DownloadResult.Downloaded
 
@@ -63,13 +71,13 @@ class OfflineFirstAttachmentRepositoryTest {
         val result = repository.download("a1")
 
         assertEquals(DownloadResult.Downloaded(file.absolutePath), result)
-        coVerify(exactly = 0) { remoteSource.download(any()) }
+        coVerify(exactly = 0) { remoteSource.download(any(), any()) }
     }
 
     @Test
     fun `downloads again when the stored file has been removed`() = runTest {
         storeAttachment(localPath = File(application.attachmentDirectory(), "gone").absolutePath)
-        coEvery { remoteSource.download(any()) } returns "again".toByteArray()
+        coEvery { remoteSource.download(any(), any()) } answers { secondArg<File>().writeText("again") }
 
         val result = repository.download("a1") as DownloadResult.Downloaded
 
@@ -79,10 +87,23 @@ class OfflineFirstAttachmentRepositoryTest {
     @Test
     fun `reports a network failure and keeps no file`() = runTest {
         storeAttachment()
-        coEvery { remoteSource.download(any()) } throws IOException("offline")
+        coEvery { remoteSource.download(any(), any()) } throws IOException("offline")
 
         assertEquals(DownloadResult.Failure(RefreshError.NETWORK_UNAVAILABLE), repository.download("a1"))
         assertEquals(null, databaseRule.database.attachmentDao().findByMessage("m1").single().localPath)
+    }
+
+    @Test
+    fun `removes the partial file when the download is interrupted`() = runTest {
+        storeAttachment()
+        coEvery { remoteSource.download(any(), any()) } coAnswers {
+            secondArg<File>().writeText("half")
+            throw IOException("connection lost")
+        }
+
+        repository.download("a1")
+
+        assertEquals(emptyList<String>(), application.attachmentDirectory().list()?.toList())
     }
 
     @Test
