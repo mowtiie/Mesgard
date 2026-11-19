@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -54,6 +56,7 @@ import com.mowtiie.mesgard.ui.common.labelResource
 internal fun ContactsScreenRoute(
     onConversationStarted: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
     viewModel: ContactsViewModel = hiltViewModel(),
     selectionViewModel: ContactsSelectionViewModel = hiltViewModel(),
 ) {
@@ -88,6 +91,7 @@ internal fun ContactsScreenRoute(
             viewModel.onConversationOpened()
         },
         onErrorShown = viewModel::onErrorShown,
+        onBack = onBack,
         modifier = modifier,
     )
 }
@@ -104,6 +108,7 @@ internal fun ContactsScreen(
     onConversationOpened: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val errorMessage = uiState.error?.let { stringResource(it.messageResource()) }
@@ -125,8 +130,18 @@ internal fun ContactsScreen(
     }
 
     TitledScreen(
-        title = stringResource(R.string.tab_contacts),
+        title = stringResource(if (onBack != null) R.string.new_chat_title else R.string.tab_contacts),
         modifier = modifier,
+        navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = stringResource(R.string.navigate_back),
+                    )
+                }
+            }
+        },
         actions = {
             OverflowMenu { dismiss ->
                 RefreshMenuItem(enabled = !uiState.isRefreshing) {

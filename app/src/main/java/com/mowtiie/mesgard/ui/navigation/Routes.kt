@@ -18,6 +18,9 @@ internal data object ArchivedRoute
 internal data object ContactsRoute
 
 @Serializable
+internal data object NewChatRoute
+
+@Serializable
 internal data object AccountRoute
 
 @Serializable

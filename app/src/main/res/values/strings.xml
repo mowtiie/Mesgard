@@ -270,6 +270,7 @@
     <string name="account_email">Email</string>
     <string name="tab_chats">Chats</string>
     <string name="tab_contacts">Contacts</string>
+    <string name="new_chat_title">New chat</string>
     <string name="account_details">Details</string>
     <string name="account_open">Open account</string>
     <string name="account_mfa">Two-step verification</string>

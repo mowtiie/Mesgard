@@ -37,6 +37,7 @@ internal fun ConversationListRoute(
     scrollToTopRequests: Int,
     onConversationClick: (String) -> Unit,
     onOpenArchived: () -> Unit,
+    onNewChat: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConversationListViewModel = hiltViewModel(),
     selectionViewModel: ConversationSelectionViewModel = hiltViewModel(),
@@ -53,6 +54,7 @@ internal fun ConversationListRoute(
         onRefreshErrorShown = viewModel::onRefreshErrorShown,
         onConversationClick = onConversationClick,
         onOpenArchived = onOpenArchived,
+        onNewChat = onNewChat,
         modifier = modifier,
     )
 }
@@ -69,6 +71,7 @@ internal fun ConversationListScreen(
     onRefreshErrorShown: () -> Unit,
     onConversationClick: (String) -> Unit,
     onOpenArchived: () -> Unit,
+    onNewChat: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -121,6 +124,9 @@ internal fun ConversationListScreen(
             else -> null
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            if (!selection.isActive && !isSearching) NewChatButton(listState, onNewChat)
+        },
     ) { padding ->
         PullToRefreshBox(
             isRefreshing = uiState.isRefreshing,

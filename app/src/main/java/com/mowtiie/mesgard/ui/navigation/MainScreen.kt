@@ -28,6 +28,7 @@ internal fun MainScreen(
     onSignOut: () -> Unit,
     onConversationClick: (String) -> Unit,
     onOpenArchived: () -> Unit,
+    onNewChat: () -> Unit,
     settingsNavigation: SettingsNavigation,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
@@ -60,6 +61,7 @@ internal fun MainScreen(
                     scrollToTopRequests = chatsScrollToTopRequests,
                     onConversationClick = onConversationClick,
                     onOpenArchived = onOpenArchived,
+                    onNewChat = onNewChat,
                 )
             }
             composable<ContactsRoute> { ContactsScreenRoute(onConversationStarted = onConversationClick) }
