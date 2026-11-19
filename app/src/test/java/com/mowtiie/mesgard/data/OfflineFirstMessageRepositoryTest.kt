@@ -481,6 +481,20 @@ class OfflineFirstMessageRepositoryTest {
     }
 
     @Test
+    fun `refresh with a full page that continues the stored history keeps the older messages`() = runTest {
+        val dao = databaseRule.database.messageDao()
+        dao.upsert(messageEntity("ancient", CONVERSATION_ID, 1_000L))
+        val sentAt = "2026-11-10T08:00:00+00:00"
+        val page = List(MESSAGE_PAGE_SIZE) { messageDto("m-$it", CONVERSATION_ID, createdAt = sentAt) }
+        dao.upsert(messageEntity("m-0", CONVERSATION_ID, 1_700_000_000_000L))
+        coEvery { remoteSource.fetchLatest(CONVERSATION_ID) } returns page
+
+        repository.refresh(CONVERSATION_ID)
+
+        assertEquals("ancient", dao.findById("ancient")?.id)
+    }
+
+    @Test
     fun `refresh with a short page keeps the older stored messages`() = runTest {
         val dao = databaseRule.database.messageDao()
         dao.upsert(messageEntity("ancient", CONVERSATION_ID, 1_000L))

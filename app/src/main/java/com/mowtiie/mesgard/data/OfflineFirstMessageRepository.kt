@@ -5,6 +5,7 @@ import com.mowtiie.mesgard.data.attachment.AttachmentIntake
 import com.mowtiie.mesgard.data.attachment.IntakeResult
 import com.mowtiie.mesgard.data.local.AttachmentEntity
 import com.mowtiie.mesgard.data.local.MesgardDatabase
+import com.mowtiie.mesgard.data.local.MessageDao
 import com.mowtiie.mesgard.data.local.MessageEntity
 import com.mowtiie.mesgard.data.local.TimelineMessage
 import com.mowtiie.mesgard.data.local.upsert
@@ -157,14 +158,23 @@ internal class OfflineFirstMessageRepository @Inject constructor(
 
     private suspend fun storeLatestPage(conversationId: String, page: List<MessageDto>) {
         database.withTransaction {
+            val gapStart = messageDao.findGapStart(page)
             storeMessages(page)
-            if (page.size >= MESSAGE_PAGE_SIZE) {
-                messageDao.deleteSentOlderThan(conversationId, page.minOf { parseEpochMillis(it.createdAt) })
-            }
+            if (gapStart != null) messageDao.deleteSentOlderThan(conversationId, gapStart)
         }
     }
 
     private suspend fun storeMessages(messages: List<MessageDto>) = database.storeMessages(messages)
+}
+
+/**
+ * A full page whose oldest message is already stored continues the stored history, so the history stays.
+ * Otherwise messages may be missing before the page, and the older ones are dropped to keep it contiguous.
+ */
+private suspend fun MessageDao.findGapStart(page: List<MessageDto>): Long? {
+    if (page.size < MESSAGE_PAGE_SIZE) return null
+    val oldest = page.minBy { parseEpochMillis(it.createdAt) }
+    return if (findById(oldest.id) == null) parseEpochMillis(oldest.createdAt) else null
 }
 
 private fun toMessage(
