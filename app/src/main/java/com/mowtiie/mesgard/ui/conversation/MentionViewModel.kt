@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.mowtiie.mesgard.domain.model.MentionCandidate
 import com.mowtiie.mesgard.domain.repository.MAX_MENTIONS_PER_MESSAGE
+import com.mowtiie.mesgard.domain.repository.MENTION_SUGGESTION_LIMIT
 import com.mowtiie.mesgard.domain.repository.MentionRepository
 import com.mowtiie.mesgard.ui.navigation.ConversationRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,8 +43,13 @@ internal class MentionViewModel @Inject constructor(
             return
         }
         search = viewModelScope.launch {
+            val stored = repository.searchStored(conversationId, query)
+            mutableUiState.value = MentionUiState(stored)
             delay(SEARCH_DELAY_MS)
-            mutableUiState.value = MentionUiState(repository.search(conversationId, query))
+            val fromServer = repository.search(conversationId, query)
+            val known = stored.mapTo(mutableSetOf()) { it.userId }
+            val merged = (stored + fromServer.filter { it.userId !in known }).take(MENTION_SUGGESTION_LIMIT)
+            mutableUiState.value = MentionUiState(merged)
         }
     }
 

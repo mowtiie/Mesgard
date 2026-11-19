@@ -1,5 +1,6 @@
 package com.mowtiie.mesgard.data
 
+import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.remote.MentionRemoteSource
 import com.mowtiie.mesgard.data.remote.RemoteOutcome
 import com.mowtiie.mesgard.data.remote.attemptRemote
@@ -11,10 +12,16 @@ import javax.inject.Inject
 
 private const val TAG = "MentionRepository"
 
-internal class RemoteMentionRepository @Inject constructor(
+internal class OfflineFirstMentionRepository @Inject constructor(
     private val remote: MentionRemoteSource,
+    database: MesgardDatabase,
     private val authRepository: AuthRepository,
 ) : MentionRepository {
+    private val profileDao = database.profileDao()
+
+    override suspend fun searchStored(conversationId: String, query: String): List<MentionCandidate> =
+        profileDao.findSenders(conversationId, query, authRepository.currentUserId.orEmpty(), MENTION_SUGGESTION_LIMIT)
+
     override suspend fun search(conversationId: String, query: String): List<MentionCandidate> {
         val me = authRepository.currentUserId
         // One more than shown, because the current user can be among the results and is removed.

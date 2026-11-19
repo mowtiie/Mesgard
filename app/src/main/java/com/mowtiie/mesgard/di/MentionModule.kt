@@ -1,6 +1,6 @@
 package com.mowtiie.mesgard.di
 
-import com.mowtiie.mesgard.data.RemoteMentionRepository
+import com.mowtiie.mesgard.data.OfflineFirstMentionRepository
 import com.mowtiie.mesgard.data.remote.MentionRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseMentionRemoteSource
 import com.mowtiie.mesgard.domain.repository.MentionRepository
@@ -19,5 +19,5 @@ internal interface MentionModule {
 
     @Binds
     @Singleton
-    fun bindMentionRepository(repository: RemoteMentionRepository): MentionRepository
+    fun bindMentionRepository(repository: OfflineFirstMentionRepository): MentionRepository
 }

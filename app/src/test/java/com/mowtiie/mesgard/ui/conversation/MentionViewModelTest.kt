@@ -9,6 +9,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -24,12 +25,39 @@ class MentionViewModelTest {
     val mainDispatcherRule = MainDispatcherRule(dispatcher)
 
     private val ana = MentionCandidate("u1", "Ana Cruz")
-    private val repository = mockk<MentionRepository>()
+    private val repository = mockk<MentionRepository> {
+        coEvery { searchStored(any(), any()) } returns emptyList()
+    }
     private val viewModel by lazy { MentionViewModel(SavedStateHandle(mapOf("conversationId" to "c1")), repository) }
 
     @Test
     fun `typing an @ shows the people who match after a short pause`() = runTest(dispatcher) {
         coEvery { repository.search("c1", "An") } returns listOf(ana)
+
+        viewModel.onDraftChanged("Hello @An")
+        advanceTimeBy(1_000)
+
+        assertEquals(listOf(ana), viewModel.uiState.value.suggestions)
+    }
+
+    @Test
+    fun `people from the conversation show at once and the server adds the others`() = runTest(dispatcher) {
+        val ben = MentionCandidate("u2", "Ana Ben")
+        coEvery { repository.searchStored("c1", "An") } returns listOf(ana)
+        coEvery { repository.search("c1", "An") } returns listOf(ana, ben)
+
+        viewModel.onDraftChanged("Hello @An")
+        runCurrent()
+        assertEquals(listOf(ana), viewModel.uiState.value.suggestions)
+
+        advanceTimeBy(1_000)
+        assertEquals(listOf(ana, ben), viewModel.uiState.value.suggestions)
+    }
+
+    @Test
+    fun `the stored people stay when the server cannot be reached`() = runTest(dispatcher) {
+        coEvery { repository.searchStored("c1", "An") } returns listOf(ana)
+        coEvery { repository.search("c1", "An") } returns emptyList()
 
         viewModel.onDraftChanged("Hello @An")
         advanceTimeBy(1_000)
