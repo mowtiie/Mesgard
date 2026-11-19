@@ -30,6 +30,7 @@ import com.mowtiie.mesgard.ui.settings.AppearanceSettingsScreenRoute
 import com.mowtiie.mesgard.ui.settings.NotificationSettingsScreenRoute
 import com.mowtiie.mesgard.ui.settings.SecuritySettingsScreenRoute
 import com.mowtiie.mesgard.ui.settings.SettingsNavigation
+import com.mowtiie.mesgard.ui.settings.SettingsScreenRoute
 
 @Composable
 internal fun MesgardNavHost(
@@ -49,11 +50,15 @@ internal fun MesgardNavHost(
     NavHost(navController = navController, startDestination = MainRoute, modifier = modifier) {
         composable<MainRoute> {
             MainScreen(
-                onSignOut = onSignOut,
                 onConversationClick = { conversationId -> navController.navigate(ConversationRoute(conversationId)) },
                 onOpenArchived = { navController.navigate(ArchivedRoute) },
                 onNewChat = { navController.navigate(NewChatRoute) },
-                settingsNavigation = SettingsNavigation(
+                onOpenSettings = { navController.navigate(SettingsRoute) },
+            )
+        }
+        composable<SettingsRoute> {
+            SettingsScreenRoute(
+                navigation = SettingsNavigation(
                     onOpenAccount = { navController.navigate(AccountRoute) },
                     onOpenAdministration = { navController.navigate(AdministrationRoute) },
                     onOpenAppearance = { navController.navigate(AppearanceSettingsRoute) },
@@ -61,6 +66,8 @@ internal fun MesgardNavHost(
                     onOpenSecurity = { navController.navigate(SecuritySettingsRoute) },
                     onOpenAbout = { navController.navigate(AboutRoute) },
                 ),
+                onSignOut = onSignOut,
+                onBack = { navController.popBackStack() },
             )
         }
         composable<AccountRoute> {

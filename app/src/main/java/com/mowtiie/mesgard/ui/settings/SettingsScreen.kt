@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +39,7 @@ import com.mowtiie.mesgard.ui.theme.IsDynamicColorSupported
 internal fun SettingsScreenRoute(
     navigation: SettingsNavigation,
     onSignOut: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -45,6 +48,7 @@ internal fun SettingsScreenRoute(
         uiState = uiState,
         navigation = navigation,
         onSignOut = onSignOut,
+        onBack = onBack,
         modifier = modifier,
     )
 }
@@ -55,11 +59,20 @@ internal fun SettingsScreen(
     uiState: SettingsUiState,
     navigation: SettingsNavigation,
     onSignOut: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isSignOutConfirmationShown by rememberSaveable { mutableStateOf(false) }
 
-    TitledScreen(title = stringResource(R.string.tab_settings), modifier = modifier) { padding ->
+    TitledScreen(
+        title = stringResource(R.string.settings_title),
+        modifier = modifier,
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.navigate_back))
+            }
+        },
+    ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
             AccountSummary(navigation.onOpenAccount)
             AdministrationEntry(navigation.onOpenAdministration)

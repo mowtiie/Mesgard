@@ -55,8 +55,8 @@ import com.mowtiie.mesgard.ui.common.labelResource
 @Composable
 internal fun ContactsScreenRoute(
     onConversationStarted: (String) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    onBack: (() -> Unit)? = null,
     viewModel: ContactsViewModel = hiltViewModel(),
     selectionViewModel: ContactsSelectionViewModel = hiltViewModel(),
 ) {
@@ -107,8 +107,8 @@ internal fun ContactsScreen(
     onQueryChanged: (String) -> Unit,
     onConversationOpened: () -> Unit,
     onErrorShown: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    onBack: (() -> Unit)? = null,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val errorMessage = uiState.error?.let { stringResource(it.messageResource()) }
@@ -130,16 +130,14 @@ internal fun ContactsScreen(
     }
 
     TitledScreen(
-        title = stringResource(if (onBack != null) R.string.new_chat_title else R.string.tab_contacts),
+        title = stringResource(R.string.new_chat_title),
         modifier = modifier,
         navigationIcon = {
-            if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        Icons.AutoMirrored.Outlined.ArrowBack,
-                        contentDescription = stringResource(R.string.navigate_back),
-                    )
-                }
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = stringResource(R.string.navigate_back),
+                )
             }
         },
         actions = {

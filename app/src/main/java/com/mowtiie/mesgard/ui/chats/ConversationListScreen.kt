@@ -7,7 +7,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -34,10 +38,10 @@ import com.mowtiie.mesgard.ui.common.TitledScreen
 
 @Composable
 internal fun ConversationListRoute(
-    scrollToTopRequests: Int,
     onConversationClick: (String) -> Unit,
     onOpenArchived: () -> Unit,
     onNewChat: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConversationListViewModel = hiltViewModel(),
     selectionViewModel: ConversationSelectionViewModel = hiltViewModel(),
@@ -48,13 +52,13 @@ internal fun ConversationListRoute(
         uiState = uiState,
         selection = selection,
         selectionCallbacks = selectionViewModel.callbacks(selection) { uiState.conversations.map { it.id } },
-        scrollToTopRequests = scrollToTopRequests,
         onRefresh = viewModel::onRefresh,
         onQueryChanged = viewModel::onQueryChanged,
         onRefreshErrorShown = viewModel::onRefreshErrorShown,
         onConversationClick = onConversationClick,
         onOpenArchived = onOpenArchived,
         onNewChat = onNewChat,
+        onOpenSettings = onOpenSettings,
         modifier = modifier,
     )
 }
@@ -65,13 +69,13 @@ internal fun ConversationListScreen(
     uiState: ConversationListUiState,
     selection: ConversationSelectionUiState,
     selectionCallbacks: SelectionCallbacks,
-    scrollToTopRequests: Int,
     onRefresh: () -> Unit,
     onQueryChanged: (String) -> Unit,
     onRefreshErrorShown: () -> Unit,
     onConversationClick: (String) -> Unit,
     onOpenArchived: () -> Unit,
     onNewChat: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -85,9 +89,6 @@ internal fun ConversationListScreen(
         }
     }
     SelectionEffects(selection, selectionCallbacks, snackbarHostState)
-    LaunchedEffect(scrollToTopRequests) {
-        if (scrollToTopRequests > 0) listState.animateScrollToItem(0)
-    }
 
     var isSearching by rememberSaveable { mutableStateOf(false) }
     val closeSearch = {
@@ -96,10 +97,13 @@ internal fun ConversationListScreen(
     }
 
     TitledScreen(
-        title = stringResource(R.string.tab_chats),
+        title = stringResource(R.string.chats_title),
         modifier = modifier,
         actions = {
             if (uiState.showSearch) SearchAction { isSearching = true }
+            IconButton(onClick = onOpenSettings) {
+                Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings_title))
+            }
             OverflowMenu { dismiss ->
                 RefreshMenuItem(enabled = !uiState.isRefreshing) {
                     dismiss()
