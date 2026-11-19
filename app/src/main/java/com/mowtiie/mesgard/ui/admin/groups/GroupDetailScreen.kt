@@ -32,6 +32,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.GroupRole
+import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.ui.admin.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
@@ -60,6 +61,7 @@ internal fun GroupDetailScreenRoute(
         onDeleteConfirmed = viewModel::onDeleteConfirmed,
         onRemoveConfirmed = viewModel::onRemoveConfirmed,
         onRoleToggled = viewModel::onRoleToggled,
+        onSettingsChanged = viewModel::onSettingsChanged,
         onErrorShown = viewModel::onErrorShown,
         modifier = modifier,
     )
@@ -78,6 +80,7 @@ internal fun GroupDetailScreen(
     onDeleteConfirmed: () -> Unit,
     onRemoveConfirmed: (GroupMemberRow) -> Unit,
     onRoleToggled: (GroupMemberRow) -> Unit,
+    onSettingsChanged: (GroupSettings) -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -130,7 +133,7 @@ internal fun GroupDetailScreen(
                 onRefresh = onRefresh,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                MemberList(uiState, onDialogRequested, onRoleToggled)
+                MemberList(uiState, onDialogRequested, onRoleToggled, onSettingsChanged)
             }
         }
     }
@@ -142,6 +145,7 @@ private fun MemberList(
     uiState: GroupDetailUiState,
     onDialogRequested: (GroupDetailDialog) -> Unit,
     onRoleToggled: (GroupMemberRow) -> Unit,
+    onSettingsChanged: (GroupSettings) -> Unit,
 ) {
     if (uiState.members.isEmpty() && !uiState.isLoading) {
         EmptyState(
@@ -151,6 +155,13 @@ private fun MemberList(
         )
     }
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = FabClearance)) {
+        item(key = "settings") {
+            GroupSettingsRows(
+                uiState.settings,
+                enabled = !uiState.isWorking && !uiState.isLoading,
+                onChanged = onSettingsChanged,
+            )
+        }
         items(uiState.members, key = { it.userId }) { member ->
             val name = member.displayName ?: stringResource(R.string.group_unknown_member)
             ListItem(

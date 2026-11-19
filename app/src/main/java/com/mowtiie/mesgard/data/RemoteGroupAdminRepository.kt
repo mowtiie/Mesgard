@@ -6,11 +6,15 @@ import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupDetail
 import com.mowtiie.mesgard.domain.model.GroupMember
 import com.mowtiie.mesgard.domain.model.GroupRole
+import com.mowtiie.mesgard.domain.model.GroupSettings
+import com.mowtiie.mesgard.domain.model.PostingPolicy
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
 import javax.inject.Inject
 
 private const val MODERATOR = "moderator"
 private const val MEMBER = "member"
+private const val MODERATORS = "moderators"
+private const val EVERYONE = "everyone"
 
 /** Groups are never cached: administration only works with a connection, and every answer comes from the server. */
 internal class RemoteGroupAdminRepository @Inject constructor(private val remote: GroupAdminRemoteSource) :
@@ -20,12 +24,24 @@ internal class RemoteGroupAdminRepository @Inject constructor(private val remote
     }
 
     override suspend fun fetchGroup(groupId: String): AdminResult<GroupDetail> = attemptAdmin {
-        val name = checkNotNull(remote.fetchGroupName(groupId)) { "The group is not visible" }
-        GroupDetail(groupId, name, remote.fetchGroupMembers(groupId).map { GroupMember(it.userId, it.role.toRole()) })
+        val group = checkNotNull(remote.fetchGroup(groupId)) { "The group is not visible" }
+        GroupDetail(
+            id = groupId,
+            name = group.name,
+            members = remote.fetchGroupMembers(groupId).map { GroupMember(it.userId, it.role.toRole()) },
+            settings = GroupSettings(group.postingPolicy.toPostingPolicy(), group.includesEveryone),
+        )
     }
 
-    override suspend fun createGroup(orgId: String, name: String): AdminResult<String> =
-        attemptAdmin { remote.createGroup(orgId, name.trim()) }
+    override suspend fun createGroup(orgId: String, name: String, settings: GroupSettings): AdminResult<String> =
+        attemptAdmin {
+            remote.createGroup(orgId, name.trim(), settings.postingPolicy.toWireName(), settings.includesEveryone)
+        }
+
+    override suspend fun changeSettings(groupId: String, settings: GroupSettings): AdminResult<Unit> = attemptAdmin {
+        val changed = remote.updateSettings(groupId, settings.postingPolicy.toWireName(), settings.includesEveryone)
+        check(changed) { "No group was changed" }
+    }
 
     override suspend fun renameGroup(groupId: String, name: String): AdminResult<Unit> =
         attemptAdmin { check(remote.renameGroup(groupId, name.trim())) { "No group was changed" } }
@@ -44,5 +60,9 @@ internal class RemoteGroupAdminRepository @Inject constructor(private val remote
 }
 
 private fun String.toRole() = if (this == MODERATOR) GroupRole.MODERATOR else GroupRole.MEMBER
+
+private fun String.toPostingPolicy() = if (this == MODERATORS) PostingPolicy.MODERATORS else PostingPolicy.EVERYONE
+
+private fun PostingPolicy.toWireName() = if (this == PostingPolicy.MODERATORS) MODERATORS else EVERYONE
 
 private fun GroupRole.toWireName() = if (this == GroupRole.MODERATOR) MODERATOR else MEMBER

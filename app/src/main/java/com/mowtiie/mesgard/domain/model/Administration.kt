@@ -53,4 +53,21 @@ internal data class AdminGroup(val id: String, val name: String, val memberCount
 
 internal data class GroupMember(val userId: String, val role: GroupRole)
 
-internal data class GroupDetail(val id: String, val name: String, val members: List<GroupMember>)
+/** Who can post in a group chat. Organization admins can always post. */
+internal enum class PostingPolicy {
+    EVERYONE,
+    MODERATORS,
+}
+
+/** [includesEveryone] puts every member of the organization in the group, now and when they join. */
+internal data class GroupSettings(
+    val postingPolicy: PostingPolicy = PostingPolicy.EVERYONE,
+    val includesEveryone: Boolean = false,
+)
+
+internal data class GroupDetail(
+    val id: String,
+    val name: String,
+    val members: List<GroupMember>,
+    val settings: GroupSettings = GroupSettings(),
+)

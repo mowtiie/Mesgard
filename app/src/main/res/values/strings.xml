@@ -167,6 +167,10 @@
     <string name="groups_empty_hint">Create a group to message a team, class or department together.</string>
     <string name="groups_add">New group</string>
     <string name="groups_create_title">New group</string>
+    <string name="group_setting_moderators_only">Only moderators can post</string>
+    <string name="group_setting_moderators_only_hint">Everyone else can read. Organization admins can always post.</string>
+    <string name="group_setting_everyone">Everyone is a member</string>
+    <string name="group_setting_everyone_hint">Every member of the organization joins, now and when they are added.</string>
     <string name="groups_create_confirm">Create</string>
     <string name="groups_name_label">Group name</string>
     <string name="group_rename">Rename</string>

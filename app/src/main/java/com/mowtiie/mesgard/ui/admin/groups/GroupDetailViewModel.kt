@@ -8,6 +8,7 @@ import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupDetail
 import com.mowtiie.mesgard.domain.model.GroupRole
+import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
 import com.mowtiie.mesgard.ui.navigation.GroupRoute
@@ -35,6 +36,7 @@ internal sealed interface GroupDetailDialog {
 
 internal data class GroupDetailUiState(
     val name: String = "",
+    val settings: GroupSettings = GroupSettings(),
     val members: List<GroupMemberRow> = emptyList(),
     val isLoading: Boolean = true,
     val isWorking: Boolean = false,
@@ -59,6 +61,7 @@ internal class GroupDetailViewModel @Inject constructor(
         val names = contacts.associate { it.userId to it.displayName }
         GroupDetailUiState(
             name = local.group?.name.orEmpty(),
+            settings = local.group?.settings ?: GroupSettings(),
             members = local.group?.members.orEmpty()
                 .map { GroupMemberRow(it.userId, names[it.userId], it.role) }
                 .sortedWith(compareBy({ it.role != GroupRole.MODERATOR }, { it.displayName.orEmpty().lowercase() })),
@@ -97,6 +100,10 @@ internal class GroupDetailViewModel @Inject constructor(
 
     fun onDeleteConfirmed() {
         change(onSuccess = { it.copy(isDeleted = true) }, refresh = false) { groupAdminRepository.deleteGroup(groupId) }
+    }
+
+    fun onSettingsChanged(settings: GroupSettings) {
+        change { groupAdminRepository.changeSettings(groupId, settings) }
     }
 
     fun onRemoveConfirmed(member: GroupMemberRow) {

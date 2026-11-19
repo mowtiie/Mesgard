@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.ui.admin.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
@@ -73,7 +74,7 @@ internal fun GroupsScreen(
     onOpenGroup: (String) -> Unit,
     onRefresh: () -> Unit,
     onQueryChanged: (String) -> Unit,
-    onCreateConfirmed: (String) -> Unit,
+    onCreateConfirmed: (String, GroupSettings) -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -138,13 +139,10 @@ internal fun GroupsScreen(
         }
     }
     if (isCreateDialogShown) {
-        GroupNameDialog(
-            title = R.string.groups_create_title,
-            confirmLabel = R.string.groups_create_confirm,
-            initialName = "",
+        NewGroupDialog(
             isWorking = uiState.isWorking,
-            onConfirm = {
-                onCreateConfirmed(it)
+            onConfirm = { name, settings ->
+                onCreateConfirmed(name, settings)
                 isCreateDialogShown = false
             },
             onDismiss = { isCreateDialogShown = false },

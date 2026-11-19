@@ -6,6 +6,7 @@ import com.mowtiie.mesgard.domain.admin.ObserveAdminOrganization
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminGroup
 import com.mowtiie.mesgard.domain.model.AdminResult
+import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
 import com.mowtiie.mesgard.ui.common.matchesQuery
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -65,12 +66,12 @@ internal class GroupsViewModel @Inject constructor(
         }
     }
 
-    fun onCreateConfirmed(name: String) {
+    fun onCreateConfirmed(name: String, settings: GroupSettings = GroupSettings()) {
         if (name.isBlank() || mutableUiState.value.isWorking) return
         mutableUiState.update { it.copy(isWorking = true) }
         viewModelScope.launch {
             val organizationId = observeAdminOrganization.organization.first()?.organizationId
-            val result = organizationId?.let { groupAdminRepository.createGroup(it, name) }
+            val result = organizationId?.let { groupAdminRepository.createGroup(it, name, settings) }
                 ?: AdminResult.Failure(AdminError.NOT_ALLOWED)
             val error = (result as? AdminResult.Failure)?.error
             mutableUiState.update { it.copy(isWorking = false, error = error) }

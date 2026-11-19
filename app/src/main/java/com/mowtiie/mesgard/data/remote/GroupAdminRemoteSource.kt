@@ -16,6 +16,8 @@ internal data class GroupRowDto(
     val id: String,
     val name: String,
     @SerialName("group_members") val members: List<CountDto> = emptyList(),
+    @SerialName("posting_policy") val postingPolicy: String = "everyone",
+    @SerialName("includes_everyone") val includesEveryone: Boolean = false,
 )
 
 @Serializable
@@ -34,7 +36,12 @@ internal data class IdDto(val id: String)
 internal data class UserIdDto(@SerialName("user_id") val userId: String)
 
 @Serializable
-private data class NewGroupDto(@SerialName("org_id") val orgId: String, val name: String)
+private data class NewGroupDto(
+    @SerialName("org_id") val orgId: String,
+    val name: String,
+    @SerialName("posting_policy") val postingPolicy: String,
+    @SerialName("includes_everyone") val includesEveryone: Boolean,
+)
 
 @Serializable
 private data class NewGroupMemberDto(
@@ -46,14 +53,16 @@ private data class NewGroupMemberDto(
 internal interface GroupAdminRemoteSource {
     suspend fun listGroups(orgId: String): List<GroupRowDto>
 
-    suspend fun fetchGroupName(groupId: String): String?
+    suspend fun fetchGroup(groupId: String): GroupRowDto?
 
     suspend fun fetchGroupMembers(groupId: String): List<GroupMemberRowDto>
 
-    suspend fun createGroup(orgId: String, name: String): String
+    suspend fun createGroup(orgId: String, name: String, postingPolicy: String, includesEveryone: Boolean): String
 
     /** The writes below return true when a row changed; Row Level Security hides the rows an admin may not change. */
     suspend fun renameGroup(groupId: String, name: String): Boolean
+
+    suspend fun updateSettings(groupId: String, postingPolicy: String, includesEveryone: Boolean): Boolean
 
     suspend fun deleteGroup(groupId: String): Boolean
 
@@ -72,19 +81,35 @@ internal class SupabaseGroupAdminRemoteSource @Inject constructor(private val cl
             order("name", Order.ASCENDING)
         }.decodeList()
 
-    override suspend fun fetchGroupName(groupId: String): String? =
-        client.from(GROUPS_TABLE).select(Columns.list("id", "name")) {
+    override suspend fun fetchGroup(groupId: String): GroupRowDto? =
+        client.from(GROUPS_TABLE).select(Columns.list("id", "name", "posting_policy", "includes_everyone")) {
             filter { eq("id", groupId) }
-        }.decodeList<GroupRowDto>().firstOrNull()?.name
+        }.decodeList<GroupRowDto>().firstOrNull()
 
     override suspend fun fetchGroupMembers(groupId: String): List<GroupMemberRowDto> =
         client.from(GROUP_MEMBERS_TABLE).select(Columns.list("user_id", "role_in_group")) {
             filter { eq("group_id", groupId) }
         }.decodeList()
 
-    override suspend fun createGroup(orgId: String, name: String): String =
-        client.from(GROUPS_TABLE).insert(NewGroupDto(orgId, name)) { select(Columns.list("id")) }
-            .decodeSingle<IdDto>().id
+    override suspend fun createGroup(
+        orgId: String,
+        name: String,
+        postingPolicy: String,
+        includesEveryone: Boolean,
+    ): String = client.from(GROUPS_TABLE)
+        .insert(NewGroupDto(orgId, name, postingPolicy, includesEveryone)) { select(Columns.list("id")) }
+        .decodeSingle<IdDto>().id
+
+    override suspend fun updateSettings(groupId: String, postingPolicy: String, includesEveryone: Boolean): Boolean =
+        client.from(GROUPS_TABLE).update(
+            {
+                set("posting_policy", postingPolicy)
+                set("includes_everyone", includesEveryone)
+            },
+        ) {
+            select(Columns.list("id"))
+            filter { eq("id", groupId) }
+        }.decodeList<IdDto>().isNotEmpty()
 
     override suspend fun renameGroup(groupId: String, name: String): Boolean =
         client.from(GROUPS_TABLE).update({ set("name", name) }) {

@@ -10,6 +10,8 @@ import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupDetail
 import com.mowtiie.mesgard.domain.model.GroupMember
 import com.mowtiie.mesgard.domain.model.GroupRole
+import com.mowtiie.mesgard.domain.model.GroupSettings
+import com.mowtiie.mesgard.domain.model.PostingPolicy
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -40,7 +42,7 @@ class RemoteGroupAdminRepositoryTest {
 
     @Test
     fun `reads a group with its name and the roles of its members`() = runTest {
-        coEvery { remote.fetchGroupName("g1") } returns "Grade 10 A"
+        coEvery { remote.fetchGroup("g1") } returns GroupRowDto("g1", "Grade 10 A")
         coEvery { remote.fetchGroupMembers("g1") } returns listOf(
             GroupMemberRowDto("u1", "moderator"),
             GroupMemberRowDto("u2", "member"),
@@ -59,15 +61,38 @@ class RemoteGroupAdminRepositoryTest {
     }
 
     @Test
+    fun `reads who can post and whether everyone is a member`() = runTest {
+        coEvery { remote.fetchGroup("g1") } returns GroupRowDto("g1", "Announcements", emptyList(), "moderators", true)
+        coEvery { remote.fetchGroupMembers("g1") } returns emptyList()
+
+        val group = (repository.fetchGroup("g1") as AdminResult.Success).value
+
+        assertEquals(GroupSettings(PostingPolicy.MODERATORS, includesEveryone = true), group.settings)
+    }
+
+    @Test
+    fun `creates a group with its settings and changes them later`() = runTest {
+        coEvery { remote.createGroup(ORG, "Announcements", "moderators", true) } returns "g7"
+        coEvery { remote.updateSettings("g7", "everyone", true) } returns true
+
+        val settings = GroupSettings(PostingPolicy.MODERATORS, includesEveryone = true)
+        assertEquals(AdminResult.Success("g7"), repository.createGroup(ORG, "Announcements", settings))
+        assertEquals(
+            AdminResult.Success(Unit),
+            repository.changeSettings("g7", GroupSettings(PostingPolicy.EVERYONE, includesEveryone = true)),
+        )
+    }
+
+    @Test
     fun `a group that cannot be seen is not allowed`() = runTest {
-        coEvery { remote.fetchGroupName("g1") } returns null
+        coEvery { remote.fetchGroup("g1") } returns null
 
         assertEquals(AdminResult.Failure(AdminError.NOT_ALLOWED), repository.fetchGroup("g1"))
     }
 
     @Test
     fun `creates and renames a group with a trimmed name`() = runTest {
-        coEvery { remote.createGroup(ORG, "Chess Club") } returns "g9"
+        coEvery { remote.createGroup(ORG, "Chess Club", "everyone", false) } returns "g9"
         coEvery { remote.renameGroup("g9", "Chess Society") } returns true
 
         assertEquals(AdminResult.Success("g9"), repository.createGroup(ORG, "  Chess Club "))

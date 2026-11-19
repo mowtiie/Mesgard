@@ -8,7 +8,9 @@ import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.GroupDetail
 import com.mowtiie.mesgard.domain.model.GroupMember
 import com.mowtiie.mesgard.domain.model.GroupRole
+import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.domain.model.PostingPolicy
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
@@ -67,6 +69,24 @@ class GroupDetailViewModelTest {
             assertEquals(listOf("Ben Reyes", null, "Ana Cruz"), state.members.map { it.displayName })
             assertEquals(GroupRole.MODERATOR, state.members.first().role)
         }
+    }
+
+    @Test
+    fun `shows who can post, and changing it saves the settings and loads the group again`() = runTest {
+        val moderatorsOnly = GroupSettings(PostingPolicy.MODERATORS, includesEveryone = true)
+        coEvery { groupAdminRepository.fetchGroup("g1") } returns
+            AdminResult.Success(detail.copy(settings = moderatorsOnly))
+        coEvery { groupAdminRepository.changeSettings("g1", any()) } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            assertEquals(moderatorsOnly, expectMostRecentItem().settings)
+            viewModel.onSettingsChanged(GroupSettings())
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { groupAdminRepository.changeSettings("g1", GroupSettings()) }
+        coVerify(atLeast = 2) { groupAdminRepository.fetchGroup("g1") }
     }
 
     @Test

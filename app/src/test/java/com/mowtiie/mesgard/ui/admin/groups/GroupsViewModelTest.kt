@@ -6,7 +6,9 @@ import com.mowtiie.mesgard.domain.model.AccountMembership
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminGroup
 import com.mowtiie.mesgard.domain.model.AdminResult
+import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.domain.model.PostingPolicy
 import com.mowtiie.mesgard.domain.repository.AccountRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
@@ -86,6 +88,17 @@ class GroupsViewModelTest {
         coVerify(exactly = 1) { groupAdminRepository.createGroup(ORG, "Chess Club") }
         coVerify(exactly = 2) { groupAdminRepository.listGroups(ORG) }
         assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `creates an announcements style group with its settings`() {
+        val settings = GroupSettings(PostingPolicy.MODERATORS, includesEveryone = true)
+        coEvery { groupAdminRepository.listGroups(ORG) } returns AdminResult.Success(groups)
+        coEvery { groupAdminRepository.createGroup(ORG, "Announcements", settings) } returns AdminResult.Success("g4")
+
+        viewModel().onCreateConfirmed("Announcements", settings)
+
+        coVerify(exactly = 1) { groupAdminRepository.createGroup(ORG, "Announcements", settings) }
     }
 
     @Test
