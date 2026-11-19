@@ -40,6 +40,7 @@ internal fun SectionTabs(selected: ContactsSection, onSectionSelected: (Contacts
 @Composable
 internal fun SectionPager(
     uiState: ContactsUiState,
+    selection: ContactsSelection,
     onContactClicked: (Contact) -> Unit,
     onGroupClicked: (Group) -> Unit,
     onSectionSelected: (ContactsSection) -> Unit,
@@ -53,7 +54,7 @@ internal fun SectionPager(
         snapshotFlow { pagerState.settledPage }.collect { onSectionSelected(sections[it]) }
     }
     HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
-        ContactList(sections[page], uiState, onContactClicked, onGroupClicked)
+        ContactList(sections[page], uiState, selection, onContactClicked, onGroupClicked)
     }
 }
 

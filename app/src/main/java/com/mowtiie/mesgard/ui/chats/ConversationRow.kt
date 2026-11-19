@@ -3,19 +3,14 @@ package com.mowtiie.mesgard.ui.chats
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,12 +29,12 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.ConversationSummary
 import com.mowtiie.mesgard.domain.model.ConversationType
 import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.SelectedAvatar
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val MutedIconSize = 16.dp
 private val StatusIconSpacing = 4.dp
-private val SelectedAvatarSize = 48.dp
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -141,23 +136,6 @@ private fun UnreadBadge(count: Int) {
     val description = pluralStringResource(R.plurals.conversation_unread_messages, count, count)
     Badge(modifier = Modifier.semantics { contentDescription = description }) {
         Text(formatUnreadCount(count))
-    }
-}
-
-@Composable
-private fun SelectedAvatar() {
-    Surface(
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.size(SelectedAvatarSize),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                Icons.Default.Check,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
-            )
-        }
     }
 }
 
