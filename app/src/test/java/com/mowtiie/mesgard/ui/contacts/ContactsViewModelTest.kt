@@ -59,13 +59,30 @@ class ContactsViewModelTest {
     }
 
     @Test
-    fun `exposes the stored contacts`() = runTest {
+    fun `lists nobody until a name is typed, and asks for a search`() = runTest {
         contacts.value = listOf(ana)
 
         viewModel().uiState.test {
             val state = expectMostRecentItem()
-            assertEquals(listOf("Ana"), state.contacts.map { it.displayName })
+            assertEquals(emptyList<String>(), state.contacts.map { it.displayName })
+            assertEquals(1, state.totalContacts)
+            assertTrue(state.showSearchPrompt)
             assertFalse(state.showEmptyMessage)
+            assertFalse(state.showNoResults)
+        }
+    }
+
+    @Test
+    fun `finds a person by typing part of the name`() = runTest {
+        contacts.value = listOf(ana)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onQueryChanged("an")
+            val state = awaitItem()
+            assertEquals(listOf("Ana"), state.contacts.map { it.displayName })
+            assertFalse(state.showSearchPrompt)
         }
     }
 
@@ -270,14 +287,16 @@ class ContactsViewModelTest {
     }
 
     @Test
-    fun `a blank query shows everything`() = runTest {
+    fun `a blank query still lists nobody`() = runTest {
         contacts.value = listOf(ana)
         val viewModel = viewModel()
 
         viewModel.uiState.test {
             expectMostRecentItem()
             viewModel.onQueryChanged("   ")
-            assertEquals(1, awaitItem().contacts.size)
+            val state = awaitItem()
+            assertEquals(0, state.contacts.size)
+            assertTrue(state.showSearchPrompt)
         }
     }
 

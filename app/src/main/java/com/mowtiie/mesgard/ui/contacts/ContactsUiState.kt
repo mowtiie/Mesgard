@@ -15,7 +15,11 @@ internal enum class ContactsSection {
     GROUPS,
 }
 
-/** [contacts] and [groups] are already filtered by [query]; the totals count them without the filter. */
+/**
+ * [contacts] holds the people that match [query], and nobody while it is blank: people are found by searching, not
+ * by scrolling a roster. [groups] are filtered by [query] too, and all shown while it is blank. The totals count them
+ * without the filter.
+ */
 internal data class ContactsUiState(
     val contacts: List<Contact> = emptyList(),
     val groups: List<Group> = emptyList(),
@@ -40,7 +44,10 @@ internal data class ContactsUiState(
         get() = query.isNotBlank()
 
     val showSearch: Boolean
-        get() = totalContacts > 0 || isFiltering
+        get() = totalContacts > 0 || totalGroups > 0 || isFiltering
+
+    val showSearchPrompt: Boolean
+        get() = isLoaded && totalContacts > 0 && !isFiltering && section == ContactsSection.PEOPLE
 
     val showEmptyMessage: Boolean
         get() = isLoaded && totalContacts == 0 && !isRefreshing && section == ContactsSection.PEOPLE

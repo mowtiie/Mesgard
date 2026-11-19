@@ -39,7 +39,13 @@ internal class ContactsViewModel @Inject constructor(
     ) { allContacts, allGroups, onlineUserIds, local ->
         val startableGroups = allGroups.filter { it.canStartConversation }
         ContactsUiState(
-            contacts = allContacts.filter { matchesQuery(it.displayName, local.query) },
+            contacts = if (local.query.isBlank()) {
+                emptyList()
+            } else {
+                allContacts.filter {
+                    matchesQuery(it.displayName, local.query)
+                }
+            },
             groups = startableGroups.filter { matchesQuery(it.name, local.query) },
             totalContacts = allContacts.size,
             totalGroups = startableGroups.size,

@@ -423,7 +423,9 @@
     <string name="contacts_empty_hint">People in your organization appear here once an administrator adds them.</string>
     <string name="contacts_section_people">People</string>
     <string name="contacts_section_groups">Groups</string>
-    <string name="contacts_search_placeholder">Search</string>
+    <string name="contacts_search_placeholder">Search by name</string>
+    <string name="contacts_search_prompt">Search for a person</string>
+    <string name="contacts_search_prompt_hint">Type a name to find someone and start a conversation.</string>
     <string name="chats_search_placeholder">Search conversations</string>
     <string name="conversation_search">Search messages</string>
     <string name="conversation_search_placeholder">Search in this conversation</string>

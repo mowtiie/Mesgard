@@ -19,9 +19,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -35,8 +33,6 @@ import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.NoResultsState
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.RefreshMenuItem
-import com.mowtiie.mesgard.ui.common.SearchAction
-import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.labelResource
 
@@ -86,13 +82,11 @@ internal fun ContactsScreen(
     LaunchedEffect(uiState.conversationToOpen) {
         if (uiState.conversationToOpen != null) onConversationOpened()
     }
-    var isSearching by rememberSaveable { mutableStateOf(false) }
 
     TitledScreen(
         title = stringResource(R.string.tab_contacts),
         modifier = modifier,
         actions = {
-            if (uiState.showSearch) SearchAction { isSearching = true }
             OverflowMenu { dismiss ->
                 RefreshMenuItem(enabled = !uiState.isRefreshing) {
                     dismiss()
@@ -100,25 +94,11 @@ internal fun ContactsScreen(
                 }
             }
         },
-        searchBar = if (isSearching) {
-            {
-                SearchAppBar(
-                    query = uiState.query,
-                    onQueryChange = onQueryChanged,
-                    onClose = {
-                        isSearching = false
-                        onQueryChanged("")
-                    },
-                    placeholder = stringResource(R.string.contacts_search_placeholder),
-                )
-            }
-        } else {
-            null
-        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (uiState.isStartingConversation) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            if (uiState.showSearch) ContactsSearchField(uiState.query, onQueryChanged)
             if (uiState.showSections) SectionTabs(uiState.section, onSectionSelected)
             ContactsContent(
                 uiState = uiState,
@@ -167,6 +147,16 @@ internal fun ContactList(
                     R.drawable.illustration_contacts,
                     R.string.contacts_empty,
                     R.string.contacts_empty_hint,
+                    Modifier.fillParentMaxSize(),
+                )
+            }
+        }
+        if (uiState.showSearchPrompt && section == ContactsSection.PEOPLE) {
+            item(key = "search-prompt") {
+                EmptyState(
+                    R.drawable.illustration_search,
+                    R.string.contacts_search_prompt,
+                    R.string.contacts_search_prompt_hint,
                     Modifier.fillParentMaxSize(),
                 )
             }
