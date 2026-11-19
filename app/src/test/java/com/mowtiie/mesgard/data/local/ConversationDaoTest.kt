@@ -38,7 +38,7 @@ class ConversationDaoTest {
     }
 
     @Test
-    fun `pins announcement conversations above more recent conversations`() = runTest {
+    fun `keeps the announcements conversation out of the list of conversations`() = runTest {
         conversationDao.upsertAll(
             listOf(
                 conversationEntity("announcements", type = ConversationType.ANNOUNCEMENT),
@@ -53,7 +53,11 @@ class ConversationDaoTest {
         )
 
         conversationDao.observeList(PAGE_SIZE).test {
-            assertEquals(listOf("announcements", "recent"), awaitItem().map { it.id })
+            assertEquals(listOf("recent"), awaitItem().map { it.id })
+            cancelAndIgnoreRemainingEvents()
+        }
+        conversationDao.observeAnnouncements().test {
+            assertEquals("announcements", awaitItem()?.id)
             cancelAndIgnoreRemainingEvents()
         }
     }

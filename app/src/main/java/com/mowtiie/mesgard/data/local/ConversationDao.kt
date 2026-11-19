@@ -32,11 +32,15 @@ internal interface ConversationDao {
     @Query(
         """
         $CONVERSATION_ITEM_SELECT
-        ORDER BY (c.type = 'ANNOUNCEMENT') DESC, activityAtEpochMillis DESC, c.id DESC
+        WHERE c.type <> 'ANNOUNCEMENT'
+        ORDER BY activityAtEpochMillis DESC, c.id DESC
         LIMIT :limit
         """,
     )
     fun observeList(limit: Int): Flow<List<ConversationListItem>>
+
+    @Query("$CONVERSATION_ITEM_SELECT WHERE c.type = 'ANNOUNCEMENT' ORDER BY c.created_at LIMIT 1")
+    fun observeAnnouncements(): Flow<ConversationListItem?>
 
     @Query("$CONVERSATION_ITEM_SELECT WHERE c.id = :conversationId")
     fun observeById(conversationId: String): Flow<ConversationListItem?>
