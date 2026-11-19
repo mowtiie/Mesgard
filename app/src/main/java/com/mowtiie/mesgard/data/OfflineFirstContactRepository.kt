@@ -8,7 +8,9 @@ import com.mowtiie.mesgard.data.remote.attemptRemote
 import com.mowtiie.mesgard.data.remote.toContact
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.remote.toRefreshResult
+import com.mowtiie.mesgard.data.remote.toStoredEntity
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.ContactSearchResult
 import com.mowtiie.mesgard.domain.model.MAX_FAVORITE_CONTACTS
 import com.mowtiie.mesgard.domain.model.PreferenceError
 import com.mowtiie.mesgard.domain.model.PreferenceResult
@@ -37,7 +39,11 @@ internal class OfflineFirstContactRepository @Inject constructor(
     override suspend fun refresh(): RefreshResult = attemptRemote(TAG) {
         val userId = authRepository.currentUserId
         val favoriteIds = remoteSource.fetchFavoriteIds(userId)
-        val contacts = remoteSource.fetchContacts(userId).map { it.toEntity(isFavorite = it.userId in favoriteIds) }
+        val roster = remoteSource.fetchContacts(userId)
+        // A favorite stays on the list even when the roster of a large organization does not reach that far.
+        val missing = favoriteIds - roster.mapTo(mutableSetOf()) { it.userId }
+        val contacts = (roster + remoteSource.fetchContactsByIds(missing))
+            .map { it.toEntity(isFavorite = it.userId in favoriteIds) }
         database.withTransaction {
             contactDao.deleteAll()
             contactDao.upsertAll(contacts)
@@ -52,6 +58,20 @@ internal class OfflineFirstContactRepository @Inject constructor(
         }
     }
 
+    override suspend fun search(query: String): ContactSearchResult {
+        val userId = authRepository.currentUserId
+        val outcome = attemptRemote(TAG) {
+            val favoriteIds = remoteSource.fetchFavoriteIds(userId)
+            remoteSource.searchContacts(query, userId).map {
+                it.toEntity(isFavorite = it.userId in favoriteIds).toContact()
+            }
+        }
+        return when (outcome) {
+            is RemoteOutcome.Success -> ContactSearchResult.Found(outcome.value)
+            is RemoteOutcome.Failure -> ContactSearchResult.Unavailable
+        }
+    }
+
     override suspend fun setFavorite(contacts: Set<Contact>, favorite: Boolean): PreferenceResult {
         val userId = authRepository.currentUserId
         val changed = contacts.filter { it.isFavorite != favorite }
@@ -60,16 +80,16 @@ internal class OfflineFirstContactRepository @Inject constructor(
             changed.isEmpty() -> PreferenceResult.Success
             favorite && contactDao.countFavorites() + changed.size > MAX_FAVORITE_CONTACTS ->
                 PreferenceResult.Failure(PreferenceError.TOO_MANY_FAVORITES)
-            else -> applyFavorite(userId, changed.groupBy({ it.orgId }, { it.userId }), favorite)
+            else -> applyFavorite(userId, changed, favorite)
         }
     }
 
-    private suspend fun applyFavorite(
-        userId: String,
-        idsByOrganization: Map<String, List<String>>,
-        favorite: Boolean,
-    ): PreferenceResult {
-        idsByOrganization.forEach { (orgId, ids) -> contactDao.updateFavorite(orgId, ids, favorite) }
+    private suspend fun writeFavorites(people: List<Contact>, favorite: Boolean) =
+        contactDao.upsertAll(people.map { it.copy(isFavorite = favorite).toStoredEntity() })
+
+    private suspend fun applyFavorite(userId: String, people: List<Contact>, favorite: Boolean): PreferenceResult {
+        val idsByOrganization = people.groupBy({ it.orgId }, { it.userId })
+        writeFavorites(people, favorite)
         val outcome = attemptRemote(TAG) {
             idsByOrganization.forEach { (orgId, ids) ->
                 if (favorite) {
@@ -86,7 +106,7 @@ internal class OfflineFirstContactRepository @Inject constructor(
         return when (outcome) {
             is RemoteOutcome.Success -> PreferenceResult.Success
             is RemoteOutcome.Failure -> {
-                idsByOrganization.forEach { (orgId, ids) -> contactDao.updateFavorite(orgId, ids, !favorite) }
+                writeFavorites(people, !favorite)
                 PreferenceResult.Failure(outcome.error.toPreferenceError())
             }
         }

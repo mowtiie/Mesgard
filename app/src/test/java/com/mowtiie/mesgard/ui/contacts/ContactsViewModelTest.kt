@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.ui.contacts
 
 import app.cash.turbine.test
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.ContactSearchResult
 import com.mowtiie.mesgard.domain.model.Group
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.model.RefreshError
@@ -16,7 +17,10 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,6 +29,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ContactsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -33,6 +38,7 @@ class ContactsViewModelTest {
     private val repository = mockk<ContactRepository> {
         every { observeContacts() } returns contacts
         coEvery { refresh() } returns RefreshResult.Success
+        coEvery { search(any()) } returns ContactSearchResult.Unavailable
     }
     private val groups = MutableStateFlow(emptyList<Group>())
     private val groupRepository = mockk<GroupRepository> {
@@ -93,6 +99,47 @@ class ContactsViewModelTest {
             expectMostRecentItem()
             viewModel.onQueryChanged("an")
             assertFalse(awaitItem().showFavorites)
+        }
+    }
+
+    @Test
+    fun `after a pause the server answers, so people beyond the stored roster are found`() = runTest {
+        val far = Contact("org", "zed", "Zed Far", OrgRole.MEMBER)
+        coEvery { repository.search("zed") } returns ContactSearchResult.Found(listOf(far))
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onQueryChanged("zed")
+            val waiting = awaitItem()
+            assertTrue(waiting.isSearching)
+            assertEquals(emptyList<String>(), waiting.contacts.map { it.displayName })
+
+            advanceTimeBy(SEARCH_PAUSE_MS + 1)
+            runCurrent()
+
+            val answered = expectMostRecentItem()
+            assertEquals(listOf("Zed Far"), answered.contacts.map { it.displayName })
+            assertFalse(answered.isSearching)
+        }
+    }
+
+    @Test
+    fun `when the server cannot be asked the stored roster is searched`() = runTest {
+        contacts.value = listOf(ana)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onQueryChanged("an")
+            awaitItem()
+
+            advanceTimeBy(SEARCH_PAUSE_MS + 1)
+            runCurrent()
+
+            val state = expectMostRecentItem()
+            assertEquals(listOf("Ana"), state.contacts.map { it.displayName })
+            assertFalse(state.isSearching)
         }
     }
 

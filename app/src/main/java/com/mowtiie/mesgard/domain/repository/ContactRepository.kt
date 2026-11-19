@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.domain.repository
 
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.ContactSearchResult
 import com.mowtiie.mesgard.domain.model.PreferenceResult
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.StartConversationResult
@@ -15,6 +16,9 @@ internal interface ContactRepository {
     suspend fun refresh(): RefreshResult
 
     suspend fun startDirectConversation(contact: Contact): StartConversationResult
+
+    /** Looks for people by name on the server, so an organization larger than the stored roster is searchable. */
+    suspend fun search(query: String): ContactSearchResult
 
     /** Adds or removes favorites on the phone first, then on the server, and puts them back when it refuses. */
     suspend fun setFavorite(contacts: Set<Contact>, favorite: Boolean): PreferenceResult

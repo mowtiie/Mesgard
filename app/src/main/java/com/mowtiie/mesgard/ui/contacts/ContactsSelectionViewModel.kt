@@ -42,38 +42,40 @@ internal data class ContactsSelectionUiState(
 @HiltViewModel
 internal class ContactsSelectionViewModel @Inject constructor(private val repository: ContactRepository) :
     ViewModel() {
-    private val selectedKeys = MutableStateFlow(emptySet<String>())
+    private val selectedPeople = MutableStateFlow(emptyMap<String, Contact>())
     private val error = MutableStateFlow<PreferenceError?>(null)
 
     val uiState: StateFlow<ContactsSelectionUiState> = combine(
         repository.observeContacts(),
-        selectedKeys,
+        selectedPeople,
         error,
-    ) { contacts, keys, currentError ->
-        ContactsSelectionUiState(contacts.filter { it.selectionKey() in keys }, currentError)
+    ) { roster, people, currentError ->
+        // The roster has the latest favorite state, but a person found by searching may not be in it.
+        val latest = roster.associateBy { it.selectionKey() }
+        ContactsSelectionUiState(people.map { (key, person) -> latest[key] ?: person }, currentError)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
         initialValue = ContactsSelectionUiState(),
     )
 
-    fun onToggled(contact: Contact) = selectedKeys.update { keys ->
+    fun onToggled(contact: Contact) = selectedPeople.update { people ->
         val key = contact.selectionKey()
-        if (key in keys) keys - key else keys + key
+        if (key in people) people - key else people + (key to contact)
     }
 
     fun onSelectAll(contacts: Collection<Contact>) {
-        selectedKeys.value = contacts.mapTo(mutableSetOf()) { it.selectionKey() }
+        selectedPeople.value = contacts.associateBy { it.selectionKey() }
     }
 
     fun onSelectionClosed() {
-        selectedKeys.value = emptySet()
+        selectedPeople.value = emptyMap()
     }
 
     fun onFavoriteClicked() {
         val state = uiState.value
         if (!state.isActive) return
-        selectedKeys.value = emptySet()
+        selectedPeople.value = emptyMap()
         viewModelScope.launch {
             val result = repository.setFavorite(state.selected.toSet(), favorite = !state.removesFavorites)
             if (result is PreferenceResult.Failure) error.value = result.error

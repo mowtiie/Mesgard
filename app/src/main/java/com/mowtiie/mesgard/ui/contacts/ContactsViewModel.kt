@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.ui.contacts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.ContactSearchResult
 import com.mowtiie.mesgard.domain.model.Group
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
@@ -13,15 +14,26 @@ import com.mowtiie.mesgard.domain.repository.GroupRepository
 import com.mowtiie.mesgard.ui.common.matchesQuery
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+internal const val SEARCH_PAUSE_MS = 300L
 
 @HiltViewModel
 internal class ContactsViewModel @Inject constructor(
@@ -31,21 +43,47 @@ internal class ContactsViewModel @Inject constructor(
 ) : ViewModel() {
     private val localState = MutableStateFlow(LocalState())
 
+    /** What the server found for the text typed, after a pause. Until it answers, the stored roster is searched. */
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    private val serverSearch: Flow<ServerSearch> = localState
+        .map { it.query.trim() }
+        .distinctUntilChanged()
+        .debounce(SEARCH_PAUSE_MS)
+        .flatMapLatest { query ->
+            if (query.isEmpty()) {
+                flowOf(ServerSearch())
+            } else {
+                flow {
+                    emit(ServerSearch(query))
+                    emit(
+                        ServerSearch(
+                            query,
+                            (contactRepository.search(query) as? ContactSearchResult.Found)?.contacts,
+                            false,
+                        ),
+                    )
+                }
+            }
+        }
+        .onStart { emit(ServerSearch()) }
+
     val uiState: StateFlow<ContactsUiState> = combine(
         contactRepository.observeContacts(),
         groupRepository.observeGroups(),
         presenceTracker.onlineUserIds,
         localState,
-    ) { allContacts, allGroups, onlineUserIds, local ->
+        serverSearch,
+    ) { allContacts, allGroups, onlineUserIds, local, server ->
         val startableGroups = allGroups.filter { it.canStartConversation }
+        val query = local.query.trim()
+        val serverAnswered = server.query == query && server.contacts != null
         ContactsUiState(
-            contacts = if (local.query.isBlank()) {
-                emptyList()
-            } else {
-                allContacts.filter {
-                    matchesQuery(it.displayName, local.query)
-                }
+            contacts = when {
+                query.isEmpty() -> emptyList()
+                serverAnswered -> server.contacts.orEmpty()
+                else -> allContacts.filter { matchesQuery(it.displayName, query) }
             },
+            isSearching = query.isNotEmpty() && !serverAnswered && (server.query != query || server.isSearching),
             favorites = allContacts.filter { it.isFavorite },
             groups = startableGroups.filter { matchesQuery(it.name, local.query) },
             totalContacts = allContacts.size,
@@ -106,6 +144,12 @@ internal class ContactsViewModel @Inject constructor(
             }
         }
     }
+
+    private data class ServerSearch(
+        val query: String = "",
+        val contacts: List<Contact>? = null,
+        val isSearching: Boolean = true,
+    )
 
     private data class LocalState(
         val selectedSection: ContactsSection = ContactsSection.PEOPLE,

@@ -31,6 +31,8 @@ internal data class ContactsUiState(
     val selectedSection: ContactsSection = ContactsSection.PEOPLE,
     val isLoaded: Boolean = false,
     val isRefreshing: Boolean = false,
+    /** True while the server has not yet answered the text typed, so the list may still change. */
+    val isSearching: Boolean = false,
     val isStartingConversation: Boolean = false,
     val conversationToOpen: String? = null,
     val error: ContactsError? = null,

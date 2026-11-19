@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.mowtiie.mesgard.data.remote.ContactRemoteSource
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.ContactSearchResult
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.model.PreferenceError
 import com.mowtiie.mesgard.domain.model.PreferenceResult
@@ -44,6 +45,51 @@ class OfflineFirstContactRepositoryTest {
         OfflineFirstContactRepository(databaseRule.database, remoteSource, conversationRepository, authRepository)
     }
     private val ana = Contact(TEST_ORG_ID, "ana", "Ana", OrgRole.STAFF)
+
+    @Test
+    fun `searching asks the server and marks the favorites`() = runTest {
+        coEvery { remoteSource.searchContacts("be", CURRENT_USER_ID) } returns
+            listOf(contactDto("ben"), contactDto("bea"))
+        coEvery { remoteSource.fetchFavoriteIds(CURRENT_USER_ID) } returns setOf("bea")
+
+        val result = repository.search("be") as ContactSearchResult.Found
+
+        assertEquals(listOf("ben", "bea"), result.contacts.map { it.userId })
+        assertEquals(listOf(false, true), result.contacts.map { it.isFavorite })
+    }
+
+    @Test
+    fun `when the server cannot be reached the search says so`() = runTest {
+        coEvery { remoteSource.searchContacts(any(), any()) } throws IOException("offline")
+
+        assertEquals(ContactSearchResult.Unavailable, repository.search("be"))
+    }
+
+    @Test
+    fun `a favorite beyond the roster is fetched too`() = runTest {
+        coEvery { remoteSource.fetchContacts(CURRENT_USER_ID) } returns listOf(contactDto("ana"))
+        coEvery { remoteSource.fetchFavoriteIds(CURRENT_USER_ID) } returns setOf("zed")
+        coEvery { remoteSource.fetchContactsByIds(setOf("zed")) } returns listOf(contactDto("zed"))
+
+        repository.refresh()
+
+        repository.observeContacts().test {
+            assertEquals(listOf("ana", "zed"), awaitItem().map { it.userId })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `favoriting someone found by searching keeps them on the roster`() = runTest {
+        val zed = Contact(TEST_ORG_ID, "zed", "Zed", OrgRole.MEMBER)
+
+        repository.setFavorite(setOf(zed), true)
+
+        repository.observeContacts().test {
+            assertEquals(listOf(true), awaitItem().map { it.isFavorite })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 
     @Test
     fun `refreshing marks the people on the favorites list`() = runTest {

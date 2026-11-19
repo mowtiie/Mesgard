@@ -143,7 +143,9 @@ internal fun ContactsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (uiState.isStartingConversation) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            if (uiState.isStartingConversation || uiState.isSearching) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
             if (uiState.showSearch) ContactsSearchField(uiState.query, onQueryChanged)
             if (uiState.showSections) SectionTabs(uiState.section, onSectionSelected)
             ContactsContent(

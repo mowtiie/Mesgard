@@ -11,6 +11,14 @@ internal fun ContactDto.toEntity(isFavorite: Boolean = false) = ContactEntity(
     isFavorite = isFavorite,
 )
 
+internal fun Contact.toStoredEntity() = ContactEntity(
+    orgId = orgId,
+    userId = userId,
+    displayName = displayName,
+    role = role.name.lowercase(),
+    isFavorite = isFavorite,
+)
+
 internal fun ContactEntity.toContact() = Contact(
     orgId = orgId,
     userId = userId,
