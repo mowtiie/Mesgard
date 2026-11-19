@@ -25,6 +25,8 @@ Commands:
   doctor    Check a server and print what is missing. Changes nothing.
   reset     Rebuild the database from the migrations. Erases all data. Needs --local or --project-ref <ref>;
             a hosted project is never seeded and asks for its ref to be typed.
+  reinstall Reset, then setup, in one go: an empty database with a new organization and administrator.
+            Needs --local or --project-ref <ref>; never seeds, and takes the options of both commands.
 
 Options:
   --project-ref <ref>   Hosted project to use (default: the linked project)
@@ -45,6 +47,14 @@ Options:
   --org-name, --org-slug, --admin-email, --admin-name
                         setup: answers for the first organization, so nothing is asked`;
 
+async function setUp(target, options, output) {
+  const tools = realTools(target, repositoryRoot);
+  const deps = { ...tools, createLogin, secretKey: () => target.revealSecretKey() };
+  await runSetup({ target, options, deps, ...output });
+  if (options["with-push"] === true) await runPush({ target, options, deps: tools, ...output });
+  return runDoctor({ target, repositoryRoot, embedded: true, ...output });
+}
+
 async function main() {
   const output = detectOutput();
   const { command, options } = parseArgs(process.argv.slice(2));
@@ -54,18 +64,19 @@ async function main() {
     projectRef: typeof options["project-ref"] === "string" ? options["project-ref"] : null,
     repositoryRoot,
   });
+  const isExplicit = options.local === true || typeof options["project-ref"] === "string";
   if (command === "push") {
     await runPush({ target, options, deps: realTools(target, repositoryRoot), ...output });
     process.exitCode = 0;
   } else if (command === "setup") {
-    const tools = realTools(target, repositoryRoot);
-    const deps = { ...tools, createLogin, secretKey: () => target.revealSecretKey() };
-    await runSetup({ target, options, deps, ...output });
-    if (options["with-push"] === true) await runPush({ target, options, deps: tools, ...output });
-    process.exitCode = await runDoctor({ target, repositoryRoot, embedded: true, ...output });
+    process.exitCode = await setUp(target, options, output);
   } else if (command === "reset") {
-    const isExplicit = options.local === true || typeof options["project-ref"] === "string";
     await runReset({ target, options, deps: realTools(target, repositoryRoot), isExplicit, ...output });
+  } else if (command === "reinstall") {
+    // A seeded local stack already has organizations, which setup would skip, so it starts empty.
+    const chained = { ...options, chained: true, "no-seed": true };
+    await runReset({ target, options: chained, deps: realTools(target, repositoryRoot), isExplicit, ...output });
+    process.exitCode = await setUp(target, options, output);
   } else if (command === "doctor") process.exitCode = await runDoctor({ target, repositoryRoot, ...output });
   else throw new CliError(`Unknown command: ${command}\n\n${HELP}`);
 }

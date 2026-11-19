@@ -77,3 +77,13 @@ test("the ref can be given as an option when nothing can be asked, and it must s
   await assert.rejects(runReset({ target: hosted, options: { confirm: "other" }, deps: wrong, isExplicit: true, log: () => {} }), /nothing was erased/);
   assert.deepEqual(wrong.calls, []);
 });
+
+test("when chained to setup, the reset does not print next steps that setup is about to do", async () => {
+  const lines = [];
+  await runReset({ target: hosted, options: { confirm: REF, chained: true }, deps: fakeDeps(), isExplicit: true, log: (line) => lines.push(line) });
+  assert.doesNotMatch(lines.join("\n"), /Next steps/);
+
+  const localLines = [];
+  await runReset({ target: local, options: { chained: true, "no-seed": true }, deps: fakeDeps(), isExplicit: true, log: (line) => localLines.push(line) });
+  assert.doesNotMatch(localLines.join("\n"), /admin@rnhs/);
+});

@@ -39,6 +39,7 @@ function resetLocal(ui, options, deps) {
   ui.step("Resetting the local database");
   deps.resetLocal({ seed: options["no-seed"] !== true });
   ui.done(options["no-seed"] === true ? "Rebuilt from the migrations, without the seed" : "Rebuilt from the migrations and seeded");
+  if (options.chained === true) return;
   ui.info("The sign in accounts of supabase/seed.sql are back, for example admin@rnhs.test.");
 }
 
@@ -52,6 +53,7 @@ async function resetHosted(ui, target, options, deps) {
   ui.step("Resetting the database");
   deps.resetHosted(target.ref);
   ui.done("Rebuilt from the migrations, empty");
+  if (options.chained === true) return;
   ui.section("Next steps");
   ui.list([
     `Run: node scripts/server/index.mjs setup --project-ref ${target.ref}`,
