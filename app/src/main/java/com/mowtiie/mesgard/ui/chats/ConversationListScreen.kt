@@ -51,6 +51,7 @@ internal fun ConversationListRoute(
             onSelectAll = { selectionViewModel.onSelectAll(uiState.conversations.map { it.id }) },
             onClose = selectionViewModel::onSelectionClosed,
             onErrorShown = selectionViewModel::onErrorShown,
+            onPin = selectionViewModel::onPinClicked,
             onMute = selectionViewModel::onMuteClicked,
             onRead = selectionViewModel::onReadClicked,
         ),

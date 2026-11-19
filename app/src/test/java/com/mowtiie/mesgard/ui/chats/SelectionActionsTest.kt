@@ -11,6 +11,7 @@ class SelectionActionsTest {
         unreadCount: Int = 0,
         isMuted: Boolean = false,
         isMarkedUnread: Boolean = false,
+        isPinned: Boolean = false,
     ) = ConversationSummary(
         id = id,
         type = ConversationType.DIRECT,
@@ -21,6 +22,7 @@ class SelectionActionsTest {
         canPost = true,
         isMuted = isMuted,
         isMarkedUnread = isMarkedUnread,
+        isPinned = isPinned,
     )
 
     @Test
@@ -33,6 +35,19 @@ class SelectionActionsTest {
         assertEquals(
             MuteAction.UNMUTE,
             selectionActionsFor(listOf(conversation("a", isMuted = true), conversation("b", isMuted = true))).mute,
+        )
+    }
+
+    @Test
+    fun `pinning is offered until every selected conversation is pinned`() {
+        assertEquals(PinAction.PIN, selectionActionsFor(listOf(conversation())).pin)
+        assertEquals(
+            PinAction.PIN,
+            selectionActionsFor(listOf(conversation("a", isPinned = true), conversation("b"))).pin,
+        )
+        assertEquals(
+            PinAction.UNPIN,
+            selectionActionsFor(listOf(conversation("a", isPinned = true), conversation("b", isPinned = true))).pin,
         )
     }
 

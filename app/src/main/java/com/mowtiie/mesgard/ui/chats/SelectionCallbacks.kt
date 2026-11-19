@@ -6,6 +6,7 @@ internal data class SelectionCallbacks(
     val onSelectAll: () -> Unit,
     val onClose: () -> Unit,
     val onErrorShown: () -> Unit,
+    val onPin: () -> Unit,
     val onMute: () -> Unit,
     val onRead: () -> Unit,
 )

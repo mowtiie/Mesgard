@@ -2,8 +2,10 @@ package com.mowtiie.mesgard.ui.chats
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -36,6 +38,7 @@ import com.mowtiie.mesgard.ui.common.fallbackTitleResource
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val MutedIconSize = 16.dp
+private val StatusIconSpacing = 4.dp
 private val SelectedAvatarSize = 48.dp
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -93,9 +96,27 @@ internal fun ConversationRow(
                     style = MaterialTheme.typography.labelSmall,
                 )
                 if (hasUnread) UnreadBadge(conversation.unreadCount)
-                if (conversation.isMuted) MutedIcon()
+                if (conversation.isPinned || conversation.isMuted) StatusIcons(conversation)
             }
         },
+    )
+}
+
+@Composable
+private fun StatusIcons(conversation: ConversationSummary) {
+    Row(horizontalArrangement = Arrangement.spacedBy(StatusIconSpacing)) {
+        if (conversation.isPinned) PinnedIcon()
+        if (conversation.isMuted) MutedIcon()
+    }
+}
+
+@Composable
+private fun PinnedIcon() {
+    Icon(
+        painter = painterResource(R.drawable.ic_push_pin),
+        contentDescription = stringResource(R.string.conversation_pinned),
+        modifier = Modifier.size(MutedIconSize),
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 

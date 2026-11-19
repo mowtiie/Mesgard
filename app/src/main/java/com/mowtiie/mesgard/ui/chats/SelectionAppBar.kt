@@ -44,6 +44,7 @@ internal fun SelectionAppBar(
             }
         },
         actions = {
+            PinButton(state.actions.pin, callbacks.onPin)
             MuteButton(state.actions.mute, callbacks.onMute)
             ReadButton(state.actions.read, callbacks.onRead)
             OverflowMenu { dismiss ->
@@ -58,6 +59,18 @@ internal fun SelectionAppBar(
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     )
+}
+
+/** The icon shows the state the conversation will be in: filled once pinned, outlined while it can be pinned. */
+@Composable
+private fun PinButton(action: PinAction, onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        if (action == PinAction.PIN) {
+            Icon(painterResource(R.drawable.ic_push_pin_outline), stringResource(R.string.conversation_pin))
+        } else {
+            Icon(painterResource(R.drawable.ic_push_pin), stringResource(R.string.conversation_unpin))
+        }
+    }
 }
 
 @Composable

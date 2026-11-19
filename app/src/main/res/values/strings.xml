@@ -359,6 +359,9 @@
     <string name="conversation_mute">Mute notifications</string>
     <string name="conversation_unmute">Unmute notifications</string>
     <string name="conversation_muted">Notifications muted</string>
+    <string name="conversation_pin">Pin conversation</string>
+    <string name="conversation_unpin">Unpin conversation</string>
+    <string name="conversation_pinned">Pinned</string>
     <string name="conversation_mark_read">Mark as read</string>
     <string name="conversation_mark_unread">Mark as unread</string>
     <string name="conversation_marked_unread">Marked as unread</string>

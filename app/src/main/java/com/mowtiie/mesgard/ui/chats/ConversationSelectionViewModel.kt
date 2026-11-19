@@ -71,6 +71,10 @@ internal class ConversationSelectionViewModel @Inject constructor(
         preferences.setMuted(ids, muted = actions.mute == MuteAction.MUTE)
     }
 
+    fun onPinClicked() = apply { ids, actions ->
+        preferences.setPinned(ids, pinned = actions.pin == PinAction.PIN)
+    }
+
     fun onReadClicked() = apply { ids, actions ->
         if (actions.read == ReadAction.MARK_READ) preferences.markRead(ids) else preferences.markUnread(ids)
     }

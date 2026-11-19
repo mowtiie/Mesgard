@@ -99,6 +99,22 @@ class ConversationSelectionViewModelTest {
     }
 
     @Test
+    fun `pinning applies to the whole selection`() = runTest {
+        coEvery { preferences.setPinned(any(), any()) } returns PreferenceResult.Success
+
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onSelectAll(listOf("a", "b"))
+            awaitItem()
+
+            viewModel.onPinClicked()
+            awaitItem()
+
+            coVerify { preferences.setPinned(setOf("a", "b"), true) }
+        }
+    }
+
+    @Test
     fun `read and unread follow whether anything selected is unread`() = runTest {
         viewModel.uiState.test {
             awaitItem()
