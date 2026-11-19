@@ -75,7 +75,8 @@ create temporary table seed_groups as
 select * from (values
   (1, null::int, 'Grade 10'),
   (2, 1, 'Grade 10 Section A'),
-  (3, null::int, 'Science Department')
+  (3, null::int, 'Science Department'),
+  (4, null::int, 'School Announcements')
 ) as grp (number, parent_number, name);
 
 insert into public.groups (id, org_id, parent_id, name)
@@ -101,19 +102,22 @@ cross join (values
   (2, 4, 'member'),
   (2, 5, 'member'),
   (3, 2, 'moderator'),
-  (3, 3, 'member')
+  (3, 3, 'member'),
+  (4, 1, 'member'),
+  (4, 2, 'moderator'),
+  (4, 3, 'moderator'),
+  (4, 4, 'member'),
+  (4, 5, 'member'),
+  (4, 6, 'member')
 ) as membership (group_number, user_number, role_in_group);
 
 create temporary table seed_conversations as
 select * from (values
   (1, 'direct', null::int, 'Student One and Staff One', 4),
   (2, 'group', 2, 'Grade 10 Section A', 2),
-  (3, 'announcement', null::int, 'School Announcements', 1),
+  (3, 'group', 4, 'School Announcements', 1),
   (4, 'direct', null::int, 'Student Two and Student Three', 5)
 ) as conversation (number, type, group_number, title, creator_number);
-
--- Adding the first member of an organization already created its announcement conversation; the seed uses fixed ids.
-delete from public.conversations where type = 'announcement';
 
 insert into public.conversations (id, org_id, type, group_id, title, created_by)
 select
@@ -139,6 +143,9 @@ cross join (values
   (3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6),
   (4, 5), (4, 6)
 ) as participant (conversation_number, user_number);
+
+-- The announcements group lets only its moderators (and organization admins) post, and includes everyone.
+update public.groups set posting_policy = 'moderators', includes_everyone = true where name = 'School Announcements';
 
 insert into public.messages (id, org_id, conversation_id, sender_id, body, created_at)
 select

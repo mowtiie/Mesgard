@@ -56,7 +56,7 @@ select is(
 select is(
   (select can_post from public.list_conversation_summaries() where conversation_id = tests.seed_id('40', 'a', 3)),
   false,
-  'a member cannot post in an announcement conversation'
+  'a member cannot post in a group that limits posting to moderators'
 );
 select is(
   (select can_post from public.list_conversation_summaries() where conversation_id = tests.seed_id('40', 'a', 2)),
@@ -68,7 +68,7 @@ select tests.authenticate_as(tests.seed_id('20', 'a', 2));
 select is(
   (select can_post from public.list_conversation_summaries() where conversation_id = tests.seed_id('40', 'a', 3)),
   true,
-  'a staff member can post in an announcement conversation'
+  'a moderator can post in a group that limits posting to moderators'
 );
 
 select tests.authenticate_as(tests.seed_id('20', 'a', 6));

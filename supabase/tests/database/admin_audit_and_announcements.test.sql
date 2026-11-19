@@ -92,7 +92,8 @@ select results_eq(
 delete from public.group_members
 where group_id = tests.seed_id('30', 'a', 50) and user_id = tests.seed_id('20', 'a', 5);
 select is(
-  (select count(*)::int from public.audit_logs where action = 'group_member.removed'),
+  (select count(*)::int from public.audit_logs
+   where action = 'group_member.removed' and metadata ->> 'group_id' = tests.seed_id('30', 'a', 50)::text),
   1,
   'removing one member from a group is recorded'
 );
@@ -104,7 +105,8 @@ select is(
   'deleting a group is recorded'
 );
 select is(
-  (select count(*)::int from public.audit_logs where action = 'group_member.removed'),
+  (select count(*)::int from public.audit_logs
+   where action = 'group_member.removed' and metadata ->> 'group_id' = tests.seed_id('30', 'a', 50)::text),
   1,
   'deleting a group does not record each of its members as removed'
 );
@@ -131,7 +133,7 @@ select ok(
     select 1 from public.conversation_participants
     where conversation_id = tests.seed_id('40', 'a', 3) and user_id = tests.seed_id('20', 'b', 5)
   ),
-  'a new member of the organization joins the announcement conversation'
+  'a new member of the organization joins the announcements group conversation'
 );
 select * from finish();
 rollback;
