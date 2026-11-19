@@ -24,6 +24,7 @@ internal data class ConversationSelectionUiState(
     val error: PreferenceError? = null,
     /** The conversations just archived, while Undo is offered. */
     val undoArchive: Set<String> = emptySet(),
+    val deletion: DeletionState = DeletionState(),
 ) {
     val isActive: Boolean
         get() = selected.isNotEmpty()
@@ -48,6 +49,8 @@ internal class ConversationSelectionViewModel @Inject constructor(
         if (result is PreferenceResult.Failure) error.value = result.error
     }
 
+    val deletion = ConversationDeletion(preferences, viewModelScope) { error.value = it }
+
     /** A conversation that leaves the list, for example when it is archived elsewhere, leaves the selection too. */
     val uiState: StateFlow<ConversationSelectionUiState> = combine(
         combine(conversationRepository.observeConversations(), conversationRepository.observeArchived()) {
@@ -59,8 +62,9 @@ internal class ConversationSelectionViewModel @Inject constructor(
         selectedIds,
         error,
         undoArchive,
-    ) { conversations, ids, currentError, undo ->
-        ConversationSelectionUiState(conversations.filter { it.id in ids }, currentError, undo)
+        deletion.state,
+    ) { conversations, ids, currentError, undo, deleting ->
+        ConversationSelectionUiState(conversations.filter { it.id in ids }, currentError, undo, deleting)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),

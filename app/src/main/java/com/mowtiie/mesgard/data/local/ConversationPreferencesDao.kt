@@ -40,6 +40,9 @@ internal interface ConversationPreferencesDao {
     )
     suspend fun hide(conversationId: String, hiddenBefore: Long)
 
+    @Query("UPDATE conversations SET hidden_before = NULL WHERE id IN (:conversationIds)")
+    suspend fun unhide(conversationIds: List<String>)
+
     @Query(
         """
         SELECT id, pinned_at, archived_at, marked_unread, is_muted, hidden_before, unread_count

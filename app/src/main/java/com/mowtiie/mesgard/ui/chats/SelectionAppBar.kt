@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.ui.chats
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -43,6 +44,9 @@ internal fun SelectionAppBar(
         actions = {
             if (state.actions.archive == ArchiveAction.ARCHIVE) PinButton(state.actions.pin, callbacks.onPin)
             ArchiveButton(state.actions.archive, callbacks.onArchive)
+            IconButton(onClick = callbacks.onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.conversation_delete))
+            }
             OverflowMenu { dismiss ->
                 MuteItem(state.actions.mute) {
                     dismiss()

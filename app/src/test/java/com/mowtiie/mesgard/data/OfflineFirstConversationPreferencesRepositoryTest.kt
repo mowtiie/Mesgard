@@ -154,6 +154,18 @@ class OfflineFirstConversationPreferencesRepositoryTest {
     }
 
     @Test
+    fun `undoing a delete shows the history again`() = runTest {
+        repository.deleteForMe(setOf("a"))
+        val changes = slot<JsonObject>()
+        coEvery { remote.update("me", any(), capture(changes)) } returns Unit
+
+        assertEquals(PreferenceResult.Success, repository.undoDeleteForMe(setOf("a")))
+
+        assertNull(preferences("a").hiddenBefore)
+        assertEquals(JsonNull, changes.captured["hidden_before"])
+    }
+
+    @Test
     fun `a refused delete brings the conversation back`() = runTest {
         coEvery { remote.update(any(), any(), any()) } throws IOException("offline")
 

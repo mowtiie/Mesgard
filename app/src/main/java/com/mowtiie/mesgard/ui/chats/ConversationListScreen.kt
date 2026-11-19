@@ -8,10 +8,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,17 +46,7 @@ internal fun ConversationListRoute(
     ConversationListScreen(
         uiState = uiState,
         selection = selection,
-        selectionCallbacks = SelectionCallbacks(
-            onToggled = selectionViewModel::onToggled,
-            onSelectAll = { selectionViewModel.onSelectAll(uiState.conversations.map { it.id }) },
-            onClose = selectionViewModel::onSelectionClosed,
-            onErrorShown = selectionViewModel::onErrorShown,
-            onPin = selectionViewModel::onPinClicked,
-            onArchive = selectionViewModel::onArchiveClicked,
-            onUndoArchiveHandled = selectionViewModel::onUndoArchiveHandled,
-            onMute = selectionViewModel::onMuteClicked,
-            onRead = selectionViewModel::onReadClicked,
-        ),
+        selectionCallbacks = selectionViewModel.callbacks(selection) { uiState.conversations.map { it.id } },
         scrollToTopRequests = scrollToTopRequests,
         onRefresh = viewModel::onRefresh,
         onQueryChanged = viewModel::onQueryChanged,
@@ -94,21 +81,7 @@ internal fun ConversationListScreen(
             onRefreshErrorShown()
         }
     }
-    val selectionErrorMessage = selection.error?.let { stringResource(it.messageResource()) }
-    LaunchedEffect(selectionErrorMessage) {
-        if (selectionErrorMessage != null) {
-            snackbarHostState.showSnackbar(selectionErrorMessage)
-            selectionCallbacks.onErrorShown()
-        }
-    }
-    val archivedMessage =
-        pluralStringResource(R.plurals.archived_snackbar, selection.undoArchive.size, selection.undoArchive.size)
-    val undoLabel = stringResource(R.string.undo)
-    LaunchedEffect(selection.undoArchive) {
-        if (selection.undoArchive.isEmpty()) return@LaunchedEffect
-        val result = snackbarHostState.showSnackbar(archivedMessage, undoLabel, duration = SnackbarDuration.Long)
-        selectionCallbacks.onUndoArchiveHandled(result == SnackbarResult.ActionPerformed)
-    }
+    SelectionEffects(selection, selectionCallbacks, snackbarHostState)
     LaunchedEffect(scrollToTopRequests) {
         if (scrollToTopRequests > 0) listState.animateScrollToItem(0)
     }

@@ -20,4 +20,7 @@ internal interface ConversationPreferencesRepository {
 
     /** Removes the conversations and clears their history for this person only. New messages bring them back. */
     suspend fun deleteForMe(conversationIds: Set<String>): PreferenceResult
+
+    /** Shows the history again. Pins, the archive and the unread mark that the delete cleared are not restored. */
+    suspend fun undoDeleteForMe(conversationIds: Set<String>): PreferenceResult
 }

@@ -83,6 +83,9 @@ internal class OfflineFirstConversationPreferencesRepository @Inject constructor
         return finish(outcome, snapshot)
     }
 
+    override suspend fun undoDeleteForMe(conversationIds: Set<String>): PreferenceResult =
+        change(conversationIds, mapOf("hidden_before" to JsonNull)) { dao.unhide(conversationIds.toList()) }
+
     private suspend fun change(
         conversationIds: Set<String>,
         changes: Map<String, JsonElement>,
@@ -106,16 +109,16 @@ internal class OfflineFirstConversationPreferencesRepository @Inject constructor
 
     private suspend fun wouldExceedPinLimit(conversationIds: Set<String>): Boolean =
         dao.countPinnedExcept(conversationIds.toList()) + conversationIds.size > MAX_PINNED_CONVERSATIONS
-
-    private fun deleteChanges(hiddenAt: Long): JsonObject = JsonObject(
-        mapOf(
-            "hidden_before" to timestamp(hiddenAt),
-            "pinned_at" to JsonNull,
-            "archived_at" to JsonNull,
-            "marked_unread" to JsonPrimitive(false),
-        ),
-    )
 }
+
+private fun deleteChanges(hiddenAt: Long): JsonObject = JsonObject(
+    mapOf(
+        "hidden_before" to timestamp(hiddenAt),
+        "pinned_at" to JsonNull,
+        "archived_at" to JsonNull,
+        "marked_unread" to JsonPrimitive(false),
+    ),
+)
 
 private fun timestamp(epochMillis: Long?): JsonElement =
     epochMillis?.let { JsonPrimitive(Instant.ofEpochMilli(it).toString()) } ?: JsonNull

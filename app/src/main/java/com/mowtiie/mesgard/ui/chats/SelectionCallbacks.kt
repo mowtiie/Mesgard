@@ -9,6 +9,10 @@ internal data class SelectionCallbacks(
     val onPin: () -> Unit,
     val onArchive: () -> Unit,
     val onUndoArchiveHandled: (Boolean) -> Unit,
+    val onDelete: () -> Unit,
+    val onDeleteConfirmed: () -> Unit,
+    val onDeleteDismissed: () -> Unit,
+    val onUndoDeleteHandled: (Boolean) -> Unit,
     val onMute: () -> Unit,
     val onRead: () -> Unit,
 )

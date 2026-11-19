@@ -369,6 +369,16 @@
         <item quantity="other">%d conversations archived</item>
     </plurals>
     <string name="undo">Undo</string>
+    <string name="conversation_delete">Delete</string>
+    <plurals name="conversation_delete_title">
+        <item quantity="one">Delete %d conversation?</item>
+        <item quantity="other">Delete %d conversations?</item>
+    </plurals>
+    <string name="conversation_delete_text">They disappear from your list and their history is cleared for you only. Other people keep them, and a new message brings a conversation back.</string>
+    <plurals name="deleted_snackbar">
+        <item quantity="one">%d conversation deleted</item>
+        <item quantity="other">%d conversations deleted</item>
+    </plurals>
     <string name="conversation_pin">Pin conversation</string>
     <string name="conversation_unpin">Unpin conversation</string>
     <string name="conversation_pinned">Pinned</string>

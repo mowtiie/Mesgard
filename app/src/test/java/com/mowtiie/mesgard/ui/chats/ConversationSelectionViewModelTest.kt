@@ -154,6 +154,61 @@ class ConversationSelectionViewModelTest {
     }
 
     @Test
+    fun `deleting asks first, then deletes the selection and offers Undo`() = runTest {
+        coEvery { preferences.deleteForMe(any()) } returns PreferenceResult.Success
+        coEvery { preferences.undoDeleteForMe(any()) } returns PreferenceResult.Success
+
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onSelectAll(listOf("a", "b"))
+            awaitItem()
+
+            viewModel.deletion.onRequested(setOf("a", "b"))
+            assertEquals(setOf("a", "b"), awaitItem().deletion.pending)
+            coVerify(exactly = 0) { preferences.deleteForMe(any()) }
+
+            viewModel.deletion.onConfirmed()
+            var state = awaitItem()
+            while (state.deletion.undo.isEmpty()) state = awaitItem()
+            assertEquals(setOf("a", "b"), state.deletion.undo)
+            coVerify { preferences.deleteForMe(setOf("a", "b")) }
+
+            viewModel.deletion.onUndoHandled(true)
+            awaitItem()
+            coVerify { preferences.undoDeleteForMe(setOf("a", "b")) }
+        }
+    }
+
+    @Test
+    fun `cancelling the dialog deletes nothing`() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.deletion.onRequested(setOf("a"))
+            awaitItem()
+
+            viewModel.deletion.onDismissed()
+
+            assertTrue(awaitItem().deletion.pending.isEmpty())
+            coVerify(exactly = 0) { preferences.deleteForMe(any()) }
+        }
+    }
+
+    @Test
+    fun `a refused delete is reported`() = runTest {
+        coEvery { preferences.deleteForMe(any()) } returns PreferenceResult.Failure(PreferenceError.UNKNOWN)
+
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.deletion.onRequested(setOf("a"))
+            awaitItem()
+            viewModel.deletion.onConfirmed()
+            var state = awaitItem()
+            while (state.error == null) state = awaitItem()
+            assertEquals(PreferenceError.UNKNOWN, state.error)
+        }
+    }
+
+    @Test
     fun `read and unread follow whether anything selected is unread`() = runTest {
         viewModel.uiState.test {
             awaitItem()

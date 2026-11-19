@@ -11,7 +11,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -32,17 +31,7 @@ internal fun ArchivedScreenRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selection by selectionViewModel.uiState.collectAsStateWithLifecycle()
-    val callbacks = SelectionCallbacks(
-        onToggled = selectionViewModel::onToggled,
-        onSelectAll = { selectionViewModel.onSelectAll(uiState.conversations.map { it.id }) },
-        onClose = selectionViewModel::onSelectionClosed,
-        onErrorShown = selectionViewModel::onErrorShown,
-        onPin = selectionViewModel::onPinClicked,
-        onArchive = selectionViewModel::onArchiveClicked,
-        onUndoArchiveHandled = selectionViewModel::onUndoArchiveHandled,
-        onMute = selectionViewModel::onMuteClicked,
-        onRead = selectionViewModel::onReadClicked,
-    )
+    val callbacks = selectionViewModel.callbacks(selection) { uiState.conversations.map { it.id } }
     ArchivedScreen(uiState, selection, callbacks, onBack, onConversationClick, modifier)
 }
 
@@ -56,13 +45,7 @@ internal fun ArchivedScreen(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val errorMessage = selection.error?.let { stringResource(it.messageResource()) }
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            callbacks.onErrorShown()
-        }
-    }
+    SelectionEffects(selection, callbacks, snackbarHostState)
     TitledScreen(
         title = stringResource(R.string.archived_title),
         modifier = modifier,
