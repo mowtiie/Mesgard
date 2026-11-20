@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.ui.conversation
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,16 +62,16 @@ internal fun MessageComposer(
     val messageLabel = stringResource(R.string.message_label)
     Column(modifier = modifier.fillMaxWidth().padding(ComposerPadding)) {
         if (attachments.isNotEmpty()) PickedAttachments(attachments, onAttachmentRemoved)
-        Row(verticalAlignment = Alignment.Bottom) {
-            AttachButton(pickers)
-            OutlinedTextField(
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(ChipSpacing)) {
+            MessageTextField(
                 value = draft,
                 onValueChange = onDraftChanged,
-                placeholder = { Text(messageLabel) },
+                placeholder = messageLabel,
                 maxLines = COMPOSER_MAX_LINES,
+                trailingIcon = { AttachButton(pickers) },
                 modifier = Modifier.weight(1f).semantics { contentDescription = messageLabel },
             )
-            FilledIconButton(onClick = onSendClicked, enabled = canSend) {
+            FilledIconButton(onClick = onSendClicked, enabled = canSend, modifier = Modifier.size(MessageFieldHeight)) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.Send,
                     contentDescription = stringResource(R.string.send_message),
@@ -84,24 +84,26 @@ internal fun MessageComposer(
 @Composable
 private fun AttachButton(pickers: AttachmentPickers) {
     var isMenuOpen by remember { mutableStateOf(false) }
-    IconButton(onClick = { isMenuOpen = true }) {
-        Icon(painterResource(R.drawable.ic_attach_file), contentDescription = stringResource(R.string.attach))
-    }
-    DropdownMenu(expanded = isMenuOpen, onDismissRequest = { isMenuOpen = false }) {
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.attach_photo)) },
-            onClick = {
-                isMenuOpen = false
-                pickers.pickPhotos()
-            },
-        )
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.attach_file)) },
-            onClick = {
-                isMenuOpen = false
-                pickers.pickFiles()
-            },
-        )
+    Box {
+        IconButton(onClick = { isMenuOpen = true }) {
+            Icon(painterResource(R.drawable.ic_attach_file), contentDescription = stringResource(R.string.attach))
+        }
+        DropdownMenu(expanded = isMenuOpen, onDismissRequest = { isMenuOpen = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.attach_photo)) },
+                onClick = {
+                    isMenuOpen = false
+                    pickers.pickPhotos()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.attach_file)) },
+                onClick = {
+                    isMenuOpen = false
+                    pickers.pickFiles()
+                },
+            )
+        }
     }
 }
 
