@@ -19,6 +19,7 @@ import com.mowtiie.mesgard.testing.TEST_ORG_ID
 import com.mowtiie.mesgard.testing.contactDto
 import com.mowtiie.mesgard.testing.contactEntity
 import com.mowtiie.mesgard.testing.conversationEntity
+import com.mowtiie.mesgard.testing.messageEntity
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -273,6 +274,49 @@ class OfflineFirstContactRepositoryTest {
 
         assertEquals(StartConversationResult.Failure(RefreshError.NETWORK_UNAVAILABLE), result)
         coVerify(exactly = 0) { conversationRepository.refresh() }
+    }
+
+    @Test
+    fun `the recent people are the ones of the newest conversations, and archived ones are left out`() = runTest {
+        val database = databaseRule.database
+        database.contactDao().upsertAll(listOf(contactEntity("ana"), contactEntity("ben"), contactEntity("cy")))
+        database.conversationDao().upsertAll(
+            listOf(
+                conversationEntity("with-ana", createdAt = 10L),
+                conversationEntity("with-ben", createdAt = 20L),
+                conversationEntity("with-cy", createdAt = 30L, archivedAt = 40L),
+            ),
+        )
+        database.directPeerDao().upsertAll(
+            listOf(
+                DirectPeerEntity("with-ana", "ana"),
+                DirectPeerEntity("with-ben", "ben"),
+                DirectPeerEntity("with-cy", "cy"),
+            ),
+        )
+        database.messageDao().upsertAll(listOf(messageEntity("late", "with-ana", createdAt = 50L)))
+
+        repository.observeRecentContacts(5).test {
+            assertEquals(listOf("ana", "ben"), awaitItem().map { it.userId })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `only as many recent people as asked for are returned`() = runTest {
+        val database = databaseRule.database
+        database.contactDao().upsertAll(listOf(contactEntity("ana"), contactEntity("ben")))
+        database.conversationDao().upsertAll(
+            listOf(conversationEntity("with-ana", createdAt = 10L), conversationEntity("with-ben", createdAt = 20L)),
+        )
+        database.directPeerDao().upsertAll(
+            listOf(DirectPeerEntity("with-ana", "ana"), DirectPeerEntity("with-ben", "ben")),
+        )
+
+        repository.observeRecentContacts(1).test {
+            assertEquals(listOf("ben"), awaitItem().map { it.userId })
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     private companion object {

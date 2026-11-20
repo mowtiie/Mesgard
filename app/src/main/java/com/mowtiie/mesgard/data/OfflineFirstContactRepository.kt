@@ -45,6 +45,9 @@ internal class OfflineFirstContactRepository @Inject constructor(
     override fun observeContacts(): Flow<List<Contact>> =
         contactDao.observeAll().map { contacts -> contacts.map { it.toContact() } }
 
+    override fun observeRecentContacts(limit: Int): Flow<List<Contact>> =
+        directPeerDao.observeRecentContacts(limit).map { contacts -> contacts.map { it.toContact() } }
+
     override suspend fun refresh(): RefreshResult = attemptRemote(TAG) {
         val userId = authRepository.currentUserId
         val favoriteIds = remoteSource.fetchFavoriteIds(userId)

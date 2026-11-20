@@ -21,6 +21,22 @@ internal interface DirectPeerDao {
     )
     suspend fun findConversationWith(userId: String, orgId: String): String?
 
+    /** The people the user chatted with most recently, who are on the roster, newest conversation first. */
+    @Query(
+        """
+        SELECT contact.* FROM direct_peers AS peer
+        JOIN conversations AS conversation ON conversation.id = peer.conversation_id
+        JOIN contacts AS contact ON contact.user_id = peer.user_id AND contact.org_id = conversation.org_id
+        WHERE conversation.archived_at IS NULL
+        ORDER BY COALESCE(
+            (SELECT MAX(created_at) FROM messages WHERE conversation_id = conversation.id),
+            conversation.created_at
+        ) DESC
+        LIMIT :limit
+        """,
+    )
+    fun observeRecentContacts(limit: Int): Flow<List<ContactEntity>>
+
     @Upsert
     suspend fun upsertAll(peers: List<DirectPeerEntity>)
 

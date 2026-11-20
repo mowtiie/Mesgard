@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,10 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,7 +39,6 @@ import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.NoResultsState
 import com.mowtiie.mesgard.ui.common.TitledScreen
-import com.mowtiie.mesgard.ui.common.labelResource
 
 @Composable
 internal fun ContactsScreenRoute(
@@ -58,7 +54,6 @@ internal fun ContactsScreenRoute(
         onContactClicked = viewModel::onContactClicked,
         onFavoriteToggled = viewModel::onFavoriteToggled,
         onGroupClicked = viewModel::onGroupClicked,
-        onSectionSelected = viewModel::onSectionSelected,
         onQueryChanged = viewModel::onQueryChanged,
         onConversationOpened = {
             uiState.conversationToOpen?.let(onConversationStarted)
@@ -78,7 +73,6 @@ internal fun ContactsScreen(
     onContactClicked: (Contact) -> Unit,
     onFavoriteToggled: (Contact) -> Unit,
     onGroupClicked: (Group) -> Unit,
-    onSectionSelected: (ContactsSection) -> Unit,
     onQueryChanged: (String) -> Unit,
     onConversationOpened: () -> Unit,
     onErrorShown: () -> Unit,
@@ -126,17 +120,15 @@ internal fun ContactsScreen(
                 ContactsSearchField(
                     query = uiState.query,
                     onQueryChange = onQueryChanged,
-                    focusOnOpen = uiState.isLoaded && uiState.favorites.isEmpty(),
+                    focusOnOpen = uiState.isLoaded && uiState.favorites.isEmpty() && uiState.recent.isEmpty(),
                 )
             }
-            if (uiState.showSections) SectionTabs(uiState.section, onSectionSelected)
             ContactsContent(
                 uiState = uiState,
                 onRefresh = onRefresh,
                 onContactClicked = onContactClicked,
                 onFavoriteToggled = onFavoriteToggled,
                 onGroupClicked = onGroupClicked,
-                onSectionSelected = onSectionSelected,
             )
         }
     }
@@ -150,75 +142,97 @@ private fun ContactsContent(
     onContactClicked: (Contact) -> Unit,
     onFavoriteToggled: (Contact) -> Unit,
     onGroupClicked: (Group) -> Unit,
-    onSectionSelected: (ContactsSection) -> Unit,
 ) {
     PullToRefreshBox(
         isRefreshing = uiState.isRefreshing,
         onRefresh = onRefresh,
         modifier = Modifier.fillMaxSize(),
     ) {
-        if (uiState.showSections) {
-            SectionPager(uiState, onContactClicked, onFavoriteToggled, onGroupClicked, onSectionSelected)
-        } else {
-            ContactList(ContactsSection.PEOPLE, uiState, onContactClicked, onFavoriteToggled, onGroupClicked)
-        }
+        ContactList(uiState, onContactClicked, onFavoriteToggled, onGroupClicked)
     }
 }
 
 @Composable
 internal fun ContactList(
-    section: ContactsSection,
     uiState: ContactsUiState,
     onContactClicked: (Contact) -> Unit,
     onFavoriteToggled: (Contact) -> Unit,
     onGroupClicked: (Group) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-        if (uiState.showEmptyMessage && section == ContactsSection.PEOPLE) {
-            item(key = "empty") {
-                EmptyState(
-                    R.drawable.illustration_contacts,
-                    R.string.contacts_empty,
-                    R.string.contacts_empty_hint,
-                    Modifier.fillParentMaxSize(),
-                )
-            }
+        emptyStates(uiState)
+        if (uiState.showRecent) {
+            people(
+                uiState,
+                PeopleSection("recent", R.string.contacts_recent, uiState.recent),
+                onContactClicked,
+                onFavoriteToggled,
+            )
         }
-        if (uiState.showSearchPrompt && section == ContactsSection.PEOPLE) {
-            item(key = "search-prompt") {
-                EmptyState(
-                    R.drawable.illustration_search,
-                    R.string.contacts_search_prompt,
-                    R.string.contacts_search_prompt_hint,
-                    Modifier.fillParentMaxSize(),
-                )
-            }
+        if (uiState.showFavorites) {
+            val favorites = PeopleSection("favorite", R.string.contacts_favorites, uiState.favorites)
+            people(uiState, favorites, onContactClicked, onFavoriteToggled)
         }
-        if (uiState.showNoResults(section)) {
-            item(key = "no-results") { NoResultsState(Modifier.fillParentMaxSize()) }
+        if (uiState.showPeopleHeader) {
+            val found = PeopleSection("contact", R.string.contacts_people, uiState.contacts)
+            people(uiState, found, onContactClicked, onFavoriteToggled)
         }
-        if (section == ContactsSection.PEOPLE) {
-            if (uiState.showFavorites) {
-                item(key = "favorites-header") { FavoritesHeader() }
-                items(uiState.favorites, key = { "favorite:${it.orgId}:${it.userId}" }) { contact ->
-                    ContactRow(contact, uiState, onContactClicked, onFavoriteToggled)
-                }
-            }
-            items(uiState.contacts, key = { "contact:${it.orgId}:${it.userId}" }) { contact ->
-                ContactRow(contact, uiState, onContactClicked, onFavoriteToggled)
-            }
-        } else {
-            items(uiState.groups, key = { "group:${it.id}" }) { group ->
-                ListItem(
-                    modifier = Modifier.clickable(
-                        enabled = !uiState.isStartingConversation,
-                        onClickLabel = stringResource(R.string.conversation_open),
-                    ) { onGroupClicked(group) },
-                    leadingContent = { InitialAvatar(group.name) },
-                    headlineContent = { Text(group.name) },
-                )
-            }
+        if (uiState.groups.isNotEmpty()) groups(uiState, onGroupClicked)
+    }
+}
+
+private fun LazyListScope.emptyStates(uiState: ContactsUiState) {
+    if (uiState.showEmptyMessage) {
+        item(key = "empty") {
+            EmptyState(
+                R.drawable.illustration_contacts,
+                R.string.contacts_empty,
+                R.string.contacts_empty_hint,
+                Modifier.fillParentMaxSize(),
+            )
         }
+    }
+    if (uiState.showSearchPrompt) {
+        item(key = "search-prompt") {
+            EmptyState(
+                R.drawable.illustration_search,
+                R.string.contacts_search_prompt,
+                R.string.contacts_search_prompt_hint,
+                Modifier.fillParentMaxSize(),
+            )
+        }
+    }
+    if (uiState.showNoResults) {
+        item(key = "no-results") { NoResultsState(Modifier.fillParentMaxSize()) }
+    }
+}
+
+/** The [key] says which section a row is in, so a person who is in two sections is two rows. */
+private data class PeopleSection(val key: String, @StringRes val header: Int, val contacts: List<Contact>)
+
+private fun LazyListScope.people(
+    uiState: ContactsUiState,
+    section: PeopleSection,
+    onContactClicked: (Contact) -> Unit,
+    onFavoriteToggled: (Contact) -> Unit,
+) {
+    item(key = "${section.key}-header") { SectionHeader(section.header) }
+    items(section.contacts, key = { "${section.key}:${it.orgId}:${it.userId}" }) { contact ->
+        ContactRow(contact, uiState, onContactClicked, onFavoriteToggled)
+    }
+}
+
+private fun LazyListScope.groups(uiState: ContactsUiState, onGroupClicked: (Group) -> Unit) {
+    item(key = "groups-header") { SectionHeader(R.string.contacts_groups) }
+    items(uiState.groups, key = { "group:${it.id}" }) { group ->
+        ListItem(
+            modifier = Modifier.clickable(
+                enabled = !uiState.isStartingConversation,
+                onClickLabel = stringResource(R.string.conversation_open),
+            ) { onGroupClicked(group) },
+            leadingContent = { InitialAvatar(group.name) },
+            headlineContent = { Text(group.name) },
+        )
     }
 }
 
@@ -231,53 +245,11 @@ private fun ContactsError.messageResource(): Int = when (this) {
 }
 
 @Composable
-private fun FavoritesHeader() {
+private fun SectionHeader(@StringRes title: Int) {
     Text(
-        text = stringResource(R.string.contacts_favorites),
+        text = stringResource(title),
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
     )
-}
-
-@Composable
-private fun ContactRow(
-    contact: Contact,
-    uiState: ContactsUiState,
-    onContactClicked: (Contact) -> Unit,
-    onFavoriteToggled: (Contact) -> Unit,
-) {
-    val isOnline = contact.userId in uiState.onlineUserIds
-    val onlineLabel = stringResource(R.string.contact_online)
-    ListItem(
-        modifier = Modifier
-            .clickable(
-                enabled = !uiState.isStartingConversation,
-                onClickLabel = stringResource(R.string.conversation_start),
-            ) { onContactClicked(contact) }
-            .semantics { if (isOnline) stateDescription = onlineLabel },
-        leadingContent = { ContactAvatar(contact.displayName, isOnline) },
-        headlineContent = { Text(contact.displayName) },
-        supportingContent = { Text(stringResource(contact.role.labelResource())) },
-        trailingContent = { FavoriteToggle(contact.isFavorite) { onFavoriteToggled(contact) } },
-    )
-}
-
-/** Filled while the person is a favorite, which is the toggled on state, and outlined otherwise. */
-@Composable
-private fun FavoriteToggle(isFavorite: Boolean, onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        if (isFavorite) {
-            Icon(
-                Icons.Filled.Star,
-                contentDescription = stringResource(R.string.contact_unfavorite),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-        } else {
-            Icon(
-                painterResource(R.drawable.ic_star_outline),
-                contentDescription = stringResource(R.string.contact_add_favorite),
-            )
-        }
-    }
 }

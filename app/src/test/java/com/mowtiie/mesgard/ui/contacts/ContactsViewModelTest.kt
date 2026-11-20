@@ -37,8 +37,10 @@ class ContactsViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val contacts = MutableStateFlow(emptyList<Contact>())
+    private val recent = MutableStateFlow(emptyList<Contact>())
     private val repository = mockk<ContactRepository> {
         every { observeContacts() } returns contacts
+        every { observeRecentContacts(any()) } returns recent
         coEvery { refresh() } returns RefreshResult.Success
         coEvery { search(any()) } returns ContactSearchResult.Unavailable
     }
@@ -244,27 +246,13 @@ class ContactsViewModelTest {
     }
 
     @Test
-    fun `hides the sections when the user cannot start any group conversation`() = runTest {
-        groups.value = listOf(sectionA.copy(canStartConversation = false))
+    fun `lists the groups the user can start while nothing is typed, and not the ones the user cannot`() = runTest {
+        groups.value = listOf(sectionA, sectionA.copy(id = "closed", name = "Closed", canStartConversation = false))
 
         viewModel().uiState.test {
             val state = expectMostRecentItem()
-            assertFalse(state.showSections)
-            assertEquals(ContactsSection.PEOPLE, state.section)
-        }
-    }
-
-    @Test
-    fun `shows the selected section when the user can start group conversations`() = runTest {
-        groups.value = listOf(sectionA)
-        val viewModel = viewModel()
-
-        viewModel.uiState.test {
-            val initial = expectMostRecentItem()
-            assertTrue(initial.showSections)
-            assertEquals(ContactsSection.PEOPLE, initial.section)
-            viewModel.onSectionSelected(ContactsSection.GROUPS)
-            assertEquals(ContactsSection.GROUPS, awaitItem().section)
+            assertEquals(listOf("Section A"), state.groups.map { it.name })
+            assertEquals(1, state.totalGroups)
         }
     }
 
@@ -293,12 +281,10 @@ class ContactsViewModelTest {
     }
 
     @Test
-    fun `does not show the empty roster message on the groups section`() = runTest {
+    fun `does not show the empty message when there are groups to start`() = runTest {
         groups.value = listOf(sectionA)
-        val viewModel = viewModel()
-        viewModel.onSectionSelected(ContactsSection.GROUPS)
 
-        viewModel.uiState.test { assertFalse(expectMostRecentItem().showEmptyMessage) }
+        viewModel().uiState.test { assertFalse(expectMostRecentItem().showEmptyMessage) }
     }
 
     @Test
@@ -344,18 +330,45 @@ class ContactsViewModelTest {
     }
 
     @Test
-    fun `filters the groups and keeps the sections switch while searching`() = runTest {
+    fun `typing filters the groups, and shows no results when neither a person nor a group matches`() = runTest {
         groups.value = listOf(sectionA, sectionA.copy(id = "science", name = "Science"))
         val viewModel = viewModel()
 
         viewModel.uiState.test {
             expectMostRecentItem()
             viewModel.onQueryChanged("sci")
-            val state = awaitItem()
-            assertEquals(listOf("Science"), state.groups.map { it.name })
-            assertTrue(state.showSections)
+            val matching = awaitItem()
+            assertEquals(listOf("Science"), matching.groups.map { it.name })
+            assertFalse(matching.showNoResults)
             viewModel.onQueryChanged("nothing")
-            assertTrue(awaitItem().showSections)
+            assertTrue(awaitItem().showNoResults)
+        }
+    }
+
+    @Test
+    fun `the people chatted with are offered while nothing is typed, without the favorites among them`() = runTest {
+        val ben = Contact("org", "ben", "Ben Cruz", OrgRole.MEMBER)
+        contacts.value = listOf(ana, ben)
+        recent.value = listOf(ben, ana.copy(isFavorite = true))
+
+        viewModel().uiState.test {
+            val state = expectMostRecentItem()
+            assertEquals(listOf("Ben Cruz"), state.recent.map { it.displayName })
+            assertTrue(state.showRecent)
+            assertFalse(state.showSearchPrompt)
+        }
+    }
+
+    @Test
+    fun `at most five recent people are offered, and none once a name is typed`() = runTest {
+        recent.value = (1..8).map { Contact("org", "p$it", "Person $it", OrgRole.MEMBER) }
+        contacts.value = recent.value
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            assertEquals(RECENT_LIMIT, expectMostRecentItem().recent.size)
+            viewModel.onQueryChanged("per")
+            assertFalse(awaitItem().showRecent)
         }
     }
 

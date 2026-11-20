@@ -13,6 +13,9 @@ internal const val ROSTER_LIMIT = 200
 internal interface ContactRepository {
     fun observeContacts(): Flow<List<Contact>>
 
+    /** The people of the newest direct conversations, for the list shown before anything is typed. */
+    fun observeRecentContacts(limit: Int): Flow<List<Contact>>
+
     suspend fun refresh(): RefreshResult
 
     suspend fun startDirectConversation(contact: Contact): StartConversationResult

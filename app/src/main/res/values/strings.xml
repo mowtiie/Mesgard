@@ -426,10 +426,11 @@
     <string name="attachment_retry">Retry</string>
     <string name="contacts_empty">No contacts yet</string>
     <string name="contacts_empty_hint">People in your organization appear here once an administrator adds them.</string>
-    <string name="contacts_section_people">People</string>
-    <string name="contacts_section_groups">Groups</string>
     <string name="contacts_search_placeholder">Search by name</string>
+    <string name="contacts_recent">Recent</string>
     <string name="contacts_favorites">Favorites</string>
+    <string name="contacts_people">People</string>
+    <string name="contacts_groups">Groups</string>
     <string name="contact_add_favorite">Add to favorites</string>
     <string name="contact_unfavorite">Remove from favorites</string>
     <string name="contacts_search_prompt">Search for a person</string>

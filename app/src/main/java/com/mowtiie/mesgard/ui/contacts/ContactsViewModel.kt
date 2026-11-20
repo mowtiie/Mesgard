@@ -36,6 +36,10 @@ import kotlinx.coroutines.launch
 
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 internal const val SEARCH_PAUSE_MS = 300L
+internal const val RECENT_LIMIT = 5
+
+// More than the list shows, because the favorites among them are taken out.
+private const val RECENT_QUERY_LIMIT = RECENT_LIMIT * 2
 
 @HiltViewModel
 internal class ContactsViewModel @Inject constructor(
@@ -69,13 +73,18 @@ internal class ContactsViewModel @Inject constructor(
         }
         .onStart { emit(ServerSearch()) }
 
-    val uiState: StateFlow<ContactsUiState> = combine(
+    private val people = combine(
         contactRepository.observeContacts(),
+        contactRepository.observeRecentContacts(RECENT_QUERY_LIMIT),
+    ) { roster, recentlyChatted -> roster to recentlyChatted }
+
+    val uiState: StateFlow<ContactsUiState> = combine(
+        people,
         groupRepository.observeGroups(),
         presenceTracker.onlineUserIds,
         localState,
         serverSearch,
-    ) { allContacts, allGroups, onlineUserIds, local, server ->
+    ) { (allContacts, recentlyChatted), allGroups, onlineUserIds, local, server ->
         val startableGroups = allGroups.filter { it.canStartConversation }
         val query = local.query.trim()
         val serverAnswered = server.query == query && server.contacts != null
@@ -88,13 +97,14 @@ internal class ContactsViewModel @Inject constructor(
                 else -> allContacts.filter { matchesQuery(it.displayName, query) }
             },
             isSearching = query.isNotEmpty() && !serverAnswered && (server.query != query || server.isSearching),
+            // A favorite is listed under Favorites, so it is not offered twice.
+            recent = recentlyChatted.filter { !it.isFavorite }.take(RECENT_LIMIT),
             favorites = allContacts.filter { it.isFavorite },
             groups = startableGroups.filter { matchesQuery(it.name, local.query) },
             totalContacts = allContacts.size,
             totalGroups = startableGroups.size,
             query = local.query,
             onlineUserIds = onlineUserIds,
-            selectedSection = local.selectedSection,
             isLoaded = true,
             isRefreshing = local.isRefreshing,
             isStartingConversation = local.isStartingConversation,
@@ -122,8 +132,6 @@ internal class ContactsViewModel @Inject constructor(
             localState.update { it.copy(isRefreshing = false, error = failure?.error?.toRefreshError()) }
         }
     }
-
-    fun onSectionSelected(section: ContactsSection) = localState.update { it.copy(selectedSection = section) }
 
     fun onQueryChanged(query: String) = localState.update { it.copy(query = query) }
 
@@ -167,7 +175,6 @@ internal class ContactsViewModel @Inject constructor(
     )
 
     private data class LocalState(
-        val selectedSection: ContactsSection = ContactsSection.PEOPLE,
         val query: String = "",
         val isRefreshing: Boolean = false,
         val isStartingConversation: Boolean = false,
