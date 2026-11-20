@@ -61,11 +61,14 @@ internal class ContactsViewModel @Inject constructor(
             } else {
                 flow {
                     emit(ServerSearch(query))
+                    val found = contactRepository.search(query) as? ContactSearchResult.Found
                     emit(
                         ServerSearch(
                             query,
-                            (contactRepository.search(query) as? ContactSearchResult.Found)?.contacts,
-                            false,
+                            found?.contacts,
+                            isSearching = false,
+                            mayHaveMore =
+                            found?.mayHaveMore == true,
                         ),
                     )
                 }
@@ -88,6 +91,7 @@ internal class ContactsViewModel @Inject constructor(
         val startableGroups = allGroups.filter { it.canStartConversation }
         val query = local.query.trim()
         val serverAnswered = server.query == query && server.contacts != null
+        val isSearching = query.isNotEmpty() && !serverAnswered && (server.query != query || server.isSearching)
         val favoriteIds = allContacts.filter { it.isFavorite }.mapTo(mutableSetOf()) { it.userId }
         ContactsUiState(
             contacts = when {
@@ -96,7 +100,10 @@ internal class ContactsViewModel @Inject constructor(
                 serverAnswered -> server.contacts.orEmpty().map { it.copy(isFavorite = it.userId in favoriteIds) }
                 else -> allContacts.filter { matchesQuery(it.displayName, query) }
             },
-            isSearching = query.isNotEmpty() && !serverAnswered && (server.query != query || server.isSearching),
+            isSearching = isSearching,
+            // The server was asked and did not answer, so what is listed comes from the stored roster.
+            isShowingSavedPeople = query.isNotEmpty() && !serverAnswered && !isSearching,
+            mayHaveMoreResults = serverAnswered && server.mayHaveMore,
             // A favorite is listed under Favorites, so it is not offered twice.
             recent = recentlyChatted.filter { !it.isFavorite }.take(RECENT_LIMIT),
             favorites = allContacts.filter { it.isFavorite },
@@ -175,6 +182,7 @@ internal class ContactsViewModel @Inject constructor(
         val query: String = "",
         val contacts: List<Contact>? = null,
         val isSearching: Boolean = true,
+        val mayHaveMore: Boolean = false,
     )
 
     private data class LocalState(

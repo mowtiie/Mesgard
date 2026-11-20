@@ -436,4 +436,56 @@ class ContactsViewModelTest {
             assertEquals(listOf(true), expectMostRecentItem().contacts.map { it.isFavorite })
         }
     }
+
+    @Test
+    fun `results from the server are not marked as saved people`() = runTest {
+        coEvery { repository.search("an") } returns ContactSearchResult.Found(listOf(ana))
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onQueryChanged("an")
+            advanceTimeBy(SEARCH_PAUSE_MS + 1)
+            runCurrent()
+            val state = expectMostRecentItem()
+            assertFalse(state.isShowingSavedPeople)
+            assertFalse(state.showSavedPeopleNote)
+        }
+    }
+
+    @Test
+    fun `when the server cannot be asked the list says it shows the saved people`() = runTest {
+        contacts.value = listOf(ana)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onQueryChanged("an")
+            val waiting = awaitItem()
+            assertFalse(waiting.isShowingSavedPeople)
+
+            advanceTimeBy(SEARCH_PAUSE_MS + 1)
+            runCurrent()
+
+            val state = expectMostRecentItem()
+            assertTrue(state.isShowingSavedPeople)
+            assertTrue(state.showSavedPeopleNote)
+        }
+    }
+
+    @Test
+    fun `a search that reached the server limit says there may be more people`() = runTest {
+        coEvery { repository.search("an") } returns ContactSearchResult.Found(listOf(ana), mayHaveMore = true)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onQueryChanged("an")
+            advanceTimeBy(SEARCH_PAUSE_MS + 1)
+            runCurrent()
+            val state = expectMostRecentItem()
+            assertTrue(state.mayHaveMoreResults)
+            assertTrue(state.showMoreResultsNote)
+        }
+    }
 }

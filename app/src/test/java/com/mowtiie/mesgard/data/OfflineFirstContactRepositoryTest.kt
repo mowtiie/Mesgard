@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.data
 import app.cash.turbine.test
 import com.mowtiie.mesgard.data.local.DirectPeerEntity
 import com.mowtiie.mesgard.data.remote.ContactRemoteSource
+import com.mowtiie.mesgard.data.remote.SEARCH_RESULT_LIMIT
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.ContactSearchResult
@@ -407,6 +408,16 @@ class OfflineFirstContactRepositoryTest {
             assertEquals(listOf("ana", "ben"), awaitItem().map { it.userId })
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `a search that fills the server limit says there may be more`() = runTest {
+        val full = (1..SEARCH_RESULT_LIMIT).map { contactDto("p$it") }
+        coEvery { remoteSource.searchContacts("p", CURRENT_USER_ID) } returns full
+        coEvery { remoteSource.searchContacts("p1", CURRENT_USER_ID) } returns full.take(2)
+
+        assertTrue((repository.search("p") as ContactSearchResult.Found).mayHaveMore)
+        assertFalse((repository.search("p1") as ContactSearchResult.Found).mayHaveMore)
     }
 
     private companion object {

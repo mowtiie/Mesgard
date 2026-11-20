@@ -2,9 +2,12 @@ package com.mowtiie.mesgard.ui.contacts
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -16,7 +19,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -40,6 +42,8 @@ import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.NoResultsState
 import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
+
+private val ProgressHeight = 4.dp
 
 @Composable
 internal fun ContactsScreenRoute(
@@ -127,9 +131,12 @@ internal fun ContactsScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (uiState.isStartingConversation || uiState.isSearching) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        Column(modifier = Modifier.padding(padding).imePadding().fillMaxSize()) {
+            // The slot keeps its height while the indicator is off, so the list does not jump when it appears.
+            Box(modifier = Modifier.fillMaxWidth().height(ProgressHeight)) {
+                if (uiState.isStartingConversation || uiState.isSearching) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
             }
             ContactsContent(
                 uiState = uiState,
@@ -184,6 +191,7 @@ internal fun ContactList(
         if (uiState.showPeopleHeader) {
             val found = PeopleSection("contact", R.string.contacts_people, uiState.contacts)
             people(uiState, found, onContactClicked, onFavoriteToggled)
+            notes(uiState)
         }
         if (uiState.groups.isNotEmpty()) groups(uiState, onGroupClicked)
     }
@@ -230,6 +238,11 @@ private fun LazyListScope.people(
     }
 }
 
+private fun LazyListScope.notes(uiState: ContactsUiState) {
+    if (uiState.showSavedPeopleNote) item(key = "saved-note") { ResultNote(R.string.contacts_saved_people_note) }
+    if (uiState.showMoreResultsNote) item(key = "more-note") { ResultNote(R.string.contacts_more_results_note) }
+}
+
 private fun LazyListScope.groups(uiState: ContactsUiState, onGroupClicked: (Group) -> Unit) {
     item(key = "groups-header") { SectionHeader(R.string.contacts_groups) }
     items(uiState.groups, key = { "group:${it.id}" }) { group ->
@@ -250,14 +263,4 @@ private fun ContactsError.messageResource(): Int = when (this) {
     ContactsError.REFRESH_UNKNOWN -> R.string.refresh_error_unknown
     ContactsError.START_NETWORK_UNAVAILABLE -> R.string.start_conversation_error_network_unavailable
     ContactsError.START_UNKNOWN -> R.string.start_conversation_error_unknown
-}
-
-@Composable
-private fun SectionHeader(@StringRes title: Int) {
-    Text(
-        text = stringResource(title),
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-    )
 }

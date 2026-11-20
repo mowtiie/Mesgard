@@ -6,6 +6,7 @@ import com.mowtiie.mesgard.data.local.DirectPeerEntity
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.remote.ContactRemoteSource
 import com.mowtiie.mesgard.data.remote.RemoteOutcome
+import com.mowtiie.mesgard.data.remote.SEARCH_RESULT_LIMIT
 import com.mowtiie.mesgard.data.remote.attemptRemote
 import com.mowtiie.mesgard.data.remote.toContact
 import com.mowtiie.mesgard.data.remote.toEntity
@@ -81,7 +82,8 @@ internal class OfflineFirstContactRepository @Inject constructor(
             }
         }
         return when (outcome) {
-            is RemoteOutcome.Success -> ContactSearchResult.Found(outcome.value)
+            is RemoteOutcome.Success ->
+                ContactSearchResult.Found(outcome.value, mayHaveMore = outcome.value.size >= SEARCH_RESULT_LIMIT)
             is RemoteOutcome.Failure -> ContactSearchResult.Unavailable
         }
     }

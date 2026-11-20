@@ -433,6 +433,8 @@
     <string name="contacts_groups">Groups</string>
     <string name="contact_add_favorite">Add to favorites</string>
     <string name="contact_unfavorite">Remove from favorites</string>
+    <string name="contacts_saved_people_note">Showing the people saved on this phone. Searching everyone needs a connection.</string>
+    <string name="contacts_more_results_note">Showing the first people found. Type more of the name to narrow the search.</string>
     <string name="contacts_search_prompt">Search for a person</string>
     <string name="contacts_search_prompt_hint">Type a name to find someone and start a conversation.</string>
     <string name="chats_search_placeholder">Search conversations</string>

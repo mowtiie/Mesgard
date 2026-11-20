@@ -17,7 +17,8 @@ internal data class Contact(
 
 /** [Unavailable] means the server could not be asked, so the roster kept on the phone is searched instead. */
 internal sealed interface ContactSearchResult {
-    data class Found(val contacts: List<Contact>) : ContactSearchResult
+    /** [mayHaveMore] is true when the server stopped at its limit, so more people may match the text. */
+    data class Found(val contacts: List<Contact>, val mayHaveMore: Boolean = false) : ContactSearchResult
 
     data object Unavailable : ContactSearchResult
 }

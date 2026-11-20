@@ -30,6 +30,10 @@ internal data class ContactsUiState(
     val isRefreshing: Boolean = false,
     /** True while the server has not yet answered the text typed, so the list may still change. */
     val isSearching: Boolean = false,
+    /** The server did not answer the search, so the people listed are the ones stored on this phone. */
+    val isShowingSavedPeople: Boolean = false,
+    /** The server stopped at its limit, so more people may match the text. */
+    val mayHaveMoreResults: Boolean = false,
     val isStartingConversation: Boolean = false,
     val conversationToOpen: String? = null,
     val error: ContactsError? = null,
@@ -50,6 +54,12 @@ internal data class ContactsUiState(
 
     val showPeopleHeader: Boolean
         get() = isFiltering && contacts.isNotEmpty()
+
+    val showSavedPeopleNote: Boolean
+        get() = showPeopleHeader && isShowingSavedPeople
+
+    val showMoreResultsNote: Boolean
+        get() = showPeopleHeader && mayHaveMoreResults
 
     /** Nobody and no group to offer yet, so the screen asks for a search. */
     val showSearchPrompt: Boolean
