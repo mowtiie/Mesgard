@@ -17,6 +17,8 @@ import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MessageRepository
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -58,8 +60,13 @@ internal class OfflineFirstConversationRepository @Inject constructor(
     }
 
     private suspend fun storeSummaries() {
-        val summaries = remoteSource.fetchSummaries()
-        val muted = authRepository.currentUserId?.let { remoteSource.fetchMutedConversationIds(it) }.orEmpty()
+        // Both are asked at once, so the refresh waits for one round trip instead of two.
+        val (summaries, muted) = coroutineScope {
+            val summaries = async { remoteSource.fetchSummaries() }
+            val muted =
+                async { authRepository.currentUserId?.let { remoteSource.fetchMutedConversationIds(it) }.orEmpty() }
+            summaries.await() to muted.await()
+        }
         val conversations = summaries.map { it.toEntity(isMuted = it.conversationId in muted) }
         val lastMessages = summaries.mapNotNull { it.toLastMessageEntity() }
         database.withTransaction {

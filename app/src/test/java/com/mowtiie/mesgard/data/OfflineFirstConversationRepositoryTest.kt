@@ -16,11 +16,13 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -28,6 +30,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+
+private const val ASKED_TOGETHER_TIMEOUT_MS = 1_000L
 
 @RunWith(RobolectricTestRunner::class)
 class OfflineFirstConversationRepositoryTest {
@@ -58,6 +62,39 @@ class OfflineFirstConversationRepositoryTest {
     @After
     fun stopSharing() {
         scope.cancel()
+    }
+
+    @Test
+    fun `the summaries and the muted conversations are asked at the same time`() = runTest {
+        val mutedAsked = CompletableDeferred<Unit>()
+        coEvery { remoteSource.fetchSummaries() } coAnswers {
+            withTimeout(ASKED_TOGETHER_TIMEOUT_MS) { mutedAsked.await() }
+            listOf(summaryDto("a"))
+        }
+        coEvery { remoteSource.fetchMutedConversationIds("me") } coAnswers {
+            mutedAsked.complete(Unit)
+            setOf("a")
+        }
+
+        assertEquals(RefreshResult.Success, repository.refresh())
+
+        repository.observeConversation("a").test {
+            assertEquals(true, awaitItem()?.isMuted)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a failed muted lookup fails the refresh and stores nothing`() = runTest {
+        coEvery { remoteSource.fetchSummaries() } returns listOf(summaryDto("a"))
+        coEvery { remoteSource.fetchMutedConversationIds("me") } throws IOException("offline")
+
+        assertEquals(RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE), repository.refresh())
+
+        repository.observeConversation("a").test {
+            assertEquals(null, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
