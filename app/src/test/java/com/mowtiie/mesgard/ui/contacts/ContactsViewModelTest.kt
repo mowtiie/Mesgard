@@ -5,6 +5,8 @@ import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.ContactSearchResult
 import com.mowtiie.mesgard.domain.model.Group
 import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.domain.model.PreferenceError
+import com.mowtiie.mesgard.domain.model.PreferenceResult
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.StartConversationResult
@@ -374,5 +376,45 @@ class ContactsViewModelTest {
     @Test
     fun `hides the search field when there are no contacts and no query`() = runTest {
         viewModel().uiState.test { assertFalse(expectMostRecentItem().showSearch) }
+    }
+
+    @Test
+    fun `the star adds a person to the favorites, and takes a favorite out`() = runTest {
+        coEvery { repository.setFavorite(any(), any()) } returns PreferenceResult.Success
+        val viewModel = viewModel()
+
+        viewModel.onFavoriteToggled(ana)
+        viewModel.onFavoriteToggled(ana.copy(isFavorite = true))
+
+        coVerify(exactly = 1) { repository.setFavorite(setOf(ana), true) }
+        coVerify(exactly = 1) { repository.setFavorite(setOf(ana.copy(isFavorite = true)), false) }
+    }
+
+    @Test
+    fun `a refused favorite is reported once and can be dismissed`() = runTest {
+        coEvery { repository.setFavorite(any(), any()) } returns
+            PreferenceResult.Failure(PreferenceError.TOO_MANY_FAVORITES)
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            viewModel.onFavoriteToggled(ana)
+            assertEquals(PreferenceError.TOO_MANY_FAVORITES, expectMostRecentItem().favoriteError)
+            viewModel.onFavoriteErrorShown()
+            assertNull(expectMostRecentItem().favoriteError)
+        }
+    }
+
+    @Test
+    fun `a person found by searching shows the star of the stored favorites`() = runTest {
+        contacts.value = listOf(ana.copy(isFavorite = true))
+        coEvery { repository.search("an") } returns ContactSearchResult.Found(listOf(ana))
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            viewModel.onQueryChanged("an")
+            advanceTimeBy(SEARCH_PAUSE_MS + 1)
+            runCurrent()
+            assertEquals(listOf(true), expectMostRecentItem().contacts.map { it.isFavorite })
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.ui.contacts
 
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.Group
+import com.mowtiie.mesgard.domain.model.PreferenceError
 
 internal enum class ContactsError {
     REFRESH_NETWORK_UNAVAILABLE,
@@ -36,6 +37,7 @@ internal data class ContactsUiState(
     val isStartingConversation: Boolean = false,
     val conversationToOpen: String? = null,
     val error: ContactsError? = null,
+    val favoriteError: PreferenceError? = null,
 ) {
     val showSections: Boolean
         get() = totalGroups > 0

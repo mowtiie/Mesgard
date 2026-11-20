@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.ContactSearchResult
 import com.mowtiie.mesgard.domain.model.Group
+import com.mowtiie.mesgard.domain.model.PreferenceError
+import com.mowtiie.mesgard.domain.model.PreferenceResult
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.StartConversationResult
@@ -77,10 +79,12 @@ internal class ContactsViewModel @Inject constructor(
         val startableGroups = allGroups.filter { it.canStartConversation }
         val query = local.query.trim()
         val serverAnswered = server.query == query && server.contacts != null
+        val favoriteIds = allContacts.filter { it.isFavorite }.mapTo(mutableSetOf()) { it.userId }
         ContactsUiState(
             contacts = when {
                 query.isEmpty() -> emptyList()
-                serverAnswered -> server.contacts.orEmpty()
+                // A person found by searching is marked from the roster, so the star follows a change at once.
+                serverAnswered -> server.contacts.orEmpty().map { it.copy(isFavorite = it.userId in favoriteIds) }
                 else -> allContacts.filter { matchesQuery(it.displayName, query) }
             },
             isSearching = query.isNotEmpty() && !serverAnswered && (server.query != query || server.isSearching),
@@ -96,6 +100,7 @@ internal class ContactsViewModel @Inject constructor(
             isStartingConversation = local.isStartingConversation,
             conversationToOpen = local.conversationToOpen,
             error = local.error,
+            favoriteError = local.favoriteError,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -130,6 +135,16 @@ internal class ContactsViewModel @Inject constructor(
 
     fun onErrorShown() = localState.update { it.copy(error = null) }
 
+    /** Adds the person to the favorites, or takes them out when they are one. The phone shows it at once. */
+    fun onFavoriteToggled(contact: Contact) {
+        viewModelScope.launch {
+            val result = contactRepository.setFavorite(setOf(contact), favorite = !contact.isFavorite)
+            if (result is PreferenceResult.Failure) localState.update { it.copy(favoriteError = result.error) }
+        }
+    }
+
+    fun onFavoriteErrorShown() = localState.update { it.copy(favoriteError = null) }
+
     private fun startConversation(start: suspend () -> StartConversationResult) {
         if (localState.value.isStartingConversation) return
         localState.update { it.copy(isStartingConversation = true) }
@@ -158,6 +173,7 @@ internal class ContactsViewModel @Inject constructor(
         val isStartingConversation: Boolean = false,
         val conversationToOpen: String? = null,
         val error: ContactsError? = null,
+        val favoriteError: PreferenceError? = null,
     )
 }
 

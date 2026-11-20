@@ -1,12 +1,8 @@
 package com.mowtiie.mesgard.ui.contacts
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -31,11 +26,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,7 +41,6 @@ import com.mowtiie.mesgard.ui.chats.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.NoResultsState
-import com.mowtiie.mesgard.ui.common.SelectedAvatar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.labelResource
 
@@ -56,31 +50,13 @@ internal fun ContactsScreenRoute(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ContactsViewModel = hiltViewModel(),
-    selectionViewModel: ContactsSelectionViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val selectionState by selectionViewModel.uiState.collectAsStateWithLifecycle()
-    val selection = ContactsSelection(
-        state = selectionState,
-        callbacks = ContactsSelectionCallbacks(
-            onToggled = selectionViewModel::onToggled,
-            onSelectAll = {
-                selectionViewModel.onSelectAll(if (uiState.showFavorites) uiState.favorites else uiState.contacts)
-            },
-            onClose = selectionViewModel::onSelectionClosed,
-            onMessage = {
-                viewModel.onContactClicked(it)
-                selectionViewModel.onSelectionClosed()
-            },
-            onFavorite = selectionViewModel::onFavoriteClicked,
-            onErrorShown = selectionViewModel::onErrorShown,
-        ),
-    )
     ContactsScreen(
         uiState = uiState,
-        selection = selection,
         onRefresh = viewModel::onRefresh,
         onContactClicked = viewModel::onContactClicked,
+        onFavoriteToggled = viewModel::onFavoriteToggled,
         onGroupClicked = viewModel::onGroupClicked,
         onSectionSelected = viewModel::onSectionSelected,
         onQueryChanged = viewModel::onQueryChanged,
@@ -89,6 +65,7 @@ internal fun ContactsScreenRoute(
             viewModel.onConversationOpened()
         },
         onErrorShown = viewModel::onErrorShown,
+        onFavoriteErrorShown = viewModel::onFavoriteErrorShown,
         onBack = onBack,
         modifier = modifier,
     )
@@ -97,14 +74,15 @@ internal fun ContactsScreenRoute(
 @Composable
 internal fun ContactsScreen(
     uiState: ContactsUiState,
-    selection: ContactsSelection,
     onRefresh: () -> Unit,
     onContactClicked: (Contact) -> Unit,
+    onFavoriteToggled: (Contact) -> Unit,
     onGroupClicked: (Group) -> Unit,
     onSectionSelected: (ContactsSection) -> Unit,
     onQueryChanged: (String) -> Unit,
     onConversationOpened: () -> Unit,
     onErrorShown: () -> Unit,
+    onFavoriteErrorShown: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -116,11 +94,11 @@ internal fun ContactsScreen(
             onErrorShown()
         }
     }
-    val selectionErrorMessage = selection.state.error?.let { stringResource(it.messageResource()) }
-    LaunchedEffect(selectionErrorMessage) {
-        if (selectionErrorMessage != null) {
-            snackbarHostState.showSnackbar(selectionErrorMessage)
-            selection.callbacks.onErrorShown()
+    val favoriteErrorMessage = uiState.favoriteError?.let { stringResource(it.messageResource()) }
+    LaunchedEffect(favoriteErrorMessage) {
+        if (favoriteErrorMessage != null) {
+            snackbarHostState.showSnackbar(favoriteErrorMessage)
+            onFavoriteErrorShown()
         }
     }
     LaunchedEffect(uiState.conversationToOpen) {
@@ -138,11 +116,6 @@ internal fun ContactsScreen(
                 )
             }
         },
-        searchBar = if (selection.state.isActive) {
-            { ContactsSelectionBar(selection.state, selection.callbacks) }
-        } else {
-            null
-        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
@@ -159,9 +132,9 @@ internal fun ContactsScreen(
             if (uiState.showSections) SectionTabs(uiState.section, onSectionSelected)
             ContactsContent(
                 uiState = uiState,
-                selection = selection,
                 onRefresh = onRefresh,
                 onContactClicked = onContactClicked,
+                onFavoriteToggled = onFavoriteToggled,
                 onGroupClicked = onGroupClicked,
                 onSectionSelected = onSectionSelected,
             )
@@ -173,9 +146,9 @@ internal fun ContactsScreen(
 @Composable
 private fun ContactsContent(
     uiState: ContactsUiState,
-    selection: ContactsSelection,
     onRefresh: () -> Unit,
     onContactClicked: (Contact) -> Unit,
+    onFavoriteToggled: (Contact) -> Unit,
     onGroupClicked: (Group) -> Unit,
     onSectionSelected: (ContactsSection) -> Unit,
 ) {
@@ -185,9 +158,9 @@ private fun ContactsContent(
         modifier = Modifier.fillMaxSize(),
     ) {
         if (uiState.showSections) {
-            SectionPager(uiState, selection, onContactClicked, onGroupClicked, onSectionSelected)
+            SectionPager(uiState, onContactClicked, onFavoriteToggled, onGroupClicked, onSectionSelected)
         } else {
-            ContactList(ContactsSection.PEOPLE, uiState, selection, onContactClicked, onGroupClicked)
+            ContactList(ContactsSection.PEOPLE, uiState, onContactClicked, onFavoriteToggled, onGroupClicked)
         }
     }
 }
@@ -196,8 +169,8 @@ private fun ContactsContent(
 internal fun ContactList(
     section: ContactsSection,
     uiState: ContactsUiState,
-    selection: ContactsSelection,
     onContactClicked: (Contact) -> Unit,
+    onFavoriteToggled: (Contact) -> Unit,
     onGroupClicked: (Group) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -228,11 +201,11 @@ internal fun ContactList(
             if (uiState.showFavorites) {
                 item(key = "favorites-header") { FavoritesHeader() }
                 items(uiState.favorites, key = { "favorite:${it.orgId}:${it.userId}" }) { contact ->
-                    ContactRow(contact, uiState, selection, onContactClicked)
+                    ContactRow(contact, uiState, onContactClicked, onFavoriteToggled)
                 }
             }
             items(uiState.contacts, key = { "contact:${it.orgId}:${it.userId}" }) { contact ->
-                ContactRow(contact, uiState, selection, onContactClicked)
+                ContactRow(contact, uiState, onContactClicked, onFavoriteToggled)
             }
         } else {
             items(uiState.groups, key = { "group:${it.id}" }) { group ->
@@ -268,53 +241,43 @@ private fun FavoritesHeader() {
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
 private fun ContactRow(
     contact: Contact,
     uiState: ContactsUiState,
-    selection: ContactsSelection,
     onContactClicked: (Contact) -> Unit,
+    onFavoriteToggled: (Contact) -> Unit,
 ) {
-    val isSelected = selection.state.isSelected(contact)
+    val isOnline = contact.userId in uiState.onlineUserIds
+    val onlineLabel = stringResource(R.string.contact_online)
     ListItem(
         modifier = Modifier
-            .combinedClickable(
+            .clickable(
                 enabled = !uiState.isStartingConversation,
                 onClickLabel = stringResource(R.string.conversation_start),
-                onLongClickLabel = stringResource(R.string.selection_select),
-                onLongClick = { selection.callbacks.onToggled(contact) },
-            ) {
-                if (selection.state.isActive) selection.callbacks.onToggled(contact) else onContactClicked(contact)
-            }
-            .semantics { selected = isSelected },
-        colors = if (isSelected) {
-            ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-        } else {
-            ListItemDefaults.colors()
-        },
-        leadingContent = { if (isSelected) SelectedAvatar() else InitialAvatar(contact.displayName) },
+            ) { onContactClicked(contact) }
+            .semantics { if (isOnline) stateDescription = onlineLabel },
+        leadingContent = { ContactAvatar(contact.displayName, isOnline) },
         headlineContent = { Text(contact.displayName) },
         supportingContent = { Text(stringResource(contact.role.labelResource())) },
-        trailingContent = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (contact.userId in uiState.onlineUserIds) OnlineLabel()
-                if (contact.isFavorite) {
-                    Icon(
-                        Icons.Filled.Star,
-                        contentDescription = stringResource(R.string.contact_favorite),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                }
-            }
-        },
+        trailingContent = { FavoriteToggle(contact.isFavorite) { onFavoriteToggled(contact) } },
     )
 }
 
+/** Filled while the person is a favorite, which is the toggled on state, and outlined otherwise. */
 @Composable
-private fun OnlineLabel() {
-    Text(
-        text = stringResource(R.string.contact_online),
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.primary,
-    )
+private fun FavoriteToggle(isFavorite: Boolean, onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        if (isFavorite) {
+            Icon(
+                Icons.Filled.Star,
+                contentDescription = stringResource(R.string.contact_unfavorite),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        } else {
+            Icon(
+                painterResource(R.drawable.ic_star_outline),
+                contentDescription = stringResource(R.string.contact_add_favorite),
+            )
+        }
+    }
 }
