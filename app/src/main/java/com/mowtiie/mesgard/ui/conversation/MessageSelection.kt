@@ -38,6 +38,8 @@ internal data class MessageSelectionActions(
     val canDelete: Boolean,
     val canEdit: Boolean,
     val canShowInfo: Boolean,
+    /** Whether the person may pin at all. A person who may not never sees the item, so it is not shown disabled. */
+    val canManagePins: Boolean,
     val pin: PinChoice,
 )
 
@@ -58,6 +60,7 @@ internal fun selectionActionsFor(
         canDelete = selected.isNotEmpty() && selected.all { it.isOwn && it.isSent() },
         canEdit = isSentSingle && single?.isOwn == true && single.body.isNotEmpty(),
         canShowInfo = isSentSingle && single?.isOwn == true,
+        canManagePins = canPin,
         pin = when {
             !isSentSingle || !canPin || single == null -> PinChoice.NONE
             single.id in pinnedIds -> PinChoice.UNPIN

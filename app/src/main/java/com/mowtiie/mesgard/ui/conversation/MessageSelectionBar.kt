@@ -102,31 +102,31 @@ private fun MenuActions(
     callbacks: MessageSelectionCallbacks,
     onChosen: () -> Unit,
 ) {
-    if (actions.canEdit) {
+    // An item that does not apply to this message stays in the menu, disabled, as the Material menu guidelines ask.
+    DropdownMenuItem(
+        text = { Text(stringResource(R.string.message_edit)) },
+        enabled = actions.canEdit,
+        onClick = {
+            onChosen()
+            callbacks.onEdit(message)
+        },
+    )
+    DropdownMenuItem(
+        text = { Text(stringResource(R.string.message_info)) },
+        enabled = actions.canShowInfo,
+        onClick = {
+            onChosen()
+            callbacks.onInfo(message.id)
+        },
+    )
+    if (actions.canManagePins) {
+        val isUnpin = actions.pin == PinChoice.UNPIN
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.message_edit)) },
+            text = { Text(stringResource(if (isUnpin) R.string.message_unpin else R.string.message_pin)) },
+            enabled = actions.pin != PinChoice.NONE,
             onClick = {
                 onChosen()
-                callbacks.onEdit(message)
-            },
-        )
-    }
-    if (actions.canShowInfo) {
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.message_info)) },
-            onClick = {
-                onChosen()
-                callbacks.onInfo(message.id)
-            },
-        )
-    }
-    if (actions.pin != PinChoice.NONE) {
-        val isPin = actions.pin == PinChoice.PIN
-        DropdownMenuItem(
-            text = { Text(stringResource(if (isPin) R.string.message_pin else R.string.message_unpin)) },
-            onClick = {
-                onChosen()
-                if (isPin) callbacks.onPin(message.id) else callbacks.onUnpin(message.id)
+                if (isUnpin) callbacks.onUnpin(message.id) else callbacks.onPin(message.id)
             },
         )
     }

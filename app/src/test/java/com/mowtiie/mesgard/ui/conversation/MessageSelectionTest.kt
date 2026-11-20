@@ -98,6 +98,20 @@ class MessageSelectionTest {
     }
 
     @Test
+    fun `only a person who may pin is shown the pin item`() {
+        assertTrue(actions(message("m1"), canPin = true).canManagePins)
+        assertFalse(actions(message("m1"), canPin = false).canManagePins)
+    }
+
+    @Test
+    fun `a person who may pin keeps the item when it does not apply to the selection`() {
+        val result = actions(message("m1"), message("m2"), canPin = true)
+
+        assertTrue(result.canManagePins)
+        assertEquals(PinChoice.NONE, result.pin)
+    }
+
+    @Test
     fun `a message without text cannot be copied or edited`() {
         val result = actions(message("m1", body = ""))
 
