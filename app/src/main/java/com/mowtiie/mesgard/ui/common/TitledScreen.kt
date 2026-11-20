@@ -16,6 +16,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import com.mowtiie.mesgard.ui.connectivity.ConnectionSnackbarHost
 
 /**
@@ -69,12 +70,20 @@ internal fun TitledScreen(
 @Composable
 private fun TitleWithSubtitle(title: String, subtitle: String?, onRefresh: (() -> Unit)?) {
     Column(modifier = Modifier.refreshAction(onRefresh)) {
-        Text(text = title, style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif))
+        // A small app bar does not wrap its headline, so a long name is cut with an ellipsis instead of overflowing.
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
         if (subtitle != null) {
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
         }
