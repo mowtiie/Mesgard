@@ -129,6 +129,7 @@ internal fun ContactsScreen(
         } else {
             null
         },
+        onRefresh = if (uiState.isRefreshing) null else onRefresh,
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).imePadding().fillMaxSize()) {

@@ -32,8 +32,6 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.NoResultsState
-import com.mowtiie.mesgard.ui.common.OverflowMenu
-import com.mowtiie.mesgard.ui.common.RefreshMenuItem
 import com.mowtiie.mesgard.ui.common.SearchAction
 import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
@@ -108,13 +106,8 @@ internal fun ConversationListScreen(
             IconButton(onClick = onOpenSettings) {
                 Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings_title))
             }
-            OverflowMenu { dismiss ->
-                RefreshMenuItem(enabled = !uiState.isRefreshing) {
-                    dismiss()
-                    onRefresh()
-                }
-            }
         },
+        onRefresh = if (uiState.isRefreshing) null else onRefresh,
         searchBar = when {
             selection.isActive -> {
                 { SelectionAppBar(state = selection, callbacks = selectionCallbacks) }

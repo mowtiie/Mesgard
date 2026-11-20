@@ -24,8 +24,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.admin.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
-import com.mowtiie.mesgard.ui.common.OverflowMenu
-import com.mowtiie.mesgard.ui.common.RefreshMenuItem
 import com.mowtiie.mesgard.ui.common.TitledScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,14 +51,7 @@ internal fun AuditLogScreenRoute(
                 Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.navigate_back))
             }
         },
-        actions = {
-            OverflowMenu { dismiss ->
-                RefreshMenuItem(enabled = !uiState.isLoading) {
-                    dismiss()
-                    viewModel.onRefresh()
-                }
-            }
-        },
+        onRefresh = if (uiState.isLoading) null else viewModel::onRefresh,
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {

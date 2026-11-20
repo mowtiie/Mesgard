@@ -38,8 +38,6 @@ import com.mowtiie.mesgard.ui.admin.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.NoResultsState
-import com.mowtiie.mesgard.ui.common.OverflowMenu
-import com.mowtiie.mesgard.ui.common.RefreshMenuItem
 import com.mowtiie.mesgard.ui.common.SearchAction
 import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
@@ -99,13 +97,8 @@ internal fun GroupsScreen(
         },
         actions = {
             SearchAction { isSearching = true }
-            OverflowMenu { dismiss ->
-                RefreshMenuItem(enabled = !uiState.isLoading) {
-                    dismiss()
-                    onRefresh()
-                }
-            }
         },
+        onRefresh = if (uiState.isLoading) null else onRefresh,
         searchBar = if (isSearching) {
             {
                 SearchAppBar(

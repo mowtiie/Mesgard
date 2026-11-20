@@ -20,7 +20,9 @@ import com.mowtiie.mesgard.ui.connectivity.ConnectionSnackbarHost
 
 /**
  * A small top app bar with a serif headline. [actions] are the trailing icon buttons; when [searchBar] is given it
- * replaces the whole app bar, which is how search is shown.
+ * replaces the whole app bar, which is how search is shown. [onRefresh], when the screen has a pull to refresh, is
+ * offered to screen readers as a Refresh action of the title, because a pull is a gesture they cannot make. It is null
+ * while a refresh is already running.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +33,7 @@ internal fun TitledScreen(
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     searchBar: (@Composable () -> Unit)? = null,
+    onRefresh: (() -> Unit)? = null,
     snackbarHost: @Composable () -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
@@ -44,7 +47,7 @@ internal fun TitledScreen(
                     searchBar()
                 } else {
                     TopAppBar(
-                        title = { TitleWithSubtitle(title, subtitle) },
+                        title = { TitleWithSubtitle(title, subtitle, onRefresh) },
                         navigationIcon = navigationIcon,
                         actions = actions,
                         scrollBehavior = scrollBehavior,
@@ -64,8 +67,8 @@ internal fun TitledScreen(
 }
 
 @Composable
-private fun TitleWithSubtitle(title: String, subtitle: String?) {
-    Column {
+private fun TitleWithSubtitle(title: String, subtitle: String?, onRefresh: (() -> Unit)?) {
+    Column(modifier = Modifier.refreshAction(onRefresh)) {
         Text(text = title, style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif))
         if (subtitle != null) {
             Text(
