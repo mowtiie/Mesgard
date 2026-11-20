@@ -1,6 +1,8 @@
 package com.mowtiie.mesgard.data
 
 import androidx.room.withTransaction
+import com.mowtiie.mesgard.data.local.ConversationEntity
+import com.mowtiie.mesgard.data.local.DirectPeerEntity
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.remote.ContactRemoteSource
 import com.mowtiie.mesgard.data.remote.RemoteOutcome
@@ -9,8 +11,10 @@ import com.mowtiie.mesgard.data.remote.toContact
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.remote.toRefreshResult
 import com.mowtiie.mesgard.data.remote.toStoredEntity
+import com.mowtiie.mesgard.di.ApplicationScope
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.ContactSearchResult
+import com.mowtiie.mesgard.domain.model.ConversationType
 import com.mowtiie.mesgard.domain.model.MAX_FAVORITE_CONTACTS
 import com.mowtiie.mesgard.domain.model.PreferenceError
 import com.mowtiie.mesgard.domain.model.PreferenceResult
@@ -20,8 +24,10 @@ import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 private const val TAG = "ContactRepository"
 
@@ -30,8 +36,11 @@ internal class OfflineFirstContactRepository @Inject constructor(
     private val remoteSource: ContactRemoteSource,
     private val conversationRepository: ConversationRepository,
     private val authRepository: AuthRepository,
+    @ApplicationScope private val scope: CoroutineScope,
 ) : ContactRepository {
     private val contactDao = database.contactDao()
+    private val conversationDao = database.conversationDao()
+    private val directPeerDao = database.directPeerDao()
 
     override fun observeContacts(): Flow<List<Contact>> =
         contactDao.observeAll().map { contacts -> contacts.map { it.toContact() } }
@@ -50,18 +59,26 @@ internal class OfflineFirstContactRepository @Inject constructor(
         }
     }.toRefreshResult()
 
+    /**
+     * A conversation the phone already has opens without the network. A new one opens as soon as the server has made
+     * it, from what the phone knows, and the conversation list catches up in the background.
+     */
     override suspend fun startDirectConversation(contact: Contact): StartConversationResult {
+        directPeerDao.findConversationWith(contact.userId, contact.orgId)?.let {
+            return StartConversationResult.Started(it)
+        }
         val created = attemptRemote(TAG) { remoteSource.createDirectConversation(contact.orgId, contact.userId) }
         return when (created) {
             is RemoteOutcome.Failure -> StartConversationResult.Failure(created.error)
-            is RemoteOutcome.Success -> openCreated(created.value)
+            is RemoteOutcome.Success -> openCreated(created.value, contact)
         }
     }
 
     override suspend fun search(query: String): ContactSearchResult {
         val userId = authRepository.currentUserId
         val outcome = attemptRemote(TAG) {
-            val favoriteIds = remoteSource.fetchFavoriteIds(userId)
+            // The favorites are on the phone already, a person found by searching is marked from them.
+            val favoriteIds = contactDao.findFavoriteIds().toSet()
             remoteSource.searchContacts(query, userId).map {
                 it.toEntity(isFavorite = it.userId in favoriteIds).toContact()
             }
@@ -112,9 +129,21 @@ internal class OfflineFirstContactRepository @Inject constructor(
         }
     }
 
-    private suspend fun openCreated(conversationId: String): StartConversationResult =
-        when (val refreshed = conversationRepository.refresh()) {
-            RefreshResult.Success -> StartConversationResult.Started(conversationId)
-            is RefreshResult.Failure -> StartConversationResult.Failure(refreshed.error)
+    private suspend fun openCreated(conversationId: String, contact: Contact): StartConversationResult {
+        database.withTransaction {
+            conversationDao.insertIfAbsent(
+                ConversationEntity(
+                    id = conversationId,
+                    orgId = contact.orgId,
+                    type = ConversationType.DIRECT,
+                    title = contact.displayName,
+                    createdAtEpochMillis = System.currentTimeMillis(),
+                    unreadCount = 0,
+                ),
+            )
+            directPeerDao.upsertAll(listOf(DirectPeerEntity(conversationId, contact.userId)))
         }
+        scope.launch { conversationRepository.refresh() }
+        return StartConversationResult.Started(conversationId)
+    }
 }

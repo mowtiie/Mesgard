@@ -10,6 +10,17 @@ internal interface DirectPeerDao {
     @Query("SELECT conversation_id FROM direct_peers WHERE conversation_id IN (:conversationIds)")
     suspend fun findKnownConversationIds(conversationIds: List<String>): List<String>
 
+    /** The direct conversation with a person in an organization, when this phone already knows it. */
+    @Query(
+        """
+        SELECT peer.conversation_id FROM direct_peers AS peer
+        JOIN conversations AS conversation ON conversation.id = peer.conversation_id
+        WHERE peer.user_id = :userId AND conversation.org_id = :orgId
+        LIMIT 1
+        """,
+    )
+    suspend fun findConversationWith(userId: String, orgId: String): String?
+
     @Upsert
     suspend fun upsertAll(peers: List<DirectPeerEntity>)
 

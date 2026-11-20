@@ -1,6 +1,8 @@
 package com.mowtiie.mesgard.data.local
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import com.mowtiie.mesgard.domain.model.ConversationType
@@ -80,6 +82,10 @@ internal interface ConversationDao {
 
     @Upsert
     suspend fun upsertAll(conversations: List<ConversationEntity>)
+
+    /** A conversation the phone does not have yet. One it has keeps its pin, unread count and the rest. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIfAbsent(conversation: ConversationEntity)
 
     @Query("DELETE FROM conversations WHERE id NOT IN (:keptIds)")
     suspend fun deleteAllExcept(keptIds: List<String>)

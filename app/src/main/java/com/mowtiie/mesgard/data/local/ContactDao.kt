@@ -20,6 +20,9 @@ internal interface ContactDao {
     @Query("UPDATE contacts SET is_favorite = :isFavorite WHERE org_id = :orgId AND user_id IN (:userIds)")
     suspend fun updateFavorite(orgId: String, userIds: List<String>, isFavorite: Boolean)
 
+    @Query("SELECT user_id FROM contacts WHERE is_favorite = 1")
+    suspend fun findFavoriteIds(): List<String>
+
     @Query("SELECT COUNT(*) FROM contacts WHERE is_favorite = 1")
     suspend fun countFavorites(): Int
 

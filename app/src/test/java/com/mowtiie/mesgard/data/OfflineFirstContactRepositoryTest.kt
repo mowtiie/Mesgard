@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.data
 
 import app.cash.turbine.test
+import com.mowtiie.mesgard.data.local.DirectPeerEntity
 import com.mowtiie.mesgard.data.remote.ContactRemoteSource
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.domain.model.Contact
@@ -17,12 +18,18 @@ import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
 import com.mowtiie.mesgard.testing.TEST_ORG_ID
 import com.mowtiie.mesgard.testing.contactDto
 import com.mowtiie.mesgard.testing.contactEntity
+import com.mowtiie.mesgard.testing.conversationEntity
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -41,18 +48,32 @@ class OfflineFirstContactRepositoryTest {
     }
     private val conversationRepository = mockk<ConversationRepository>()
     private val authRepository = mockk<AuthRepository> { every { currentUserId } returns CURRENT_USER_ID }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val repository by lazy {
-        OfflineFirstContactRepository(databaseRule.database, remoteSource, conversationRepository, authRepository)
+        OfflineFirstContactRepository(
+            databaseRule.database,
+            remoteSource,
+            conversationRepository,
+            authRepository,
+            scope,
+        )
     }
+
+    @After
+    fun stopBackgroundWork() {
+        scope.cancel()
+    }
+
     private val ana = Contact(TEST_ORG_ID, "ana", "Ana", OrgRole.STAFF)
 
     @Test
-    fun `searching asks the server and marks the favorites`() = runTest {
+    fun `searching asks the server and marks the favorites from the phone`() = runTest {
         coEvery { remoteSource.searchContacts("be", CURRENT_USER_ID) } returns
             listOf(contactDto("ben"), contactDto("bea"))
-        coEvery { remoteSource.fetchFavoriteIds(CURRENT_USER_ID) } returns setOf("bea")
+        databaseRule.database.contactDao().upsertAll(listOf(contactEntity("bea").copy(isFavorite = true)))
 
         val result = repository.search("be") as ContactSearchResult.Found
+        coVerify(exactly = 0) { remoteSource.fetchFavoriteIds(any()) }
 
         assertEquals(listOf("ben", "bea"), result.contacts.map { it.userId })
         assertEquals(listOf(false, true), result.contacts.map { it.isFavorite })
@@ -183,7 +204,7 @@ class OfflineFirstContactRepositoryTest {
     }
 
     @Test
-    fun `starting a conversation creates it and refreshes the conversation list`() = runTest {
+    fun `a new conversation opens as soon as it is created, and the list catches up in the background`() = runTest {
         coEvery { remoteSource.createDirectConversation(TEST_ORG_ID, "ana") } returns "conversation-1"
         coEvery { conversationRepository.refresh() } returns RefreshResult.Success
 
@@ -194,6 +215,57 @@ class OfflineFirstContactRepositoryTest {
     }
 
     @Test
+    fun `a new conversation is stored with the other person before the list refreshes`() = runTest {
+        coEvery { remoteSource.createDirectConversation(TEST_ORG_ID, "ana") } returns "conversation-1"
+        coEvery { conversationRepository.refresh() } returns RefreshResult.Failure(RefreshError.UNKNOWN)
+
+        repository.startDirectConversation(ana)
+
+        val database = databaseRule.database
+        assertEquals("conversation-1", database.directPeerDao().findConversationWith("ana", TEST_ORG_ID))
+        database.conversationDao().observeById("conversation-1").test {
+            assertEquals("Ana", awaitItem()?.title)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a failed list refresh does not fail starting a conversation`() = runTest {
+        coEvery { remoteSource.createDirectConversation(any(), any()) } returns "conversation-1"
+        coEvery { conversationRepository.refresh() } returns RefreshResult.Failure(RefreshError.UNKNOWN)
+
+        assertEquals(StartConversationResult.Started("conversation-1"), repository.startDirectConversation(ana))
+    }
+
+    @Test
+    fun `a conversation the phone already has opens without the network`() = runTest {
+        val database = databaseRule.database
+        database.conversationDao().upsertAll(listOf(conversationEntity("known")))
+        database.directPeerDao().upsertAll(listOf(DirectPeerEntity("known", "ana")))
+
+        val result = repository.startDirectConversation(ana)
+
+        assertEquals(StartConversationResult.Started("known"), result)
+        coVerify(exactly = 0) { remoteSource.createDirectConversation(any(), any()) }
+        coVerify(exactly = 0) { conversationRepository.refresh() }
+    }
+
+    @Test
+    fun `a conversation the phone has keeps its unread count when the server answers with it again`() = runTest {
+        val database = databaseRule.database
+        database.conversationDao().upsertAll(listOf(conversationEntity("known", unreadCount = 4)))
+        coEvery { remoteSource.createDirectConversation(TEST_ORG_ID, "ana") } returns "known"
+        coEvery { conversationRepository.refresh() } returns RefreshResult.Success
+
+        repository.startDirectConversation(ana)
+
+        database.conversationDao().observeById("known").test {
+            assertEquals(4, awaitItem()?.unreadCount)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `starting a conversation reports a failure to create it without refreshing`() = runTest {
         coEvery { remoteSource.createDirectConversation(any(), any()) } throws IOException("offline")
 
@@ -201,14 +273,6 @@ class OfflineFirstContactRepositoryTest {
 
         assertEquals(StartConversationResult.Failure(RefreshError.NETWORK_UNAVAILABLE), result)
         coVerify(exactly = 0) { conversationRepository.refresh() }
-    }
-
-    @Test
-    fun `starting a conversation reports a failure to refresh the conversation list`() = runTest {
-        coEvery { remoteSource.createDirectConversation(any(), any()) } returns "conversation-1"
-        coEvery { conversationRepository.refresh() } returns RefreshResult.Failure(RefreshError.UNKNOWN)
-
-        assertEquals(StartConversationResult.Failure(RefreshError.UNKNOWN), repository.startDirectConversation(ana))
     }
 
     private companion object {
