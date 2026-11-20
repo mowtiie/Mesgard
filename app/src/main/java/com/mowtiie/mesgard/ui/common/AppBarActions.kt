@@ -1,12 +1,9 @@
 package com.mowtiie.mesgard.ui.common
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.mowtiie.mesgard.R
@@ -17,15 +14,4 @@ internal fun SearchAction(onClick: () -> Unit) {
     IconButton(onClick = onClick) {
         Icon(Icons.Outlined.Search, contentDescription = stringResource(R.string.search))
     }
-}
-
-/** A disabled item stays in the menu while the action is unavailable, as the Material menu guidelines ask. */
-@Composable
-internal fun RefreshMenuItem(enabled: Boolean, onClick: () -> Unit) {
-    DropdownMenuItem(
-        text = { Text(stringResource(R.string.refresh)) },
-        leadingIcon = { Icon(Icons.Outlined.Refresh, contentDescription = null) },
-        enabled = enabled,
-        onClick = onClick,
-    )
 }

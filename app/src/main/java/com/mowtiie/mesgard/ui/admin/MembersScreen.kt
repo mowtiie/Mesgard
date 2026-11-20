@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -30,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -41,7 +43,6 @@ import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.NoResultsState
 import com.mowtiie.mesgard.ui.common.OverflowMenu
-import com.mowtiie.mesgard.ui.common.RefreshMenuItem
 import com.mowtiie.mesgard.ui.common.SearchAction
 import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
@@ -110,20 +111,14 @@ internal fun MembersScreen(
         },
         actions = {
             SearchAction { isSearching = true }
-            OverflowMenu { dismiss ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.members_import)) },
-                    onClick = {
-                        dismiss()
-                        onImportMembers()
-                    },
+            IconButton(onClick = onImportMembers) {
+                Icon(
+                    painterResource(R.drawable.ic_upload),
+                    contentDescription = stringResource(R.string.members_import),
                 )
-                RefreshMenuItem(enabled = !uiState.isRefreshing) {
-                    dismiss()
-                    onRefresh()
-                }
             }
         },
+        onRefresh = if (uiState.isRefreshing) null else onRefresh,
         searchBar = if (isSearching) {
             {
                 SearchAppBar(
@@ -202,6 +197,7 @@ private fun MemberMenu(member: Contact, onMemberAction: (Contact, MemberAction) 
             dismiss()
             onMemberAction(member, MemberAction.RESET_MFA)
         }
+        HorizontalDivider()
         MemberMenuItem(R.string.members_remove) {
             dismiss()
             onMemberAction(member, MemberAction.REMOVE)

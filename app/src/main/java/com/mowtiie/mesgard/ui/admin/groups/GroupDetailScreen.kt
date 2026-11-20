@@ -10,9 +10,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -102,21 +105,11 @@ internal fun GroupDetailScreen(
             }
         },
         actions = {
-            OverflowMenu { dismiss ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.group_rename)) },
-                    onClick = {
-                        dismiss()
-                        onDialogRequested(GroupDetailDialog.Rename)
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.group_delete)) },
-                    onClick = {
-                        dismiss()
-                        onDialogRequested(GroupDetailDialog.ConfirmDelete)
-                    },
-                )
+            IconButton(onClick = { onDialogRequested(GroupDetailDialog.Rename) }) {
+                Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.group_rename_title))
+            }
+            IconButton(onClick = { onDialogRequested(GroupDetailDialog.ConfirmDelete) }) {
+                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.group_delete))
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -177,6 +170,7 @@ private fun MemberList(
                                 onRoleToggled(member)
                             },
                         )
+                        HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.group_remove_member)) },
                             onClick = {
