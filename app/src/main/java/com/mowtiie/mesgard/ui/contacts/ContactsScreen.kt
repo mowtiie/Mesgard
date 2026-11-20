@@ -38,6 +38,7 @@ import com.mowtiie.mesgard.ui.chats.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.NoResultsState
+import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 
 @Composable
@@ -110,18 +111,25 @@ internal fun ContactsScreen(
                 )
             }
         },
+        searchBar = if (uiState.showSearch) {
+            {
+                SearchAppBar(
+                    query = uiState.query,
+                    onQueryChange = onQueryChanged,
+                    onClose = onBack,
+                    placeholder = stringResource(R.string.contacts_search_placeholder),
+                    focusOnShow = uiState.isLoaded && uiState.favorites.isEmpty() && uiState.recent.isEmpty(),
+                    closeDescription = stringResource(R.string.navigate_back),
+                )
+            }
+        } else {
+            null
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (uiState.isStartingConversation || uiState.isSearching) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
-            if (uiState.showSearch) {
-                ContactsSearchField(
-                    query = uiState.query,
-                    onQueryChange = onQueryChanged,
-                    focusOnOpen = uiState.isLoaded && uiState.favorites.isEmpty() && uiState.recent.isEmpty(),
-                )
             }
             ContactsContent(
                 uiState = uiState,

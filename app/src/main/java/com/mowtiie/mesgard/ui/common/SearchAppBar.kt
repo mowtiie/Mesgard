@@ -26,6 +26,7 @@ import com.mowtiie.mesgard.R
 /**
  * Replaces the top app bar while the user searches a list: the back button leaves the search, and the clear button
  * appears once there is text. The list below is filtered as the user types, so there is no separate results view.
+ * [focusOnShow] false leaves the keyboard closed, for a list that offers something to tap before anything is typed.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,9 +36,11 @@ internal fun SearchAppBar(
     onClose: () -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
+    focusOnShow: Boolean = true,
+    closeDescription: String = stringResource(R.string.close_search),
 ) {
     val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    LaunchedEffect(focusOnShow) { if (focusOnShow) focusRequester.requestFocus() }
     BackHandler(onBack = onClose)
     TopAppBar(
         modifier = modifier,
@@ -60,7 +63,7 @@ internal fun SearchAppBar(
         },
         navigationIcon = {
             IconButton(onClick = onClose) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.close_search))
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = closeDescription)
             }
         },
         actions = {
