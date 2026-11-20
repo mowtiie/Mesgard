@@ -1,5 +1,8 @@
 package com.mowtiie.mesgard.ui.conversation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -50,6 +53,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import coil3.compose.AsyncImage
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Attachment
@@ -65,7 +70,8 @@ private const val OUTLINE_ALPHA = 0.6f
 private val BarPadding = 8.dp
 private val FadeHeight = 24.dp
 
-/** Shows a photo that is already on the device at full size, with pinch zoom, pan and double tap zoom. */
+/** Shows a photo that is already on the device at full size, with pinch zoom, pan and double tap zoom. A tap hides
+ * or shows the bar and the system bars. */
 @Composable
 internal fun ImageViewer(
     attachment: Attachment,
@@ -79,16 +85,19 @@ internal fun ImageViewer(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
-        ViewerSystemBars()
+        var isBarShown by remember { mutableStateOf(true) }
+        ViewerSystemBars(isBarShown)
         Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-            ZoomableImage(localPath, attachment)
-            ViewerBar(title, subtitle, onDismiss, onOpenWithAnotherApp)
+            ZoomableImage(localPath, attachment, onTap = { isBarShown = !isBarShown })
+            AnimatedVisibility(visible = isBarShown, enter = fadeIn(), exit = fadeOut()) {
+                ViewerBar(title, subtitle, onDismiss, onOpenWithAnotherApp)
+            }
         }
     }
 }
 
 @Composable
-private fun ZoomableImage(localPath: String, attachment: Attachment) {
+private fun ZoomableImage(localPath: String, attachment: Attachment, onTap: () -> Unit) {
     var zoom by remember { mutableFloatStateOf(MIN_ZOOM) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var size by remember { mutableStateOf(IntSize.Zero) }
@@ -108,6 +117,7 @@ private fun ZoomableImage(localPath: String, attachment: Attachment) {
             .onSizeChanged { size = it }
             .pointerInput(Unit) {
                 detectTapGestures(
+                    onTap = { onTap() },
                     onDoubleTap = { tap ->
                         val newZoom = if (zoom > MIN_ZOOM) MIN_ZOOM else DOUBLE_TAP_ZOOM
                         offset =
@@ -135,16 +145,18 @@ private fun ZoomableImage(localPath: String, attachment: Attachment) {
 
 /**
  * The viewer is black in both themes, so the status and navigation bar icons are always light. Otherwise the light
- * theme would draw dark icons on the dark bar.
+ * theme would draw dark icons on the dark bar. They hide with the bar, and a swipe from the edge brings them back.
  */
 @Composable
-private fun ViewerSystemBars() {
+private fun ViewerSystemBars(isShown: Boolean) {
     val view = LocalView.current
     SideEffect {
         val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
         WindowCompat.getInsetsController(window, view).apply {
             isAppearanceLightStatusBars = false
             isAppearanceLightNavigationBars = false
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            if (isShown) show(WindowInsetsCompat.Type.systemBars()) else hide(WindowInsetsCompat.Type.systemBars())
         }
     }
 }
