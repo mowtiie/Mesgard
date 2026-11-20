@@ -41,6 +41,7 @@ internal class OfflineFirstContactRepository @Inject constructor(
     private val contactDao = database.contactDao()
     private val conversationDao = database.conversationDao()
     private val directPeerDao = database.directPeerDao()
+    private val roster = RosterSync(database, remoteSource)
 
     override fun observeContacts(): Flow<List<Contact>> =
         contactDao.observeAll().map { contacts -> contacts.map { it.toContact() } }
@@ -50,22 +51,15 @@ internal class OfflineFirstContactRepository @Inject constructor(
 
     override suspend fun refresh(): RefreshResult = attemptRemote(TAG) {
         val userId = authRepository.currentUserId
-        val favoriteIds = remoteSource.fetchFavoriteIds(userId)
-        val roster = remoteSource.fetchContacts(userId)
-        // A favorite stays on the list even when the roster of a large organization does not reach that far.
-        val missing = favoriteIds - roster.mapTo(mutableSetOf()) { it.userId }
-        val contacts = (roster + remoteSource.fetchContactsByIds(missing))
-            .map { it.toEntity(isFavorite = it.userId in favoriteIds) }
-        database.withTransaction {
-            contactDao.deleteAll()
-            contactDao.upsertAll(contacts)
-        }
+        roster.storeAll(userId, remoteSource.fetchFavoriteIds(userId))
     }.toRefreshResult()
 
-    /**
-     * A conversation the phone already has opens without the network. A new one opens as soon as the server has made
-     * it, from what the phone knows, and the conversation list catches up in the background.
-     */
+    override suspend fun refreshIfStale(): RefreshResult = attemptRemote(TAG) {
+        val userId = authRepository.currentUserId
+        val favoriteIds = remoteSource.fetchFavoriteIds(userId)
+        if (roster.isFresh(userId)) roster.storeFavorites(favoriteIds) else roster.storeAll(userId, favoriteIds)
+    }.toRefreshResult()
+
     override suspend fun startDirectConversation(contact: Contact): StartConversationResult {
         directPeerDao.findConversationWith(contact.userId, contact.orgId)?.let {
             return StartConversationResult.Started(it)

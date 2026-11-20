@@ -42,6 +42,7 @@ class ContactsViewModelTest {
         every { observeContacts() } returns contacts
         every { observeRecentContacts(any()) } returns recent
         coEvery { refresh() } returns RefreshResult.Success
+        coEvery { refreshIfStale() } returns RefreshResult.Success
         coEvery { search(any()) } returns ContactSearchResult.Unavailable
     }
     private val groups = MutableStateFlow(emptyList<Group>())
@@ -60,10 +61,15 @@ class ContactsViewModelTest {
     private fun viewModel() = ContactsViewModel(repository, groupRepository, presenceTracker)
 
     @Test
-    fun `refreshes the roster when it is created`() = runTest {
-        viewModel().uiState.test {
+    fun `asks only for what is stale when it is created, and for the whole roster on a pull`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.test {
             cancelAndIgnoreRemainingEvents()
         }
+        coVerify(exactly = 1) { repository.refreshIfStale() }
+        coVerify(exactly = 0) { repository.refresh() }
+
+        viewModel.onRefresh()
 
         coVerify(exactly = 1) { repository.refresh() }
     }
@@ -170,7 +176,7 @@ class ContactsViewModelTest {
 
     @Test
     fun `reports a refresh failure and clears it once shown`() = runTest {
-        coEvery { repository.refresh() } returns RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
+        coEvery { repository.refreshIfStale() } returns RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
         val viewModel = viewModel()
 
         viewModel.uiState.test {

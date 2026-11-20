@@ -5,6 +5,8 @@ import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+internal data class ContactKey(val orgId: String, val userId: String)
+
 @Dao
 internal interface ContactDao {
     @Query("SELECT * FROM contacts ORDER BY display_name COLLATE NOCASE ASC, user_id ASC")
@@ -25,6 +27,16 @@ internal interface ContactDao {
 
     @Query("SELECT COUNT(*) FROM contacts WHERE is_favorite = 1")
     suspend fun countFavorites(): Int
+
+    @Query("SELECT org_id AS orgId, user_id AS userId FROM contacts")
+    suspend fun findKeys(): List<ContactKey>
+
+    @Query("DELETE FROM contacts WHERE org_id = :orgId AND user_id IN (:userIds)")
+    suspend fun deleteByUserIds(orgId: String, userIds: List<String>)
+
+    /** Makes exactly these people the favorites, whoever was one before. */
+    @Query("UPDATE contacts SET is_favorite = CASE WHEN user_id IN (:favoriteIds) THEN 1 ELSE 0 END")
+    suspend fun setFavorites(favoriteIds: List<String>)
 
     @Query("DELETE FROM contacts")
     suspend fun deleteAll()

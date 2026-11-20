@@ -25,6 +25,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
+import java.time.Duration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -38,6 +39,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.shadows.ShadowSystemClock
 
 @RunWith(RobolectricTestRunner::class)
 class OfflineFirstContactRepositoryTest {
@@ -315,6 +317,94 @@ class OfflineFirstContactRepositoryTest {
 
         repository.observeRecentContacts(1).test {
             assertEquals(listOf("ben"), awaitItem().map { it.userId })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `opening the screen twice fetches the roster once, and the favorites every time`() = runTest {
+        coEvery { remoteSource.fetchContacts(CURRENT_USER_ID) } returns listOf(contactDto("ana"))
+
+        repository.refreshIfStale()
+        repository.refreshIfStale()
+
+        coVerify(exactly = 1) { remoteSource.fetchContacts(any()) }
+        coVerify(exactly = 2) { remoteSource.fetchFavoriteIds(any()) }
+    }
+
+    @Test
+    fun `the roster is fetched again after a few minutes`() = runTest {
+        coEvery { remoteSource.fetchContacts(CURRENT_USER_ID) } returns listOf(contactDto("ana"))
+        repository.refreshIfStale()
+
+        ShadowSystemClock.advanceBy(Duration.ofMinutes(6))
+        repository.refreshIfStale()
+
+        coVerify(exactly = 2) { remoteSource.fetchContacts(any()) }
+    }
+
+    @Test
+    fun `a refresh that asks for everything always fetches the roster`() = runTest {
+        coEvery { remoteSource.fetchContacts(CURRENT_USER_ID) } returns listOf(contactDto("ana"))
+        repository.refreshIfStale()
+
+        repository.refresh()
+
+        coVerify(exactly = 2) { remoteSource.fetchContacts(any()) }
+    }
+
+    @Test
+    fun `a fresh roster still gets the favorites that changed on another phone`() = runTest {
+        coEvery { remoteSource.fetchContacts(CURRENT_USER_ID) } returns listOf(contactDto("ana"), contactDto("ben"))
+        coEvery { remoteSource.fetchFavoriteIds(CURRENT_USER_ID) } returns setOf("ana")
+        repository.refreshIfStale()
+        coEvery { remoteSource.fetchFavoriteIds(CURRENT_USER_ID) } returns setOf("ben")
+
+        repository.refreshIfStale()
+
+        repository.observeContacts().test {
+            assertEquals(mapOf("ana" to false, "ben" to true), awaitItem().associate { it.userId to it.isFavorite })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a fresh roster fetches a favorite it does not have`() = runTest {
+        coEvery { remoteSource.fetchContacts(CURRENT_USER_ID) } returns listOf(contactDto("ana"))
+        repository.refreshIfStale()
+        coEvery { remoteSource.fetchFavoriteIds(CURRENT_USER_ID) } returns setOf("zed")
+        coEvery { remoteSource.fetchContactsByIds(setOf("zed")) } returns listOf(contactDto("zed"))
+
+        repository.refreshIfStale()
+
+        repository.observeContacts().test {
+            assertEquals(mapOf("ana" to false, "zed" to true), awaitItem().associate { it.userId to it.isFavorite })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `the next user to sign in gets the roster fetched, not skipped`() = runTest {
+        var currentUser = CURRENT_USER_ID
+        every { authRepository.currentUserId } answers { currentUser }
+        coEvery { remoteSource.fetchContacts(any()) } returns listOf(contactDto("ana"))
+        repository.refreshIfStale()
+
+        currentUser = "someone-else"
+        repository.refreshIfStale()
+
+        coVerify(exactly = 2) { remoteSource.fetchContacts(any()) }
+    }
+
+    @Test
+    fun `a person who left the roster is removed and the others are kept`() = runTest {
+        databaseRule.database.contactDao().upsertAll(listOf(contactEntity("ana"), contactEntity("gone")))
+        coEvery { remoteSource.fetchContacts(CURRENT_USER_ID) } returns listOf(contactDto("ana"), contactDto("ben"))
+
+        repository.refresh()
+
+        repository.observeContacts().test {
+            assertEquals(listOf("ana", "ben"), awaitItem().map { it.userId })
             cancelAndIgnoreRemainingEvents()
         }
     }

@@ -16,7 +16,14 @@ internal interface ContactRepository {
     /** The people of the newest direct conversations, for the list shown before anything is typed. */
     fun observeRecentContacts(limit: Int): Flow<List<Contact>>
 
+    /** Fetches the whole roster and the favorites. */
     suspend fun refresh(): RefreshResult
+
+    /**
+     * For opening a screen: the favorites are always fetched, and the roster only when it was not fetched in the last
+     * few minutes, because the roster changes rarely and is not what the screen lists.
+     */
+    suspend fun refreshIfStale(): RefreshResult
 
     suspend fun startDirectConversation(contact: Contact): StartConversationResult
 

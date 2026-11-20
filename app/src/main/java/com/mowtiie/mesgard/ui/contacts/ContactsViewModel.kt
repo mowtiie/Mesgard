@@ -119,14 +119,17 @@ internal class ContactsViewModel @Inject constructor(
     )
 
     init {
-        onRefresh()
+        refreshWith { contactRepository.refreshIfStale() }
     }
 
-    fun onRefresh() {
+    /** A pull to refresh asks for the whole roster. Opening the screen asks only for what is stale. */
+    fun onRefresh() = refreshWith { contactRepository.refresh() }
+
+    private fun refreshWith(refreshRoster: suspend () -> RefreshResult) {
         if (localState.value.isRefreshing) return
         localState.update { it.copy(isRefreshing = true) }
         viewModelScope.launch {
-            val failure = listOf(contactRepository.refresh(), groupRepository.refresh())
+            val failure = listOf(refreshRoster(), groupRepository.refresh())
                 .filterIsInstance<RefreshResult.Failure>()
                 .firstOrNull()
             localState.update { it.copy(isRefreshing = false, error = failure?.error?.toRefreshError()) }
