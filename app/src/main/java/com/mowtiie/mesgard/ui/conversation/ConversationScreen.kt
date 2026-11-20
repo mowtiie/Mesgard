@@ -289,8 +289,11 @@ internal fun ConversationScreen(
         }
     }
     viewedImage?.let {
+        val sender = uiState.messages.firstOrNull { message -> message.attachments.any { a -> a.id == it.id } }
         ImageViewer(
             attachment = it,
+            title = viewerTitle(sender, it.fileName),
+            subtitle = sender?.let { message -> viewerSubtitle(message.createdAtEpochMillis) },
             onDismiss = { viewedImageId = null },
             onOpenWithAnotherApp = { actions.onAttachmentClick(it) },
         )

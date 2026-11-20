@@ -44,7 +44,7 @@ private const val DEFAULT_IMAGE_RATIO = 220f / 160f
 private const val MIN_IMAGE_RATIO = 0.6f
 private const val MAX_IMAGE_RATIO = 2f
 private const val PHOTOS_PER_ROW = 2
-private const val LAST_PHOTO_RATIO = 2f
+private const val LAST_PHOTO_MAX_RATIO = 2f
 private val GridGap = 2.dp
 private val FileIconSize = 32.dp
 private val ItemSpacing = 4.dp
@@ -114,7 +114,11 @@ internal fun ImageGrid(
                     row.forEach { tile(it, Modifier.weight(1f).aspectRatio(1f)) }
                 }
             } else {
-                tile(row.single(), Modifier.fillMaxWidth().aspectRatio(LAST_PHOTO_RATIO))
+                val photo = row.single()
+                tile(
+                    photo,
+                    Modifier.fillMaxWidth().aspectRatio(photo.displayRatio().coerceIn(1f, LAST_PHOTO_MAX_RATIO)),
+                )
             }
         }
     }
