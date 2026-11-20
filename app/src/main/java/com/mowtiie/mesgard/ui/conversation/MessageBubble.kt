@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -27,8 +28,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Attachment
 import com.mowtiie.mesgard.domain.model.Message
@@ -46,6 +49,7 @@ private const val SELECTED_ROW_ALPHA = 0.16f
 private val AvatarSize = 32.dp
 private val AvatarGap = 8.dp
 private val AvatarSlotWidth = AvatarSize + AvatarGap
+private val LargeEmojiStyle = TextStyle(fontSize = 44.sp, lineHeight = 52.sp)
 
 /** What the user can do with a message or one of its attachments. */
 @Immutable
@@ -162,6 +166,13 @@ private fun BubbleContent(
         PhotoBubbleContent(message, showSenderName, maxWidth, downloads, actions)
         return
     }
+    if (message.isEmojiOnlyMessage()) {
+        Column(modifier = Modifier.padding(BubblePadding), horizontalAlignment = Alignment.End) {
+            Text(text = message.body, style = LargeEmojiStyle)
+            MessageMetadataLabel(message)
+        }
+        return
+    }
     Column(modifier = Modifier.widthIn(max = maxWidth).padding(BubblePadding)) {
         message.replyTo?.let { QuotedReply(it, onClick = { id -> actions.onReplyClick(id) }) }
         if (hasAttachments) {
@@ -216,6 +227,7 @@ private fun bubbleColors(message: Message): BubbleColors {
     val scheme = MaterialTheme.colorScheme
     return when {
         message.status == MessageStatus.FAILED -> BubbleColors(scheme.errorContainer, scheme.onErrorContainer)
+        message.isEmojiOnlyMessage() -> BubbleColors(Color.Transparent, scheme.onSurface)
         message.isOwn -> BubbleColors(scheme.primaryContainer, scheme.onPrimaryContainer)
         else -> BubbleColors(scheme.surfaceContainerHigh, scheme.onSurface)
     }
