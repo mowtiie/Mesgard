@@ -46,8 +46,6 @@ import com.mowtiie.mesgard.ui.chats.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.NoResultsState
-import com.mowtiie.mesgard.ui.common.OverflowMenu
-import com.mowtiie.mesgard.ui.common.RefreshMenuItem
 import com.mowtiie.mesgard.ui.common.SelectedAvatar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.labelResource
@@ -140,14 +138,6 @@ internal fun ContactsScreen(
                 )
             }
         },
-        actions = {
-            OverflowMenu { dismiss ->
-                RefreshMenuItem(enabled = !uiState.isRefreshing) {
-                    dismiss()
-                    onRefresh()
-                }
-            }
-        },
         searchBar = if (selection.state.isActive) {
             { ContactsSelectionBar(selection.state, selection.callbacks) }
         } else {
@@ -159,7 +149,13 @@ internal fun ContactsScreen(
             if (uiState.isStartingConversation || uiState.isSearching) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
-            if (uiState.showSearch) ContactsSearchField(uiState.query, onQueryChanged)
+            if (uiState.showSearch) {
+                ContactsSearchField(
+                    query = uiState.query,
+                    onQueryChange = onQueryChanged,
+                    focusOnOpen = uiState.isLoaded && uiState.favorites.isEmpty(),
+                )
+            }
             if (uiState.showSections) SectionTabs(uiState.section, onSectionSelected)
             ContactsContent(
                 uiState = uiState,

@@ -292,7 +292,7 @@
     <string name="conversation_no_messages">No messages yet</string>
     <string name="conversation_attachment_preview">Attachment</string>
     <string name="conversation_list_empty">No conversations yet</string>
-    <string name="conversation_list_empty_hint">Your conversations appear here. Start one from Contacts.</string>
+    <string name="conversation_list_empty_hint">Your conversations appear here. Start one with New chat.</string>
     <string name="refresh_error_network_unavailable">Unable to refresh. Check your connection.</string>
     <string name="refresh_error_unknown">Unable to refresh. Try again later.</string>
     <plurals name="conversation_unread_messages">
