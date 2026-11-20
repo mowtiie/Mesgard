@@ -9,9 +9,11 @@ import com.mowtiie.mesgard.data.local.GroupDao
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.local.MessageDao
 import com.mowtiie.mesgard.data.local.ProfileDao
+import com.mowtiie.mesgard.data.local.security.DatabaseKeyMigrator
 import com.mowtiie.mesgard.data.local.security.DatabasePassphraseProvider
 import com.mowtiie.mesgard.data.local.security.EncryptedFile
 import com.mowtiie.mesgard.data.local.security.SecretCipher
+import com.mowtiie.mesgard.data.local.security.SqlCipherDatabaseKeyring
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,8 +44,10 @@ internal object DatabaseModule {
         passphraseProvider: DatabasePassphraseProvider,
     ): MesgardDatabase {
         System.loadLibrary(SQLCIPHER_LIBRARY)
+        val key = DatabaseKeyMigrator(SqlCipherDatabaseKeyring())
+            .prepare(context.getDatabasePath(MesgardDatabase.NAME), passphraseProvider.getOrCreate())
         return Room.databaseBuilder(context, MesgardDatabase::class.java, MesgardDatabase.NAME)
-            .openHelperFactory(SupportOpenHelperFactory(passphraseProvider.getOrCreate()))
+            .openHelperFactory(SupportOpenHelperFactory(key))
             .build()
     }
 
