@@ -390,6 +390,7 @@ private fun MessageList(
                 when (item) {
                     is TimelineItem.Bubble -> MessageBubble(
                         message = item.message,
+                        modifier = Modifier.animateItem(),
                         showSenderName = uiState.showSenderNames,
                         downloads = downloads,
                         actions = jumpingActions,
@@ -402,8 +403,8 @@ private fun MessageList(
                             onToggle = { selection.callbacks.onToggle(item.message.id) },
                         ),
                     )
-                    is TimelineItem.DateHeader -> DateHeader(item.date)
-                    is TimelineItem.UnreadDivider -> UnreadDivider(item.count)
+                    is TimelineItem.DateHeader -> DateHeader(item.date, Modifier.animateItem())
+                    is TimelineItem.UnreadDivider -> UnreadDivider(item.count, Modifier.animateItem())
                 }
             }
             if (uiState.isLoadingOlder) {
