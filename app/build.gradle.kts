@@ -141,6 +141,7 @@ dependencies {
     implementation(libs.supabase.storage)
     implementation(libs.supabase.functions)
     implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
     ksp(libs.androidx.hilt.compiler)
     ksp(libs.androidx.room.compiler)
     ksp(libs.hilt.compiler)

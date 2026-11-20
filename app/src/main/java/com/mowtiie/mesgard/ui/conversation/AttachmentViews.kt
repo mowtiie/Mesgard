@@ -46,6 +46,7 @@ private const val MAX_IMAGE_RATIO = 2f
 private const val PHOTOS_PER_ROW = 2
 private const val LAST_PHOTO_MAX_RATIO = 2f
 private val GridGap = 2.dp
+private val BadgeInset = 6.dp
 private val FileIconSize = 32.dp
 private val ItemSpacing = 4.dp
 private val FileRowSpacing = 12.dp
@@ -161,6 +162,9 @@ private fun ImageAttachment(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
+        }
+        if (attachment.isGif && localPath != null && !isFailed) {
+            GifBadge(Modifier.align(Alignment.TopStart).padding(BadgeInset))
         }
     }
 }

@@ -64,6 +64,7 @@ supabase-realtime = { group = "io.github.jan-tennert.supabase", name = "realtime
 supabase-storage = { group = "io.github.jan-tennert.supabase", name = "storage-kt" }
 supabase-functions = { group = "io.github.jan-tennert.supabase", name = "functions-kt" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-gif = { group = "io.coil-kt.coil3", name = "coil-gif", version.ref = "coil" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }

@@ -417,6 +417,7 @@
     <string name="attach_file">File</string>
     <string name="remove_attachment">Remove %1$s</string>
     <string name="attachment_photo">Photo %1$s</string>
+    <string name="attachment_gif_badge">GIF</string>
     <string name="attachment_photo_failed">Photo %1$s could not be loaded</string>
     <string name="attachment_failed_hint">Could not load. Tap to retry.</string>
     <string name="attachment_open">Open</string>

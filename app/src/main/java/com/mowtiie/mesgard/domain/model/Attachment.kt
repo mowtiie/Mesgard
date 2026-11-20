@@ -13,6 +13,8 @@ internal data class Attachment(
 ) {
     val isImage: Boolean get() = mimeType.startsWith("image/")
 
+    val isGif: Boolean get() = mimeType == "image/gif"
+
     /** Width divided by height, or null when the pixel size is not known. */
     val aspectRatio: Float?
         get() = if (width != null && height != null) width.toFloat() / height else null

@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -52,7 +53,6 @@ import androidx.core.view.WindowCompat
 import coil3.compose.AsyncImage
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Attachment
-import java.io.File
 
 private const val MIN_ZOOM = 1f
 private const val MAX_ZOOM = 5f
@@ -97,8 +97,11 @@ private fun ZoomableImage(localPath: String, attachment: Attachment) {
     val center = Offset(container.width / HALF, container.height / HALF)
     val displayed = fittedSize(attachment.width, attachment.height, container)
 
+    val context = LocalContext.current
+    val request = remember(localPath, attachment.mimeType) { animatedImageRequest(context, attachment, localPath) }
+
     AsyncImage(
-        model = File(localPath),
+        model = request,
         contentDescription = description,
         contentScale = ContentScale.Fit,
         modifier = Modifier.fillMaxSize()
