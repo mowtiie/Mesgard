@@ -422,6 +422,7 @@
     <string name="attachment_failed_hint">Could not load. Tap to retry.</string>
     <string name="attachment_open">Open</string>
     <string name="attachment_open_with">Open with</string>
+    <string name="viewer_position">%1$d of %2$d</string>
     <string name="attachment_retry">Retry</string>
     <string name="contacts_empty">No contacts yet</string>
     <string name="contacts_empty_hint">People in your organization appear here once an administrator adds them.</string>

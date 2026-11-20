@@ -1,5 +1,10 @@
 package com.mowtiie.mesgard.ui.conversation
 
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import kotlin.math.max
@@ -35,4 +40,43 @@ internal fun offsetKeepingFocus(
 ): Offset {
     val fromCenter = focus - center
     return fromCenter - (fromCenter - oldOffset) * (newZoom / oldZoom)
+}
+
+private const val MIN_ZOOM = 1f
+private const val MAX_ZOOM = 5f
+private const val DOUBLE_TAP_ZOOM = 2.5f
+
+/** The zoom and position of the photo on one page of the viewer. */
+@Stable
+internal class ZoomState {
+    var zoom by mutableFloatStateOf(MIN_ZOOM)
+        private set
+    var offset by mutableStateOf(Offset.Zero)
+        private set
+    private var container = Size.Zero
+    private var displayed = Size.Zero
+
+    val isZoomed: Boolean get() = zoom > MIN_ZOOM
+
+    private val center: Offset get() = Offset(container.width / HALF, container.height / HALF)
+
+    fun onLaidOut(containerSize: Size, imageWidth: Int?, imageHeight: Int?) {
+        container = containerSize
+        displayed = fittedSize(imageWidth, imageHeight, containerSize)
+    }
+
+    /** A pinch or a drag. The photo keeps the point under the fingers where it is. */
+    fun transform(centroid: Offset, pan: Offset, gestureZoom: Float) {
+        val newZoom = (zoom * gestureZoom).coerceIn(MIN_ZOOM, MAX_ZOOM)
+        val keptFocus = offsetKeepingFocus(centroid, center, zoom, newZoom, offset)
+        offset = clampOffset(keptFocus + pan, newZoom, displayed, container)
+        zoom = newZoom
+    }
+
+    /** A double tap zooms in around the tap, or back out when the photo is already zoomed. */
+    fun toggleAt(tap: Offset) {
+        val newZoom = if (isZoomed) MIN_ZOOM else DOUBLE_TAP_ZOOM
+        offset = clampOffset(offsetKeepingFocus(tap, center, zoom, newZoom, offset), newZoom, displayed, container)
+        zoom = newZoom
+    }
 }

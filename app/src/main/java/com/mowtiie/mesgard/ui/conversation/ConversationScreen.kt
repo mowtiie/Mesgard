@@ -224,7 +224,6 @@ internal fun ConversationScreen(
 
     val copyMessage = rememberCopyMessage(snackbarHostState)
     var viewedImageId by rememberSaveable { mutableStateOf<String?>(null) }
-    val viewedImage = uiState.messages.flatMap { it.attachments }.firstOrNull { it.id == viewedImageId }
 
     val searchBar: (@Composable () -> Unit)? = if (isSearching) {
         {
@@ -300,14 +299,12 @@ internal fun ConversationScreen(
             )
         }
     }
-    viewedImage?.let {
-        val sender = uiState.messages.firstOrNull { message -> message.attachments.any { a -> a.id == it.id } }
-        ImageViewer(
-            attachment = it,
-            title = viewerTitle(sender, it.fileName),
-            subtitle = sender?.let { message -> viewerSubtitle(message.createdAtEpochMillis) },
+    viewedImageId?.let {
+        ConversationImageViewer(
+            messages = uiState.messages,
+            openedId = it,
             onDismiss = { viewedImageId = null },
-            onOpenWithAnotherApp = { actions.onAttachmentClick(it) },
+            onOpenWithAnotherApp = actions.onAttachmentClick,
         )
     }
 }

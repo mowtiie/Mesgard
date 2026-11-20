@@ -5,8 +5,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +21,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.FilledTonalIconButton
@@ -26,20 +32,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -47,7 +54,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -58,11 +64,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import coil3.compose.AsyncImage
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Attachment
+import com.mowtiie.mesgard.domain.model.Message
 
-private const val MIN_ZOOM = 1f
-private const val MAX_ZOOM = 5f
-private const val DOUBLE_TAP_ZOOM = 2.5f
-private const val HALF = 2f
 private const val BAR_ALPHA = 0.7f
 private const val SUBTITLE_ALPHA = 0.85f
 private const val BUTTON_CONTAINER_ALPHA = 0.16f
@@ -70,77 +73,114 @@ private const val OUTLINE_ALPHA = 0.6f
 private val BarPadding = 8.dp
 private val FadeHeight = 24.dp
 
-/** Shows a photo that is already on the device at full size, with pinch zoom, pan and double tap zoom. A tap hides
- * or shows the bar and the system bars. */
+/** The viewer for the message the person opened, or nothing when none of its photos is on the device. */
 @Composable
-internal fun ImageViewer(
-    attachment: Attachment,
-    title: String,
-    subtitle: String?,
+internal fun ConversationImageViewer(
+    messages: List<Message>,
+    openedId: String,
     onDismiss: () -> Unit,
-    onOpenWithAnotherApp: () -> Unit,
+    onOpenWithAnotherApp: (Attachment) -> Unit,
 ) {
-    val localPath = attachment.localPath ?: return
+    val message = messages.firstOrNull { candidate -> candidate.attachments.any { it.id == openedId } } ?: return
+    val viewed = viewerPhotosOf(message, openedId) ?: return
+    ImageViewer(
+        photos = viewed.photos,
+        startIndex = viewed.startIndex,
+        title = viewerTitle(message, viewed.photos[viewed.startIndex].fileName),
+        subtitle = viewerSubtitle(message.createdAtEpochMillis),
+        onDismiss = onDismiss,
+        onOpenWithAnotherApp = onOpenWithAnotherApp,
+    )
+}
+
+/**
+ * Shows the photos of a message at full size. A swipe turns to the next photo, a tap hides or shows the bar and the
+ * system bars, and a photo has pinch zoom, pan and double tap zoom. Swiping is off while a photo is zoomed, so the
+ * drag moves the photo.
+ */
+@Composable
+private fun ImageViewer(
+    photos: List<Attachment>,
+    startIndex: Int,
+    title: String,
+    subtitle: String,
+    onDismiss: () -> Unit,
+    onOpenWithAnotherApp: (Attachment) -> Unit,
+) {
+    val pagerState = rememberPagerState(initialPage = startIndex) { photos.size }
+    var isBarShown by remember { mutableStateOf(true) }
+    var isZoomed by remember { mutableStateOf(false) }
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
-        var isBarShown by remember { mutableStateOf(true) }
         ViewerSystemBars(isBarShown)
         Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-            ZoomableImage(localPath, attachment, onTap = { isBarShown = !isBarShown })
+            HorizontalPager(state = pagerState, userScrollEnabled = !isZoomed, modifier = Modifier.fillMaxSize()) {
+                ZoomableImage(
+                    attachment = photos[it],
+                    onTap = { isBarShown = !isBarShown },
+                    onZoomChanged = { zoomed -> isZoomed = zoomed },
+                )
+            }
             AnimatedVisibility(visible = isBarShown, enter = fadeIn(), exit = fadeOut()) {
-                ViewerBar(title, subtitle, onDismiss, onOpenWithAnotherApp)
+                val current = photos[pagerState.currentPage]
+                val position = stringResource(R.string.viewer_position, pagerState.currentPage + 1, photos.size)
+                ViewerBar(
+                    title = title,
+                    subtitle = if (photos.size > 1) "$subtitle, $position" else subtitle,
+                    onClose = onDismiss,
+                    onOpenWithAnotherApp = { onOpenWithAnotherApp(current) },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ZoomableImage(localPath: String, attachment: Attachment, onTap: () -> Unit) {
-    var zoom by remember { mutableFloatStateOf(MIN_ZOOM) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
-    var size by remember { mutableStateOf(IntSize.Zero) }
+private fun ZoomableImage(attachment: Attachment, onTap: () -> Unit, onZoomChanged: (Boolean) -> Unit) {
+    val zoom = remember { ZoomState() }
     val description = stringResource(R.string.attachment_photo, attachment.fileName)
-    val container = Size(size.width.toFloat(), size.height.toFloat())
-    val center = Offset(container.width / HALF, container.height / HALF)
-    val displayed = fittedSize(attachment.width, attachment.height, container)
-
     val context = LocalContext.current
-    val request = remember(localPath, attachment.mimeType) { animatedImageRequest(context, attachment, localPath) }
+    val request = remember(attachment.localPath, attachment.mimeType) {
+        animatedImageRequest(context, attachment, attachment.localPath.orEmpty())
+    }
+    LaunchedEffect(zoom.isZoomed) { onZoomChanged(zoom.isZoomed) }
 
     AsyncImage(
         model = request,
         contentDescription = description,
         contentScale = ContentScale.Fit,
         modifier = Modifier.fillMaxSize()
-            .onSizeChanged { size = it }
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = { onTap() },
-                    onDoubleTap = { tap ->
-                        val newZoom = if (zoom > MIN_ZOOM) MIN_ZOOM else DOUBLE_TAP_ZOOM
-                        offset =
-                            clampOffset(
-                                offsetKeepingFocus(tap, center, zoom, newZoom, offset),
-                                newZoom,
-                                displayed,
-                                container,
-                            )
-                        zoom = newZoom
-                    },
-                )
+            .onSizeChanged {
+                zoom.onLaidOut(Size(it.width.toFloat(), it.height.toFloat()), attachment.width, attachment.height)
             }
-            .pointerInput(Unit) {
-                detectTransformGestures { centroid, pan, gestureZoom, _ ->
-                    val newZoom = (zoom * gestureZoom).coerceIn(MIN_ZOOM, MAX_ZOOM)
-                    val keptFocus = offsetKeepingFocus(centroid, center, zoom, newZoom, offset)
-                    offset = clampOffset(keptFocus + pan, newZoom, displayed, container)
-                    zoom = newZoom
-                }
-            }
-            .graphicsLayer(scaleX = zoom, scaleY = zoom, translationX = offset.x, translationY = offset.y),
+            .pointerInput(Unit) { detectTapGestures(onTap = { onTap() }, onDoubleTap = zoom::toggleAt) }
+            .pointerInput(Unit) { detectZoomGestures(zoom) }
+            .graphicsLayer(
+                scaleX = zoom.zoom,
+                scaleY = zoom.zoom,
+                translationX = zoom.offset.x,
+                translationY = zoom.offset.y,
+            ),
     )
+}
+
+/**
+ * A pinch always zooms, and a drag moves the photo only while it is zoomed. A drag of a photo at normal size is left
+ * unconsumed, so the pager can turn to the next photo.
+ */
+private suspend fun PointerInputScope.detectZoomGestures(zoom: ZoomState) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false)
+        do {
+            val event = awaitPointerEvent()
+            if (event.changes.size > 1 || zoom.isZoomed) {
+                zoom.transform(event.calculateCentroid(), event.calculatePan(), event.calculateZoom())
+                event.changes.forEach { if (it.positionChanged()) it.consume() }
+            }
+        } while (event.changes.any { it.pressed })
+    }
 }
 
 /**
