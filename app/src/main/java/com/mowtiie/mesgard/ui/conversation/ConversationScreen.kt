@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.MentionCandidate
+import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.domain.model.PinnedMessage
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.TitledScreen
@@ -69,6 +70,7 @@ internal fun ConversationScreenRoute(
     mentionViewModel: MentionViewModel = hiltViewModel(),
     searchViewModel: ConversationSearchViewModel = hiltViewModel(),
     pinsViewModel: PinsViewModel = hiltViewModel(),
+    selectionViewModel: MessageSelectionViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
@@ -79,8 +81,9 @@ internal fun ConversationScreenRoute(
         onPauseOrDispose { viewModel.onVisibilityChanged(false) }
     }
     val messageActions by actionsViewModel.uiState.collectAsStateWithLifecycle()
-    messageActions.messageToDelete?.let {
+    if (messageActions.messagesToDelete.isNotEmpty()) {
         DeleteMessageDialog(
+            count = messageActions.messagesToDelete.size,
             onConfirm = actionsViewModel::onDeleteConfirmed,
             onDismiss = actionsViewModel::onDeleteDismissed,
         )
@@ -91,19 +94,25 @@ internal fun ConversationScreenRoute(
     val mentions by mentionViewModel.uiState.collectAsStateWithLifecycle()
     val searchState by searchViewModel.uiState.collectAsStateWithLifecycle()
     val pins by pinsViewModel.uiState.collectAsStateWithLifecycle()
+    val selectedIds by selectionViewModel.selected.collectAsStateWithLifecycle()
     // Remembered, so typing in the composer does not rebuild every message bubble.
-    val bubbleActions = remember(pins.canPin, pins.pinnedIds) {
+    val selectionCallbacks = remember {
+        MessageSelectionCallbacks(
+            onToggle = selectionViewModel::onToggled,
+            onClear = selectionViewModel::onSelectionClosed,
+            onReply = replyViewModel::onReplyRequested,
+            onDelete = actionsViewModel::onDeleteRequested,
+            onEdit = editViewModel::onEditRequested,
+            onInfo = actionsViewModel::onInfoRequested,
+            onPin = pinsViewModel::onPin,
+            onUnpin = pinsViewModel::onUnpin,
+        )
+    }
+    val bubbleActions = remember {
         MessageActions(
             onRetry = failedMessagesViewModel::onRetryClicked,
             onDiscard = failedMessagesViewModel::onDiscardClicked,
-            onDelete = actionsViewModel::onDeleteRequested,
-            onInfo = actionsViewModel::onInfoRequested,
-            onEdit = editViewModel::onEditRequested,
             onReply = replyViewModel::onReplyRequested,
-            onPin = pinsViewModel::onPin,
-            onUnpin = pinsViewModel::onUnpin,
-            canPin = pins.canPin,
-            pinnedIds = pins.pinnedIds,
             onAttachmentClick = downloadsViewModel::onAttachmentClicked,
             onImageShown = downloadsViewModel::onImageShown,
             onRetryDownload = downloadsViewModel::onRetryDownload,
@@ -143,6 +152,7 @@ internal fun ConversationScreenRoute(
             onJumpTo = searchViewModel::onJumpRequested,
         ),
         actions = bubbleActions,
+        selection = MessageSelection(selectedIds, pins.canPin, pins.pinnedIds, selectionCallbacks),
         onAttachmentsPicked = viewModel::onAttachmentsPicked,
         onAttachmentRemoved = viewModel::onAttachmentRemoved,
         onAttachmentOpened = downloadsViewModel::onAttachmentOpened,
@@ -175,6 +185,7 @@ internal fun ConversationScreen(
     onDraftChanged: (String) -> Unit,
     onSendClicked: () -> Unit,
     actions: MessageActions,
+    selection: MessageSelection,
     onAttachmentsPicked: (List<PickedAttachment>) -> Unit,
     onAttachmentRemoved: (String) -> Unit,
     onAttachmentOpened: () -> Unit,
@@ -215,9 +226,18 @@ internal fun ConversationScreen(
     var viewedImageId by rememberSaveable { mutableStateOf<String?>(null) }
     val viewedImage = uiState.messages.flatMap { it.attachments }.firstOrNull { it.id == viewedImageId }
 
-    val messageActions = remember(actions, copyMessage) {
-        actions.copy(onCopy = copyMessage, onImageClick = { viewedImageId = it.id })
+    val searchBar: (@Composable () -> Unit)? = if (isSearching) {
+        {
+            ConversationSearchBar(search) {
+                isSearching = false
+                search.onClosed()
+            }
+        }
+    } else {
+        null
     }
+    val messageActions = remember(actions) { actions.copy(onImageClick = { viewedImageId = it.id }) }
+    val selectedMessages = rememberSelectedMessages(uiState.messages, selection)
     val title = uiState.title ?: uiState.type?.let { stringResource(it.fallbackTitleResource()) }.orEmpty()
     TitledScreen(
         title = title,
@@ -234,16 +254,7 @@ internal fun ConversationScreen(
         actions = {
             ConversationBarActions(uiState.isMuted, onSearch = { isSearching = true }, onMuteChanged = onMuteChanged)
         },
-        searchBar = if (isSearching) {
-            {
-                ConversationSearchBar(search) {
-                    isSearching = false
-                    search.onClosed()
-                }
-            }
-        } else {
-            null
-        },
+        searchBar = barInPlaceOfTitle(selectedMessages, selection, copyMessage, searchBar),
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).consumeWindowInsets(padding).imePadding().fillMaxSize()) {
@@ -264,6 +275,7 @@ internal fun ConversationScreen(
                 uiState = uiState,
                 downloads = downloads,
                 actions = messageActions,
+                selection = selection,
                 jumpTo = search.state.jumpTo,
                 onJumpHandled = search.onJumpHandled,
                 onJumpFailed = {
@@ -300,11 +312,20 @@ internal fun ConversationScreen(
     }
 }
 
+/** The selection bar, or else the search bar when it is open, takes the place of the title bar. */
+private fun barInPlaceOfTitle(
+    selected: List<Message>,
+    selection: MessageSelection,
+    onCopy: (String) -> Unit,
+    searchBar: (@Composable () -> Unit)?,
+): (@Composable () -> Unit)? = if (selected.isNotEmpty()) selectionBar(selected, selection, onCopy) else searchBar
+
 @Composable
 private fun MessageList(
     uiState: ConversationUiState,
     downloads: AttachmentDownloadsUiState,
     actions: MessageActions,
+    selection: MessageSelection,
     jumpTo: String?,
     onJumpHandled: () -> Unit,
     onJumpFailed: () -> Unit,
@@ -371,6 +392,11 @@ private fun MessageList(
                         actions = jumpingActions,
                         startsGroup = item.startsGroup,
                         endsGroup = item.endsGroup,
+                        selection = BubbleSelection(
+                            isActive = selection.selectedIds.isNotEmpty(),
+                            isSelected = item.message.id in selection.selectedIds,
+                            onToggle = { selection.callbacks.onToggle(item.message.id) },
+                        ),
                     )
                     is TimelineItem.DateHeader -> DateHeader(item.date)
                     is TimelineItem.UnreadDivider -> UnreadDivider(item.count)

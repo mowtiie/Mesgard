@@ -1,5 +1,7 @@
 package com.mowtiie.mesgard.ui.conversation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +15,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,6 +42,7 @@ private val BubblePadding = 12.dp
 private val RowPadding = 12.dp
 private val RowSpacing = 2.dp
 private val GroupSpacing = 8.dp
+private const val SELECTED_ROW_ALPHA = 0.16f
 private val AvatarSize = 32.dp
 private val AvatarGap = 8.dp
 private val AvatarSlotWidth = AvatarSize + AvatarGap
@@ -50,20 +52,20 @@ private val AvatarSlotWidth = AvatarSize + AvatarGap
 internal data class MessageActions(
     val onRetry: (String) -> Unit = {},
     val onDiscard: (String) -> Unit = {},
-    val onCopy: (String) -> Unit = {},
-    val onDelete: (String) -> Unit = {},
-    val onInfo: (String) -> Unit = {},
-    val onEdit: (Message) -> Unit = {},
     val onReply: (Message) -> Unit = {},
-    val onPin: (String) -> Unit = {},
-    val onUnpin: (String) -> Unit = {},
-    val canPin: Boolean = false,
-    val pinnedIds: Set<String> = emptySet(),
     val onReplyClick: (String) -> Unit = {},
     val onAttachmentClick: (Attachment) -> Unit = {},
     val onImageClick: (Attachment) -> Unit = {},
     val onImageShown: (Attachment) -> Unit = {},
     val onRetryDownload: (Attachment) -> Unit = {},
+)
+
+/** Whether messages are being selected, whether this one is, and what a tap or a long press on it does. */
+@Immutable
+internal data class BubbleSelection(
+    val isActive: Boolean = false,
+    val isSelected: Boolean = false,
+    val onToggle: () -> Unit = {},
 )
 
 @Composable
@@ -75,10 +77,11 @@ internal fun MessageBubble(
     modifier: Modifier = Modifier,
     startsGroup: Boolean = true,
     endsGroup: Boolean = true,
+    selection: BubbleSelection = BubbleSelection(),
 ) {
-    val canReply = !message.isDeleted && message.status == MessageStatus.SENT
+    val canReply = !message.isDeleted && message.status == MessageStatus.SENT && !selection.isActive
     ReplySwipe(enabled = canReply, onReply = { actions.onReply(message) }) {
-        BubbleBody(message, showSenderName, downloads, actions, modifier, startsGroup, endsGroup, canReply)
+        BubbleBody(message, showSenderName, downloads, actions, modifier, startsGroup, endsGroup, selection)
     }
 }
 
@@ -91,39 +94,52 @@ private fun BubbleBody(
     modifier: Modifier,
     startsGroup: Boolean,
     endsGroup: Boolean,
-    canReply: Boolean,
+    selection: BubbleSelection,
 ) {
-    var isMenuOpen by remember { mutableStateOf(false) }
     val colors = bubbleColors(message)
     val showsAvatar = showSenderName && !message.isOwn
-    val canCopy = !message.isDeleted && message.body.isNotEmpty()
-    val canDelete = message.isOwn && !message.isDeleted && message.status == MessageStatus.SENT
-    val copyLabel = stringResource(R.string.message_copy)
+    val selectLabel = stringResource(R.string.message_select)
     val haptics = LocalHapticFeedback.current
+    val highlight = if (selection.isSelected) {
+        MaterialTheme.colorScheme.primary.copy(alpha = SELECTED_ROW_ALPHA)
+    } else {
+        Color.Transparent
+    }
     Column(
-        modifier = modifier.fillMaxWidth().padding(
-            start = RowPadding,
-            end = RowPadding,
-            top = if (startsGroup) GroupSpacing else RowSpacing,
-            bottom = RowSpacing,
-        ),
+        modifier = modifier.fillMaxWidth()
+            .background(highlight)
+            .clickable(enabled = selection.isActive, onClickLabel = selectLabel, onClick = selection.onToggle)
+            .padding(
+                start = RowPadding,
+                end = RowPadding,
+                top = if (startsGroup) GroupSpacing else RowSpacing,
+                bottom = RowSpacing,
+            ),
         horizontalAlignment = if (message.isOwn) Alignment.End else Alignment.Start,
     ) {
         Row(verticalAlignment = Alignment.Bottom) {
             if (showsAvatar) SenderAvatarSlot(message.senderName, show = endsGroup)
             Box {
                 Surface(
-                    modifier = Modifier.onLongPress(canCopy || canDelete || canReply, copyLabel) {
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        isMenuOpen = true
-                    },
+                    modifier = Modifier
+                        .onLongPress(!message.isDeleted && !selection.isActive, selectLabel) {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            selection.onToggle()
+                        }
+                        .semantics { selected = selection.isSelected },
                     shape = bubbleShape(message.isOwn, startsGroup),
                     color = colors.container,
                     contentColor = colors.content,
                 ) {
                     BubbleContent(message, showSenderName && startsGroup, showsAvatar, downloads, actions)
                 }
-                MessageMenu(isMenuOpen, canCopy, canDelete, canReply, message, actions) { isMenuOpen = false }
+                // While messages are selected a tap chooses the message, also on a photo or a link inside it.
+                if (selection.isActive) {
+                    Box(
+                        modifier = Modifier.matchParentSize()
+                            .clickable(onClickLabel = selectLabel, onClick = selection.onToggle),
+                    )
+                }
             }
         }
         if (message.status == MessageStatus.FAILED) {

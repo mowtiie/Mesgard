@@ -32,7 +32,7 @@ internal sealed interface ReadersState {
 }
 
 internal data class ConversationActionsUiState(
-    val messageToDelete: String? = null,
+    val messagesToDelete: List<String> = emptyList(),
     val readers: ReadersState? = null,
     val error: ConversationError? = null,
 )
@@ -52,14 +52,20 @@ internal class ConversationActionsViewModel @Inject constructor(
     private val mutableUiState = MutableStateFlow(ConversationActionsUiState())
     val uiState: StateFlow<ConversationActionsUiState> = mutableUiState.asStateFlow()
 
-    fun onDeleteRequested(messageId: String) = mutableUiState.update { it.copy(messageToDelete = messageId) }
+    fun onDeleteRequested(messageIds: List<String>) = mutableUiState.update { it.copy(messagesToDelete = messageIds) }
 
-    fun onDeleteDismissed() = mutableUiState.update { it.copy(messageToDelete = null) }
+    fun onDeleteDismissed() = mutableUiState.update { it.copy(messagesToDelete = emptyList()) }
 
+    /** Every message is deleted, and the first failure, if any, is the one shown. */
     fun onDeleteConfirmed() {
-        val messageId = mutableUiState.value.messageToDelete ?: return
-        mutableUiState.update { it.copy(messageToDelete = null) }
-        viewModelScope.launch { report(messageActions.delete(messageId)) }
+        val messageIds = mutableUiState.value.messagesToDelete
+        if (messageIds.isEmpty()) return
+        mutableUiState.update { it.copy(messagesToDelete = emptyList()) }
+        viewModelScope.launch {
+            messageIds.map { messageActions.delete(it) }
+                .firstOrNull { it is RefreshResult.Failure }
+                ?.let(::report)
+        }
     }
 
     fun onInfoRequested(messageId: String) {

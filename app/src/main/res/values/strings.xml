@@ -330,6 +330,7 @@
     <string name="message_status_sent">Sent</string>
     <string name="message_deleted">This message was deleted</string>
     <string name="message_delete">Delete</string>
+    <string name="message_select">Select</string>
     <string name="message_pin">Pin</string>
     <string name="message_unpin">Unpin</string>
     <string name="pinned_message_title">Pinned message</string>
@@ -392,7 +393,10 @@
     </plurals>
     <string name="preference_error_too_many_favorites">You can have up to 50 favorites.</string>
     <string name="preference_error_too_many_pinned">You can pin up to 3 conversations.</string>
-    <string name="message_delete_title">Delete this message?</string>
+    <plurals name="message_delete_title">
+        <item quantity="one">Delete this message?</item>
+        <item quantity="other">Delete %d messages?</item>
+    </plurals>
     <string name="message_delete_text">It is removed for everyone in the conversation. Administrators of your organization can still read the original.</string>
     <string name="conversation_empty">No messages yet</string>
     <string name="conversation_empty_hint">Send the first message to start the conversation.</string>

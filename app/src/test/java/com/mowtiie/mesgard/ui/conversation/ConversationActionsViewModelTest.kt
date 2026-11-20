@@ -119,21 +119,36 @@ class ConversationActionsViewModelTest {
     fun `deleting asks first and then deletes the message for everyone`() = runTest {
         coEvery { repository.delete("m1") } returns RefreshResult.Success
 
-        viewModel.onDeleteRequested("m1")
-        assertEquals("m1", viewModel.uiState.value.messageToDelete)
+        viewModel.onDeleteRequested(listOf("m1"))
+        assertEquals(listOf("m1"), viewModel.uiState.value.messagesToDelete)
         viewModel.onDeleteConfirmed()
 
-        assertNull(viewModel.uiState.value.messageToDelete)
+        assertEquals(emptyList<String>(), viewModel.uiState.value.messagesToDelete)
         coVerify(exactly = 1) { repository.delete("m1") }
     }
 
     @Test
+    fun `several messages are all deleted, and the first failure is shown`() = runTest {
+        coEvery { repository.delete("m1") } returns RefreshResult.Success
+        coEvery { repository.delete("m2") } returns RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
+        coEvery { repository.delete("m3") } returns RefreshResult.Success
+
+        viewModel.onDeleteRequested(listOf("m1", "m2", "m3"))
+        viewModel.onDeleteConfirmed()
+
+        coVerify(exactly = 1) { repository.delete("m1") }
+        coVerify(exactly = 1) { repository.delete("m2") }
+        coVerify(exactly = 1) { repository.delete("m3") }
+        assertEquals(ConversationError.NETWORK_UNAVAILABLE, viewModel.uiState.value.error)
+    }
+
+    @Test
     fun `cancelling the question deletes nothing`() = runTest {
-        viewModel.onDeleteRequested("m1")
+        viewModel.onDeleteRequested(listOf("m1"))
         viewModel.onDeleteDismissed()
         viewModel.onDeleteConfirmed()
 
-        assertNull(viewModel.uiState.value.messageToDelete)
+        assertEquals(emptyList<String>(), viewModel.uiState.value.messagesToDelete)
         coVerify(exactly = 0) { repository.delete(any()) }
     }
 
@@ -141,7 +156,7 @@ class ConversationActionsViewModelTest {
     fun `a failed delete shows the reason until it is shown`() = runTest {
         coEvery { repository.delete("m1") } returns RefreshResult.Failure(RefreshError.NETWORK_UNAVAILABLE)
 
-        viewModel.onDeleteRequested("m1")
+        viewModel.onDeleteRequested(listOf("m1"))
         viewModel.onDeleteConfirmed()
         assertEquals(ConversationError.NETWORK_UNAVAILABLE, viewModel.uiState.value.error)
 
