@@ -13,6 +13,10 @@ internal interface ContactDao {
     @Upsert
     suspend fun upsertAll(contacts: List<ContactEntity>)
 
+    /** The names of some people as profiles, whichever organization the roster entry is from. */
+    @Query("SELECT user_id AS id, display_name FROM contacts WHERE user_id IN (:userIds)")
+    suspend fun findDisplayNames(userIds: List<String>): List<ProfileEntity>
+
     @Query("UPDATE contacts SET is_favorite = :isFavorite WHERE org_id = :orgId AND user_id IN (:userIds)")
     suspend fun updateFavorite(orgId: String, userIds: List<String>, isFavorite: Boolean)
 

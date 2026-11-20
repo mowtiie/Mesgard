@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.data
 import app.cash.turbine.test
 import com.mowtiie.mesgard.data.attachment.AttachmentIntake
 import com.mowtiie.mesgard.data.local.AttachmentEntity
+import com.mowtiie.mesgard.data.local.ContactEntity
 import com.mowtiie.mesgard.data.local.ProfileEntity
 import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.remote.MessageRemoteSource
@@ -23,6 +24,7 @@ import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.MAX_MESSAGE_LENGTH
 import com.mowtiie.mesgard.domain.repository.MESSAGE_PAGE_SIZE
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
+import com.mowtiie.mesgard.testing.TEST_ORG_ID
 import com.mowtiie.mesgard.testing.attachmentDto
 import com.mowtiie.mesgard.testing.conversationEntity
 import com.mowtiie.mesgard.testing.messageDto
@@ -130,6 +132,26 @@ class OfflineFirstMessageRepositoryTest {
             val message = awaitItem().single()
             assertEquals(listOf("Ana Cruz"), message.mentionNames)
             assertEquals(true, message.mentionsYou)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a mentioned person who is only in the roster is named, and a profile name wins over the roster`() = runTest {
+        val database = databaseRule.database
+        database.contactDao().upsertAll(
+            listOf(
+                ContactEntity(TEST_ORG_ID, "ben", "Ben Roster", "member"),
+                ContactEntity(TEST_ORG_ID, "ana", "Ana Roster", "member"),
+            ),
+        )
+        database.profileDao().upsertAll(listOf(ProfileEntity("ana", "Ana Profile")))
+        database.messageDao().upsert(
+            messageEntity("m1", CONVERSATION_ID, 1_000L).copy(body = "@Ana @Ben", mentionedUserIds = "ana,ben"),
+        )
+
+        repository.observeMessages(CONVERSATION_ID, PAGE).test {
+            assertEquals(listOf("Ana Profile", "Ben Roster"), awaitItem().single().mentionNames)
             cancelAndIgnoreRemainingEvents()
         }
     }

@@ -4,15 +4,14 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
 import com.mowtiie.mesgard.domain.model.MentionCandidate
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 internal interface ProfileDao {
     @Upsert
     suspend fun upsertAll(profiles: List<ProfileEntity>)
 
-    @Query("SELECT * FROM profiles")
-    fun observeAll(): Flow<List<ProfileEntity>>
+    @Query("SELECT * FROM profiles WHERE id IN (:userIds)")
+    suspend fun findDisplayNames(userIds: List<String>): List<ProfileEntity>
 
     @Query("SELECT EXISTS(SELECT 1 FROM profiles WHERE id = :userId)")
     suspend fun exists(userId: String): Boolean

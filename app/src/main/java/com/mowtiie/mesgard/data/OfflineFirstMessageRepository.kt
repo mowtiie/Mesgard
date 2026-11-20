@@ -58,12 +58,10 @@ internal class OfflineFirstMessageRepository @Inject constructor(
     override fun observeMessages(conversationId: String, limit: Int): Flow<List<Message>> = combine(
         messageDao.observeTimeline(conversationId, limit),
         attachmentDao.observeForConversation(conversationId),
-        database.profileDao().observeAll(),
-        database.contactDao().observeAll(),
-    ) { items, attachments, profiles, contacts ->
+    ) { items, attachments ->
         val currentUserId = authRepository.currentUserId
         val attachmentsByMessage = attachments.groupBy { it.messageId }
-        val names = contacts.associate { it.userId to it.displayName } + profiles.associate { it.id to it.displayName }
+        val names = database.namesOfMentioned(items)
         items.map { toMessage(it, currentUserId, attachmentsByMessage[it.id].orEmpty(), names) }
     }.distinctUntilChanged()
 
@@ -174,6 +172,15 @@ private suspend fun MessageDao.findGapStart(page: List<MessageDto>): Long? {
     if (page.size < MESSAGE_PAGE_SIZE) return null
     val oldest = page.minBy { parseEpochMillis(it.createdAt) }
     return if (findById(oldest.id) == null) parseEpochMillis(oldest.createdAt) else null
+}
+
+/** Only the people the messages mention are looked up, so the whole roster is not read on every change. */
+private suspend fun MesgardDatabase.namesOfMentioned(items: List<TimelineMessage>): Map<String, String> {
+    val ids = items.flatMapTo(mutableSetOf()) { it.mentionedUserIds.splitIds() }.toList()
+    if (ids.isEmpty()) return emptyMap()
+    return (contactDao().findDisplayNames(ids) + profileDao().findDisplayNames(ids)).associate {
+        it.id to it.displayName
+    }
 }
 
 private fun toMessage(
