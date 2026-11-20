@@ -42,6 +42,17 @@ internal fun InitialAvatar(name: String, modifier: Modifier = Modifier, size: Dp
     }
 }
 
+/** The color of a person's name beside their avatar: the same theme color family, so the two belong together. */
+@Composable
+internal fun avatarAccentColor(name: String): Color {
+    val colors = MaterialTheme.colorScheme
+    return when (avatarColorIndex(name)) {
+        0 -> colors.primary
+        1 -> colors.secondary
+        else -> colors.tertiary
+    }
+}
+
 @Composable
 private fun avatarColors(index: Int): Pair<Color, Color> {
     val colors = MaterialTheme.colorScheme

@@ -3,12 +3,13 @@ package com.mowtiie.mesgard.ui.conversation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Attachment
 import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.domain.model.MessageStatus
+import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val BubbleMaxWidth = 480.dp
@@ -39,6 +41,9 @@ private val BubblePadding = 12.dp
 private val RowPadding = 12.dp
 private val RowSpacing = 2.dp
 private val GroupSpacing = 8.dp
+private val AvatarSize = 32.dp
+private val AvatarGap = 8.dp
+private val AvatarSlotWidth = AvatarSize + AvatarGap
 
 /** What the user can do with a message or one of its attachments. */
 @Immutable
@@ -90,6 +95,7 @@ private fun BubbleBody(
 ) {
     var isMenuOpen by remember { mutableStateOf(false) }
     val colors = bubbleColors(message)
+    val showsAvatar = showSenderName && !message.isOwn
     val canCopy = !message.isDeleted && message.body.isNotEmpty()
     val canDelete = message.isOwn && !message.isDeleted && message.status == MessageStatus.SENT
     val copyLabel = stringResource(R.string.message_copy)
@@ -103,19 +109,22 @@ private fun BubbleBody(
         ),
         horizontalAlignment = if (message.isOwn) Alignment.End else Alignment.Start,
     ) {
-        Box {
-            Surface(
-                modifier = Modifier.onLongPress(canCopy || canDelete || canReply, copyLabel) {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    isMenuOpen = true
-                },
-                shape = MaterialTheme.shapes.large,
-                color = colors.container,
-                contentColor = colors.content,
-            ) {
-                BubbleContent(message, showSenderName && startsGroup, endsGroup, downloads, actions)
+        Row(verticalAlignment = Alignment.Bottom) {
+            if (showsAvatar) SenderAvatarSlot(message.senderName, show = endsGroup)
+            Box {
+                Surface(
+                    modifier = Modifier.onLongPress(canCopy || canDelete || canReply, copyLabel) {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        isMenuOpen = true
+                    },
+                    shape = bubbleShape(message.isOwn, startsGroup),
+                    color = colors.container,
+                    contentColor = colors.content,
+                ) {
+                    BubbleContent(message, showSenderName && startsGroup, showsAvatar, downloads, actions)
+                }
+                MessageMenu(isMenuOpen, canCopy, canDelete, canReply, message, actions) { isMenuOpen = false }
             }
-            MessageMenu(isMenuOpen, canCopy, canDelete, canReply, message, actions) { isMenuOpen = false }
         }
         if (message.status == MessageStatus.FAILED) {
             FailedMessageNotice({ actions.onRetry(message.id) }, { actions.onDiscard(message.id) })
@@ -127,14 +136,16 @@ private fun BubbleBody(
 private fun BubbleContent(
     message: Message,
     showSenderName: Boolean,
-    endsGroup: Boolean,
+    hasAvatar: Boolean,
     downloads: AttachmentDownloadsUiState,
     actions: MessageActions,
 ) {
-    Column(modifier = Modifier.widthIn(max = maxBubbleWidth()).padding(BubblePadding)) {
+    val hasAttachments = !message.isDeleted && message.attachments.isNotEmpty()
+    val maxWidth = maxBubbleWidth() - if (hasAvatar) AvatarSlotWidth else 0.dp
+    Column(modifier = Modifier.widthIn(max = maxWidth).padding(BubblePadding)) {
         message.replyTo?.let { QuotedReply(it, onClick = { id -> actions.onReplyClick(id) }) }
-        MessageText(message, showSenderName)
-        if (!message.isDeleted) {
+        if (hasAttachments) {
+            MessageText(message, showSenderName)
             AttachmentList(
                 message.attachments,
                 downloads,
@@ -143,10 +154,21 @@ private fun BubbleContent(
                 actions.onImageShown,
                 actions.onRetryDownload,
             )
+            MessageMetadataLabel(message, Modifier.align(Alignment.End))
+        } else {
+            Box {
+                MessageText(message, showSenderName, endRoom = rememberMetadataWidth(message))
+                MessageMetadataLabel(message, Modifier.align(Alignment.BottomEnd))
+            }
         }
-        if (endsGroup || message.status != MessageStatus.SENT || message.isEdited) {
-            Text(text = metadata(message), style = MaterialTheme.typography.labelSmall)
-        }
+    }
+}
+
+/** Beside the last bubble of a person's run the avatar shows, and the other bubbles keep the same room empty. */
+@Composable
+private fun SenderAvatarSlot(name: String?, show: Boolean) {
+    Box(modifier = Modifier.padding(end = AvatarGap).size(AvatarSize)) {
+        if (show) InitialAvatar(name = name.orEmpty().ifBlank { "?" }, size = AvatarSize)
     }
 }
 
