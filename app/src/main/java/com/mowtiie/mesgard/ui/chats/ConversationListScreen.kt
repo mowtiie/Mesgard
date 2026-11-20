@@ -1,7 +1,9 @@
 package com.mowtiie.mesgard.ui.chats
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -54,6 +56,7 @@ internal fun ConversationListRoute(
         selectionCallbacks = selectionViewModel.callbacks(selection) { uiState.conversations.map { it.id } },
         onRefresh = viewModel::onRefresh,
         onQueryChanged = viewModel::onQueryChanged,
+        onFilterSelected = viewModel::onFilterSelected,
         onRefreshErrorShown = viewModel::onRefreshErrorShown,
         onConversationClick = onConversationClick,
         onOpenArchived = onOpenArchived,
@@ -71,6 +74,7 @@ internal fun ConversationListScreen(
     selectionCallbacks: SelectionCallbacks,
     onRefresh: () -> Unit,
     onQueryChanged: (String) -> Unit,
+    onFilterSelected: (ConversationFilter) -> Unit,
     onRefreshErrorShown: () -> Unit,
     onConversationClick: (String) -> Unit,
     onOpenArchived: () -> Unit,
@@ -132,19 +136,22 @@ internal fun ConversationListScreen(
             if (!selection.isActive && !isSearching) NewChatButton(listState, onNewChat)
         },
     ) { padding ->
-        PullToRefreshBox(
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = onRefresh,
-            modifier = Modifier.padding(padding).fillMaxSize(),
-        ) {
-            ConversationList(
-                uiState = uiState,
-                selection = selection,
-                selectionCallbacks = selectionCallbacks,
-                listState = listState,
-                onConversationClick = onConversationClick,
-                onOpenArchived = onOpenArchived,
-            )
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            if (uiState.showFilters) ConversationFilterRow(uiState.filter, onFilterSelected)
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = onRefresh,
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+            ) {
+                ConversationList(
+                    uiState = uiState,
+                    selection = selection,
+                    selectionCallbacks = selectionCallbacks,
+                    listState = listState,
+                    onConversationClick = onConversationClick,
+                    onOpenArchived = onOpenArchived,
+                )
+            }
         }
     }
 }
@@ -169,6 +176,16 @@ private fun ConversationList(
                     R.drawable.illustration_chats,
                     R.string.conversation_list_empty,
                     R.string.conversation_list_empty_hint,
+                    Modifier.fillParentMaxSize(),
+                )
+            }
+        }
+        if (uiState.showFilterEmpty) {
+            item(key = "filter-empty") {
+                EmptyState(
+                    R.drawable.illustration_search,
+                    uiState.filter.emptyTitle,
+                    uiState.filter.emptyHint,
                     Modifier.fillParentMaxSize(),
                 )
             }

@@ -198,13 +198,75 @@ class ConversationListViewModelTest {
         coVerify(exactly = 1) { repository.refresh() }
     }
 
-    private fun summary(id: String, title: String = "Title", preview: String = "Hello") = ConversationSummary(
+    @Test
+    fun `a chip shows only the conversations it stands for, and All shows them again`() = runTest {
+        conversations.value = listOf(
+            summary("read"),
+            summary("unread", unreadCount = 3),
+            summary("friend", isWithFavorite = true),
+            summary("class", type = ConversationType.GROUP),
+        )
+        val viewModel = ConversationListViewModel(repository, typingRepository)
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onFilterSelected(ConversationFilter.UNREAD)
+            assertEquals(listOf("unread"), expectMostRecentItem().conversations.map { it.id })
+            viewModel.onFilterSelected(ConversationFilter.FAVORITES)
+            assertEquals(listOf("friend"), expectMostRecentItem().conversations.map { it.id })
+            viewModel.onFilterSelected(ConversationFilter.GROUPS)
+            assertEquals(listOf("class"), expectMostRecentItem().conversations.map { it.id })
+            viewModel.onFilterSelected(ConversationFilter.ALL)
+            assertEquals(4, expectMostRecentItem().conversations.size)
+        }
+    }
+
+    @Test
+    fun `a chip and the search both narrow the list`() = runTest {
+        conversations.value = listOf(
+            summary("a", title = "Ana", unreadCount = 1),
+            summary("b", title = "Ben", unreadCount = 1),
+            summary("c", title = "Ana", unreadCount = 0),
+        )
+        val viewModel = ConversationListViewModel(repository, typingRepository)
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onFilterSelected(ConversationFilter.UNREAD)
+            viewModel.onQueryChanged("Ana")
+            assertEquals(listOf("a"), expectMostRecentItem().conversations.map { it.id })
+        }
+    }
+
+    @Test
+    fun `a chip that matches nothing says so, while the list is not empty`() = runTest {
+        conversations.value = listOf(summary("read"))
+        val viewModel = ConversationListViewModel(repository, typingRepository)
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onFilterSelected(ConversationFilter.UNREAD)
+            val state = expectMostRecentItem()
+            assertTrue(state.showFilterEmpty)
+            assertFalse(state.showEmptyMessage)
+        }
+    }
+
+    private fun summary(
+        id: String,
+        title: String = "Title",
+        preview: String = "Hello",
+        type: ConversationType = ConversationType.DIRECT,
+        unreadCount: Int = 0,
+        isWithFavorite: Boolean = false,
+    ) = ConversationSummary(
         id = id,
-        type = ConversationType.DIRECT,
+        type = type,
         title = title,
         lastMessagePreview = preview,
         lastActivityAtEpochMillis = 1_000L,
-        unreadCount = 0,
+        unreadCount = unreadCount,
         canPost = true,
+        isWithFavorite = isWithFavorite,
     )
 }

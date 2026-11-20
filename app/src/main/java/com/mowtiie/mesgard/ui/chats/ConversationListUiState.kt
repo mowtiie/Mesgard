@@ -11,6 +11,7 @@ internal data class ConversationListUiState(
     /** Who is typing in each conversation, for the conversations at the top of the list. */
     val typing: Map<String, List<String>> = emptyMap(),
     val query: String = "",
+    val filter: ConversationFilter = ConversationFilter.ALL,
     val isLoaded: Boolean = false,
     val isRefreshing: Boolean = false,
     val refreshError: RefreshError? = null,
@@ -29,4 +30,11 @@ internal data class ConversationListUiState(
 
     val showNoResults: Boolean
         get() = isFiltering && conversations.isEmpty()
+
+    val showFilters: Boolean
+        get() = totalConversations > 0
+
+    /** A chip other than All matches nothing while the search is empty. */
+    val showFilterEmpty: Boolean
+        get() = filter != ConversationFilter.ALL && !isFiltering && conversations.isEmpty() && totalConversations > 0
 }

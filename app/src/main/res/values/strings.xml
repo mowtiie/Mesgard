@@ -436,6 +436,16 @@
     <string name="contacts_search_prompt">Search for a person</string>
     <string name="contacts_search_prompt_hint">Type a name to find someone and start a conversation.</string>
     <string name="chats_search_placeholder">Search conversations</string>
+    <string name="chats_filter_all">All</string>
+    <string name="chats_filter_unread">Unread</string>
+    <string name="chats_filter_favorites">Favorites</string>
+    <string name="chats_filter_groups">Groups</string>
+    <string name="chats_filter_unread_empty">No unread conversations</string>
+    <string name="chats_filter_unread_empty_hint">You are all caught up.</string>
+    <string name="chats_filter_favorites_empty">No conversations with favorites</string>
+    <string name="chats_filter_favorites_empty_hint">Mark people as favorites in New chat, and your conversations with them show here.</string>
+    <string name="chats_filter_groups_empty">No group conversations</string>
+    <string name="chats_filter_groups_empty_hint">Groups you belong to show here.</string>
     <string name="conversation_search">Search messages</string>
     <string name="conversation_search_placeholder">Search in this conversation</string>
     <string name="conversation_search_hint">Type at least 2 characters to search the messages of this conversation.</string>

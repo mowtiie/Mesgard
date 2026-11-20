@@ -32,7 +32,7 @@ internal class ConversationListViewModel @Inject constructor(
     typingRepository: TypingRepository,
 ) : ViewModel() {
     private val refreshState = MutableStateFlow(RefreshState())
-    private val query = MutableStateFlow("")
+    private val listView = MutableStateFlow(ListView())
 
     /** Only the conversations at the top are watched, because each one is a Realtime channel. */
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -45,15 +45,16 @@ internal class ConversationListViewModel @Inject constructor(
         repository.observeConversations(),
         repository.observeArchived(),
         refreshState,
-        query,
+        listView,
         typing,
-    ) { conversations, archived, refresh, currentQuery, typingNow ->
+    ) { conversations, archived, refresh, view, typingNow ->
         ConversationListUiState(
-            conversations = conversations.filter { it.matches(currentQuery) },
+            conversations = conversations.filter { view.filter.accepts(it) && it.matches(view.query) },
             totalConversations = conversations.size,
             archivedCount = archived.size,
             typing = typingNow,
-            query = currentQuery,
+            query = view.query,
+            filter = view.filter,
             isLoaded = true,
             isRefreshing = refresh.isRefreshing,
             refreshError = refresh.error,
@@ -78,12 +79,18 @@ internal class ConversationListViewModel @Inject constructor(
     }
 
     fun onQueryChanged(newQuery: String) {
-        query.value = newQuery
+        listView.update { it.copy(query = newQuery) }
+    }
+
+    fun onFilterSelected(filter: ConversationFilter) {
+        listView.update { it.copy(filter = filter) }
     }
 
     fun onRefreshErrorShown() {
         refreshState.update { it.copy(error = null) }
     }
+
+    private data class ListView(val query: String = "", val filter: ConversationFilter = ConversationFilter.ALL)
 
     private data class RefreshState(val isRefreshing: Boolean = false, val error: RefreshError? = null)
 }
