@@ -12,4 +12,6 @@ internal data class ConversationSummary(
     val isPinned: Boolean = false,
     val isArchived: Boolean = false,
     val isMarkedUnread: Boolean = false,
+    /** A direct conversation with a person who is a favorite. */
+    val isWithFavorite: Boolean = false,
 )

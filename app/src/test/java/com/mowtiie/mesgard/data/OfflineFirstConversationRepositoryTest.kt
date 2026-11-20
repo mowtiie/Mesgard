@@ -8,6 +8,8 @@ import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.MessageRepository
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
+import com.mowtiie.mesgard.testing.TEST_ORG_ID
+import com.mowtiie.mesgard.testing.contactEntity
 import com.mowtiie.mesgard.testing.conversationEntity
 import com.mowtiie.mesgard.testing.summaryDto
 import io.mockk.coEvery
@@ -43,6 +45,7 @@ class OfflineFirstConversationRepositoryTest {
 
     init {
         coEvery { remoteSource.fetchMutedConversationIds(any()) } returns emptySet()
+        coEvery { remoteSource.fetchDirectPeerIds(any(), any()) } returns emptyMap()
     }
 
     private val messageRepository = mockk<MessageRepository> {
@@ -169,6 +172,51 @@ class OfflineFirstConversationRepositoryTest {
             assertEquals(mapOf("quiet" to true, "loud" to false), awaitItem().associate { it.id to it.isMuted })
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `a direct conversation with a favorite person is marked, and one with anyone else is not`() = runTest {
+        databaseRule.database.contactDao().upsertAll(
+            listOf(contactEntity("ana").copy(isFavorite = true), contactEntity("ben")),
+        )
+        coEvery { remoteSource.fetchSummaries() } returns listOf(summaryDto("with-ana"), summaryDto("with-ben"))
+        coEvery { remoteSource.fetchDirectPeerIds(any(), "me") } returns
+            mapOf("with-ana" to "ana", "with-ben" to "ben")
+
+        repository.refresh()
+
+        repository.observeConversations().test {
+            val flags = awaitItem().associate { it.id to it.isWithFavorite }
+            assertEquals(mapOf("with-ana" to true, "with-ben" to false), flags)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `making a person a favorite marks the conversation without another refresh`() = runTest {
+        val contacts = databaseRule.database.contactDao()
+        contacts.upsertAll(listOf(contactEntity("ana")))
+        coEvery { remoteSource.fetchSummaries() } returns listOf(summaryDto("with-ana"))
+        coEvery { remoteSource.fetchDirectPeerIds(any(), "me") } returns mapOf("with-ana" to "ana")
+        repository.refresh()
+
+        repository.observeConversations().test {
+            assertEquals(false, awaitItem().single().isWithFavorite)
+            contacts.updateFavorite(TEST_ORG_ID, listOf("ana"), isFavorite = true)
+            assertEquals(true, awaitItem().single().isWithFavorite)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `the other person of a direct conversation is asked for once, and groups are never asked`() = runTest {
+        coEvery { remoteSource.fetchSummaries() } returns listOf(summaryDto("direct"), summaryDto("group", "group"))
+        coEvery { remoteSource.fetchDirectPeerIds(any(), "me") } returns mapOf("direct" to "ana")
+
+        repository.refresh()
+        repository.refresh()
+
+        coVerify(exactly = 1) { remoteSource.fetchDirectPeerIds(listOf("direct"), "me") }
     }
 
     @Test

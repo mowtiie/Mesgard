@@ -15,8 +15,9 @@ import androidx.room.RoomDatabase
         AccountMembershipEntity::class,
         AttachmentEntity::class,
         PinnedMessageEntity::class,
+        DirectPeerEntity::class,
     ],
-    version = 16,
+    version = 17,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -33,6 +34,7 @@ import androidx.room.RoomDatabase
         AutoMigration(from = 13, to = 14),
         AutoMigration(from = 14, to = 15, spec = AnnouncementsBecomeGroups::class),
         AutoMigration(from = 15, to = 16),
+        AutoMigration(from = 16, to = 17),
     ],
 )
 internal abstract class MesgardDatabase : RoomDatabase() {
@@ -53,6 +55,8 @@ internal abstract class MesgardDatabase : RoomDatabase() {
     abstract fun attachmentDao(): AttachmentDao
 
     abstract fun pinnedMessageDao(): PinnedMessageDao
+
+    abstract fun directPeerDao(): DirectPeerDao
 
     companion object {
         const val NAME = "mesgard.db"
