@@ -16,8 +16,14 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,8 +44,52 @@ class OfflineFirstConversationRepositoryTest {
     private val messageRepository = mockk<MessageRepository> {
         coEvery { refresh(any()) } returns RefreshResult.Success
     }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val repository by lazy {
-        OfflineFirstConversationRepository(databaseRule.database, remoteSource, authRepository, messageRepository)
+        OfflineFirstConversationRepository(
+            databaseRule.database,
+            remoteSource,
+            authRepository,
+            messageRepository,
+            scope,
+        )
+    }
+
+    @After
+    fun stopSharing() {
+        scope.cancel()
+    }
+
+    @Test
+    fun `the list is read once and every screen gets the same list`() = runTest {
+        databaseRule.database.conversationDao().upsertAll(listOf(conversationEntity("a")))
+
+        repository.observeConversations().test {
+            val first = awaitItem()
+            repository.observeConversations().test {
+                assertSame(first, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a change reaches every screen that watches the list`() = runTest {
+        val dao = databaseRule.database.conversationDao()
+        dao.upsertAll(listOf(conversationEntity("a")))
+
+        repository.observeConversations().test {
+            assertEquals(listOf("a"), awaitItem().map { it.id })
+            repository.observeConversations().test {
+                assertEquals(listOf("a"), awaitItem().map { it.id })
+                dao.upsertAll(listOf(conversationEntity("b")))
+                assertEquals(setOf("a", "b"), awaitItem().map { it.id }.toSet())
+                cancelAndIgnoreRemainingEvents()
+            }
+            assertEquals(setOf("a", "b"), awaitItem().map { it.id }.toSet())
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test

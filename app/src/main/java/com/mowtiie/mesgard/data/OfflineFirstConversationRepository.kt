@@ -9,32 +9,40 @@ import com.mowtiie.mesgard.data.remote.attemptRemote
 import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.remote.toLastMessageEntity
 import com.mowtiie.mesgard.data.remote.toRefreshResult
+import com.mowtiie.mesgard.di.ApplicationScope
 import com.mowtiie.mesgard.domain.model.ConversationSummary
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.MessageRepository
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 
 private const val TAG = "ConversationRepository"
 private const val CATCH_UP_LIMIT = 10
+private const val SHARING_TIMEOUT_MS = 5_000L
 
 internal class OfflineFirstConversationRepository @Inject constructor(
     private val database: MesgardDatabase,
     private val remoteSource: ConversationRemoteSource,
     private val authRepository: AuthRepository,
     private val messageRepository: MessageRepository,
+    @ApplicationScope scope: CoroutineScope,
 ) : ConversationRepository {
     private val conversationDao = database.conversationDao()
     private val messageDao = database.messageDao()
 
-    override fun observeConversations(): Flow<List<ConversationSummary>> =
-        conversationDao.observeList(CONVERSATION_PAGE_SIZE).map { items -> items.map(::toSummary) }
+    // The list, the selection bar and the archive watch the same queries, so each runs once for all of them.
+    private val conversations = shared(scope, conversationDao.observeList(CONVERSATION_PAGE_SIZE))
+    private val archived = shared(scope, conversationDao.observeArchived(CONVERSATION_PAGE_SIZE))
 
-    override fun observeArchived(): Flow<List<ConversationSummary>> =
-        conversationDao.observeArchived(CONVERSATION_PAGE_SIZE).map { items -> items.map(::toSummary) }
+    override fun observeConversations(): Flow<List<ConversationSummary>> = conversations
+
+    override fun observeArchived(): Flow<List<ConversationSummary>> = archived
 
     override fun observeConversation(conversationId: String): Flow<ConversationSummary?> =
         conversationDao.observeById(conversationId).map { item -> item?.let(::toSummary) }
@@ -65,6 +73,18 @@ internal class OfflineFirstConversationRepository @Inject constructor(
         conversationDao.deleteAllExcept(currentIds)
         messageDao.deleteOutsideConversations(currentIds)
     }
+
+    private fun shared(
+        scope: CoroutineScope,
+        items: Flow<List<ConversationListItem>>,
+    ): Flow<List<ConversationSummary>> = items.map { list -> list.map(::toSummary) }.shareIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(
+            stopTimeoutMillis = SHARING_TIMEOUT_MS,
+            replayExpirationMillis = 0,
+        ),
+        replay = 1,
+    )
 
     private fun toSummary(item: ConversationListItem) = ConversationSummary(
         id = item.id,
