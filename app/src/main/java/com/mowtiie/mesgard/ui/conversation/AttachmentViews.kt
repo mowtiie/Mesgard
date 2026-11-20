@@ -43,6 +43,9 @@ private val ImageWidth = 220.dp
 private const val DEFAULT_IMAGE_RATIO = 220f / 160f
 private const val MIN_IMAGE_RATIO = 0.6f
 private const val MAX_IMAGE_RATIO = 2f
+private const val PHOTOS_PER_ROW = 2
+private const val LAST_PHOTO_RATIO = 2f
+private val GridGap = 2.dp
 private val FileIconSize = 32.dp
 private val ItemSpacing = 4.dp
 private val FileRowSpacing = 12.dp
@@ -68,6 +71,9 @@ internal fun AttachmentList(
                     onImageClick,
                     onImageShown,
                     onRetryDownload,
+                    modifier = Modifier.width(ImageWidth)
+                        .aspectRatio(attachment.displayRatio())
+                        .clip(MaterialTheme.shapes.medium),
                 )
             } else {
                 FileAttachment(attachment, attachment.id in downloads.downloadingIds, onFileClick)
@@ -76,6 +82,48 @@ internal fun AttachmentList(
     }
 }
 
+/** Photos that fill a bubble: one photo with its own shape, two or more in rows of two. */
+@Composable
+internal fun ImageGrid(
+    attachments: List<Attachment>,
+    downloads: AttachmentDownloadsUiState,
+    onImageClick: (Attachment) -> Unit,
+    onImageShown: (Attachment) -> Unit,
+    onRetryDownload: (Attachment) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    @Composable
+    fun tile(attachment: Attachment, tileModifier: Modifier) = ImageAttachment(
+        attachment,
+        attachment.id in downloads.failedIds,
+        onImageClick,
+        onImageShown,
+        onRetryDownload,
+        tileModifier,
+    )
+
+    if (attachments.size == 1) {
+        val photo = attachments.single()
+        tile(photo, modifier.fillMaxWidth().aspectRatio(photo.displayRatio()))
+        return
+    }
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(GridGap)) {
+        attachments.chunked(PHOTOS_PER_ROW).forEach { row ->
+            if (row.size == PHOTOS_PER_ROW) {
+                Row(horizontalArrangement = Arrangement.spacedBy(GridGap)) {
+                    row.forEach { tile(it, Modifier.weight(1f).aspectRatio(1f)) }
+                }
+            } else {
+                tile(row.single(), Modifier.fillMaxWidth().aspectRatio(LAST_PHOTO_RATIO))
+            }
+        }
+    }
+}
+
+private fun Attachment.displayRatio(): Float =
+    (aspectRatio ?: DEFAULT_IMAGE_RATIO).coerceIn(MIN_IMAGE_RATIO, MAX_IMAGE_RATIO)
+
+/** The size and shape of the photo are the caller's, so the same photo can fill a bubble or sit inside one. */
 @Composable
 private fun ImageAttachment(
     attachment: Attachment,
@@ -83,6 +131,7 @@ private fun ImageAttachment(
     onClick: (Attachment) -> Unit,
     onShown: (Attachment) -> Unit,
     onRetryDownload: (Attachment) -> Unit,
+    modifier: Modifier,
 ) {
     LaunchedEffect(attachment.id, attachment.localPath) { onShown(attachment) }
     val localPath = attachment.localPath
@@ -92,9 +141,7 @@ private fun ImageAttachment(
     )
     val clickLabel = stringResource(if (isFailed) R.string.attachment_retry else R.string.attachment_open)
     Box(
-        modifier = Modifier.width(ImageWidth)
-            .aspectRatio((attachment.aspectRatio ?: DEFAULT_IMAGE_RATIO).coerceIn(MIN_IMAGE_RATIO, MAX_IMAGE_RATIO))
-            .clip(MaterialTheme.shapes.medium)
+        modifier = modifier
             .clickable(enabled = isFailed || localPath != null, onClickLabel = clickLabel) {
                 if (isFailed) onRetryDownload(attachment) else onClick(attachment)
             }

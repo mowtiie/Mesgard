@@ -142,6 +142,10 @@ private fun BubbleContent(
 ) {
     val hasAttachments = !message.isDeleted && message.attachments.isNotEmpty()
     val maxWidth = maxBubbleWidth() - if (hasAvatar) AvatarSlotWidth else 0.dp
+    if (message.isPhotoMessage()) {
+        PhotoBubbleContent(message, showSenderName, maxWidth, downloads, actions)
+        return
+    }
     Column(modifier = Modifier.widthIn(max = maxWidth).padding(BubblePadding)) {
         message.replyTo?.let { QuotedReply(it, onClick = { id -> actions.onReplyClick(id) }) }
         if (hasAttachments) {

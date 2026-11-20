@@ -3,17 +3,22 @@ package com.mowtiie.mesgard.ui.conversation
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -29,6 +34,10 @@ private val StatusIconSize = 14.dp
 private val StatusIconGap = 4.dp
 private val GapBeforeMetadata = 8.dp
 private const val METADATA_ALPHA = 0.7f
+private const val OVERLAY_ALPHA = 0.5f
+private val OverlayCorner = 10.dp
+private val OverlayPaddingX = 6.dp
+private val OverlayPaddingY = 2.dp
 
 /** The time of a message with its state: a clock while it waits, a check once the server has it. */
 @Composable
@@ -55,6 +64,20 @@ internal fun MessageMetadataLabel(message: Message, modifier: Modifier = Modifie
                 modifier = Modifier.size(StatusIconSize),
                 colorFilter = ColorFilter.tint(color),
             )
+        }
+    }
+}
+
+/** The time over a photo: light text on a dark pill, so it reads on any picture. */
+@Composable
+internal fun MessageMetadataOverlay(message: Message, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(OverlayCorner),
+        color = Color.Black.copy(alpha = OVERLAY_ALPHA),
+    ) {
+        CompositionLocalProvider(LocalContentColor provides Color.White) {
+            MessageMetadataLabel(message, Modifier.padding(horizontal = OverlayPaddingX, vertical = OverlayPaddingY))
         }
     }
 }

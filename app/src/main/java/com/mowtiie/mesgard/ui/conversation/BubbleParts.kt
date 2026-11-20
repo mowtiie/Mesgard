@@ -40,11 +40,15 @@ internal fun MessageText(message: Message, showSenderName: Boolean, endRoom: Dp 
         },
     ) {
         val name = message.senderName
-        if (showSenderName && !message.isOwn && name != null) {
-            Text(text = name, style = MaterialTheme.typography.labelMedium, color = avatarAccentColor(name))
-        }
+        if (showSenderName && !message.isOwn && name != null) SenderName(name)
         MessageBody(message, endRoom)
     }
+}
+
+/** The name above a received message in a group, in the color of the person's avatar. */
+@Composable
+internal fun SenderName(name: String) {
+    Text(text = name, style = MaterialTheme.typography.labelMedium, color = avatarAccentColor(name))
 }
 
 private const val END_ROOM_ID = "endRoom"
