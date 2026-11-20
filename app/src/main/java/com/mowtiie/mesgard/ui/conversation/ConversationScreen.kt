@@ -353,12 +353,14 @@ private fun MessageList(
     LaunchedEffect(newestMessage?.id) {
         if (newestMessage?.isOwn == true || !isScrolledUp) listState.animateScrollToItem(0)
     }
+    val highlight = rememberJumpHighlight()
     JumpToMessageEffect(
         jumpTo = jumpTo,
         timeline = timeline,
         isLoadingOlder = uiState.isLoadingOlder,
         isHistoryComplete = uiState.isHistoryComplete,
         listState = listState,
+        highlight = highlight,
         onJumpHandled = onJumpHandled,
         onJumpFailed = onJumpFailed,
         onLoadOlder = onLoadOlder,
@@ -374,6 +376,7 @@ private fun MessageList(
             onReplyClick = { id ->
                 val index = currentTimeline.indexOfFirst { it is TimelineItem.Bubble && it.message.id == id }
                 if (index >= 0) scope.launch { listState.animateScrollToItem(index) }
+                highlight.show(id)
             },
         )
     }
@@ -392,6 +395,7 @@ private fun MessageList(
                         actions = jumpingActions,
                         startsGroup = item.startsGroup,
                         endsGroup = item.endsGroup,
+                        isHighlighted = item.message.id == highlight.messageId,
                         selection = BubbleSelection(
                             isActive = selection.selectedIds.isNotEmpty(),
                             isSelected = item.message.id in selection.selectedIds,

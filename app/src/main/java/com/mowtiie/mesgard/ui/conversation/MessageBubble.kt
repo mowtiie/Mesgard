@@ -1,5 +1,6 @@
 package com.mowtiie.mesgard.ui.conversation
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -46,6 +47,7 @@ private val RowPadding = 12.dp
 private val RowSpacing = 2.dp
 private val GroupSpacing = 8.dp
 private const val SELECTED_ROW_ALPHA = 0.16f
+private const val JUMP_ROW_ALPHA = 0.24f
 private val AvatarSize = 32.dp
 private val AvatarGap = 8.dp
 private val AvatarSlotWidth = AvatarSize + AvatarGap
@@ -81,11 +83,14 @@ internal fun MessageBubble(
     modifier: Modifier = Modifier,
     startsGroup: Boolean = true,
     endsGroup: Boolean = true,
+    isHighlighted: Boolean = false,
     selection: BubbleSelection = BubbleSelection(),
 ) {
     val canReply = !message.isDeleted && message.status == MessageStatus.SENT && !selection.isActive
     ReplySwipe(enabled = canReply, onReply = { actions.onReply(message) }) {
-        BubbleBody(message, showSenderName, downloads, actions, modifier, startsGroup, endsGroup, selection)
+        BubbleBody(
+            message, showSenderName, downloads, actions, modifier, startsGroup, endsGroup, isHighlighted, selection,
+        )
     }
 }
 
@@ -98,17 +103,19 @@ private fun BubbleBody(
     modifier: Modifier,
     startsGroup: Boolean,
     endsGroup: Boolean,
+    isHighlighted: Boolean,
     selection: BubbleSelection,
 ) {
     val colors = bubbleColors(message)
     val showsAvatar = showSenderName && !message.isOwn
     val selectLabel = stringResource(R.string.message_select)
     val haptics = LocalHapticFeedback.current
-    val highlight = if (selection.isSelected) {
-        MaterialTheme.colorScheme.primary.copy(alpha = SELECTED_ROW_ALPHA)
-    } else {
-        Color.Transparent
-    }
+    val primary = MaterialTheme.colorScheme.primary
+    val flash by animateColorAsState(
+        targetValue = if (isHighlighted) primary.copy(alpha = JUMP_ROW_ALPHA) else Color.Transparent,
+        label = "jumpHighlight",
+    )
+    val highlight = if (selection.isSelected) primary.copy(alpha = SELECTED_ROW_ALPHA) else flash
     Column(
         modifier = modifier.fillMaxWidth()
             .background(highlight)

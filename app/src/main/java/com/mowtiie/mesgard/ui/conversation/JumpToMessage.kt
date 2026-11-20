@@ -53,6 +53,7 @@ internal fun JumpToMessageEffect(
     isLoadingOlder: Boolean,
     isHistoryComplete: Boolean,
     listState: LazyListState,
+    highlight: JumpHighlight,
     onJumpHandled: () -> Unit,
     onJumpFailed: () -> Unit,
     onLoadOlder: () -> Unit,
@@ -66,6 +67,7 @@ internal fun JumpToMessageEffect(
         when (val step = jumpStep(timeline, jumpTo, isLoadingOlder, isHistoryComplete, loads)) {
             is JumpStep.Scroll -> {
                 listState.animateScrollToItem(step.index)
+                highlight.show(jumpTo)
                 onJumpHandled()
             }
             JumpStep.LoadOlder -> {
