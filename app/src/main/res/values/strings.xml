@@ -284,6 +284,7 @@
     <string name="admin_error_not_allowed">You do not have permission to do this.</string>
     <string name="admin_error_not_a_member">This person is no longer a member.</string>
     <string name="admin_error_not_erasable">This person cannot be erased. They may belong to another organization, a legal hold or an open report may protect them, or this server does not allow it.</string>
+    <string name="admin_error_group_not_empty">This group has groups inside it. Move or delete them first.</string>
     <string name="admin_error_legal_hold">A legal hold or an open report protects this group. It cannot be deleted until that ends.</string>
     <string name="admin_error_last_admin">An organization needs at least one administrator.</string>
     <string name="admin_error_unknown">Something went wrong. Try again later.</string>

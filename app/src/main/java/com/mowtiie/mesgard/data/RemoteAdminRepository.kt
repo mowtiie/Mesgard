@@ -57,6 +57,9 @@ internal class RemoteAdminRepository @Inject constructor(private val remote: Adm
 }
 
 /** [conflict] is what a 409 means here: the last admin cannot be removed, a person elsewhere cannot be erased. */
+/** The name of the foreign key that stops a group with groups inside it from being deleted. */
+private const val GROUP_PARENT_CONSTRAINT = "groups_org_id_parent_id_fkey"
+
 internal suspend fun <T> attemptAdmin(
     conflict: AdminError = AdminError.LAST_ADMIN,
     block: suspend () -> T,
@@ -70,7 +73,7 @@ internal suspend fun <T> attemptAdmin(
     AdminResult.Failure(AdminError.NETWORK_UNAVAILABLE)
 } catch (exception: RestException) {
     Log.w(TAG, "The server refused the request", exception)
-    AdminResult.Failure(adminErrorFor(exception.statusCode, conflict))
+    AdminResult.Failure(adminErrorFor(exception.statusCode, conflict, exception.message))
 } catch (exception: IllegalArgumentException) {
     Log.w(TAG, "The request or the answer is not valid", exception)
     AdminResult.Failure(AdminError.UNKNOWN)
@@ -79,14 +82,23 @@ internal suspend fun <T> attemptAdmin(
     AdminResult.Failure(AdminError.NOT_ALLOWED)
 }
 
-internal fun adminErrorFor(statusCode: Int, conflict: AdminError = AdminError.LAST_ADMIN): AdminError =
-    when (statusCode) {
-        HTTP_UNAUTHORIZED, HTTP_FORBIDDEN -> AdminError.NOT_ALLOWED
-        HTTP_NOT_FOUND -> AdminError.NOT_A_MEMBER
-        HTTP_CONFLICT -> conflict
-        HTTP_BAD_REQUEST -> AdminError.UNKNOWN
-        else -> AdminError.UNKNOWN
+internal fun adminErrorFor(
+    statusCode: Int,
+    conflict: AdminError = AdminError.LAST_ADMIN,
+    message: String? = null,
+): AdminError = when (statusCode) {
+    HTTP_UNAUTHORIZED, HTTP_FORBIDDEN -> AdminError.NOT_ALLOWED
+    HTTP_NOT_FOUND -> AdminError.NOT_A_MEMBER
+    HTTP_CONFLICT -> if (message?.contains(GROUP_PARENT_CONSTRAINT) ==
+        true
+    ) {
+        AdminError.GROUP_NOT_EMPTY
+    } else {
+        conflict
     }
+    HTTP_BAD_REQUEST -> AdminError.UNKNOWN
+    else -> AdminError.UNKNOWN
+}
 
 private fun OrgRole.wireName(): String = when (this) {
     OrgRole.ORG_ADMIN -> "org_admin"

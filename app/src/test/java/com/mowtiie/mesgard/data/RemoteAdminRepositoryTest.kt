@@ -114,6 +114,12 @@ class RemoteAdminRepositoryTest {
         assertEquals(AdminError.LAST_ADMIN, adminErrorFor(409))
         assertEquals(AdminError.NOT_ERASABLE, adminErrorFor(409, AdminError.NOT_ERASABLE))
         assertEquals(AdminError.NOT_ALLOWED, adminErrorFor(403, AdminError.NOT_ERASABLE))
+        val children = "violates foreign key constraint groups_org_id_parent_id_fkey on table groups"
+        assertEquals(AdminError.GROUP_NOT_EMPTY, adminErrorFor(409, AdminError.LEGAL_HOLD, children))
+        assertEquals(
+            AdminError.LEGAL_HOLD,
+            adminErrorFor(409, AdminError.LEGAL_HOLD, "A legal hold protects this group"),
+        )
     }
 
     @Test

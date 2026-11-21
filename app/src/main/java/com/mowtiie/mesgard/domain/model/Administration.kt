@@ -29,6 +29,7 @@ internal enum class AdminError {
     LAST_ADMIN,
     NOT_ERASABLE,
     LEGAL_HOLD,
+    GROUP_NOT_EMPTY,
     UNKNOWN,
 }
 

@@ -12,5 +12,6 @@ internal fun AdminError.messageResource(): Int = when (this) {
     AdminError.LAST_ADMIN -> R.string.admin_error_last_admin
     AdminError.NOT_ERASABLE -> R.string.admin_error_not_erasable
     AdminError.LEGAL_HOLD -> R.string.admin_error_legal_hold
+    AdminError.GROUP_NOT_EMPTY -> R.string.admin_error_group_not_empty
     AdminError.UNKNOWN -> R.string.admin_error_unknown
 }
