@@ -45,6 +45,7 @@ import com.mowtiie.mesgard.ui.common.NoteField
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.reports.rememberDateTimeFormatter
 
+private const val EMPTY_STATE_HEIGHT_FRACTION = 0.7f
 private val ContentPadding = 16.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,6 +129,7 @@ private fun HoldList(uiState: LegalHoldsUiState, onRelease: (LegalHold) -> Unit,
                     R.drawable.illustration_audit_log,
                     R.string.legal_holds_empty,
                     R.string.legal_holds_empty_hint,
+                    modifier = Modifier.fillParentMaxHeight(EMPTY_STATE_HEIGHT_FRACTION),
                 )
             }
         }
