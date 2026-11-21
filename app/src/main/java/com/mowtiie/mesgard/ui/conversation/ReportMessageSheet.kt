@@ -13,7 +13,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -24,8 +23,10 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.domain.model.REPORT_NOTE_MAX_LENGTH
 import com.mowtiie.mesgard.domain.model.ReportCategory
 import com.mowtiie.mesgard.domain.model.ReportError
+import com.mowtiie.mesgard.ui.common.NoteField
 import com.mowtiie.mesgard.ui.settings.RadioGroup
 import com.mowtiie.mesgard.ui.settings.RadioLabel
 import com.mowtiie.mesgard.ui.settings.SwitchRow
@@ -97,14 +98,16 @@ private fun ReportForm(state: ReportMessageUiState, actions: ReportMessageAction
         onSelected = { chosen -> chosen?.let(actions.onCategoryChanged) },
         enabled = state.stage == ReportStage.FORM,
     )
-    OutlinedTextField(
+    NoteField(
         value = state.note,
         onValueChange = actions.onNoteChanged,
-        label = { Text(stringResource(R.string.report_note_label)) },
+        label = R.string.report_note_label,
+        helper = stringResource(R.string.report_note_helper),
+        maxLength = REPORT_NOTE_MAX_LENGTH,
         minLines = NOTE_MIN_LINES,
         maxLines = NOTE_MAX_LINES,
         enabled = state.stage == ReportStage.FORM,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = SheetPadding),
+        modifier = Modifier.padding(horizontal = SheetPadding),
     )
     SwitchRow(
         title = R.string.report_anonymous_title,

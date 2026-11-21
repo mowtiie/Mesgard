@@ -129,7 +129,8 @@
     <string name="members_add_button">Add</string>
     <string name="members_add_help">The person gets a temporary password that is shown once. They choose their own password the first time they sign in.</string>
     <string name="members_email_label">Email</string>
-    <string name="members_name_label">Name (optional)</string>
+    <string name="members_name_label">Name</string>
+    <string name="members_name_helper">Optional</string>
     <string name="members_role_label">Role</string>
     <string name="members_actions">Actions for %1$s</string>
     <string name="members_change_role">Change role</string>
@@ -384,7 +385,8 @@
     <string name="report_category_child_safety">Sexual content involving a minor</string>
     <string name="report_category_child_safety_summary">It is also a crime. Tell the authorities as well.</string>
     <string name="report_category_other">Something else</string>
-    <string name="report_note_label">Add details (optional)</string>
+    <string name="report_note_label">Details</string>
+    <string name="report_note_helper">Optional. The people who review the report see this.</string>
     <string name="report_anonymous_title">Report anonymously</string>
     <string name="report_anonymous_summary">Reviewers will not see your name. An organization admin can still find out who reported, and that is recorded.</string>
     <string name="report_send">Send report</string>
@@ -438,12 +440,14 @@
     <string name="report_event_other">Other</string>
     <string name="report_decide_resolve_title">Resolve report</string>
     <string name="report_decide_dismiss_title">Dismiss report</string>
-    <string name="report_decide_note_label">Note (required)</string>
+    <string name="report_decide_note_label">Note</string>
+    <string name="report_decide_note_helper">Required. Kept in the history of the report.</string>
     <string name="report_decide_remove">Remove the message</string>
     <string name="report_decide_remove_summary">It is hidden from the conversation. The copy in this report is kept.</string>
     <string name="report_reveal_title">Show the reporter</string>
     <string name="report_reveal_text">The reporter chose to stay anonymous. This is recorded in the audit log. Use it only when a report may be false or abusive.</string>
-    <string name="report_reveal_reason_label">Reason (at least 10 characters)</string>
+    <string name="report_reveal_reason_label">Reason</string>
+    <string name="report_reveal_reason_helper">At least %d characters. Recorded in the audit log.</string>
     <string name="report_reveal_confirm">Show</string>
     <string name="report_revealed_title">Reporter</string>
     <string name="report_reviewers_title">Report reviewers</string>
@@ -505,7 +509,8 @@
     <string name="legal_hold_place_person">Nothing about %1$s will be erased while the hold is active.</string>
     <string name="legal_hold_place_group">%1$s and its group chat cannot be deleted while the hold is active.</string>
     <string name="legal_hold_place_organization">Nobody in your organization can be erased and no group can be deleted while the hold is active.</string>
-    <string name="legal_hold_reason_label">Reason (at least 10 characters)</string>
+    <string name="legal_hold_reason_label">Reason</string>
+    <string name="legal_hold_reason_helper">At least %d characters.</string>
     <string name="legal_hold_place_confirm">Place hold</string>
     <string name="legal_hold_placed_title">Legal hold placed</string>
     <string name="legal_hold_placed_text">It is listed under Legal holds in Administration, where you can release it.</string>
@@ -517,7 +522,8 @@
     <string name="legal_hold_release">Release</string>
     <string name="legal_hold_release_title">Release legal hold</string>
     <string name="legal_hold_release_text">%1$s will no longer be protected by this hold.</string>
-    <string name="legal_hold_release_note_label">Note (required)</string>
+    <string name="legal_hold_release_note_label">Note</string>
+    <string name="legal_hold_release_note_helper">Required. Recorded when the hold is released.</string>
     <string name="your_data_title">Your data</string>
     <string name="your_data_summary">How your data is handled</string>
     <string name="settings_privacy_notice_summary">Link your privacy notice.</string>

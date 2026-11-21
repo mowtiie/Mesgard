@@ -16,7 +16,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -42,6 +41,7 @@ import com.mowtiie.mesgard.domain.model.LegalHoldScope
 import com.mowtiie.mesgard.domain.model.REPORT_NOTE_MAX_LENGTH
 import com.mowtiie.mesgard.ui.admin.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
+import com.mowtiie.mesgard.ui.common.NoteField
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.reports.rememberDateTimeFormatter
 
@@ -162,12 +162,13 @@ private fun ReleaseDialog(hold: LegalHold, onConfirm: (String) -> Unit, onDismis
         text = {
             Column {
                 Text(stringResource(R.string.legal_hold_release_text, hold.targetName()))
-                OutlinedTextField(
+                NoteField(
                     value = note,
-                    onValueChange = { note = it.take(REPORT_NOTE_MAX_LENGTH) },
-                    label = { Text(stringResource(R.string.legal_hold_release_note_label)) },
-                    minLines = 2,
-                    modifier = Modifier.fillMaxWidth().padding(top = ContentPadding),
+                    onValueChange = { note = it },
+                    label = R.string.legal_hold_release_note_label,
+                    helper = stringResource(R.string.legal_hold_release_note_helper),
+                    maxLength = REPORT_NOTE_MAX_LENGTH,
+                    modifier = Modifier.padding(top = ContentPadding),
                 )
             }
         },

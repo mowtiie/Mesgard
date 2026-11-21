@@ -2,10 +2,8 @@ package com.mowtiie.mesgard.ui.legalhold
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -13,7 +11,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -23,6 +20,7 @@ import com.mowtiie.mesgard.domain.model.HOLD_REASON_MIN_LENGTH
 import com.mowtiie.mesgard.domain.model.HoldTarget
 import com.mowtiie.mesgard.domain.model.REPORT_NOTE_MAX_LENGTH
 import com.mowtiie.mesgard.ui.admin.messageResource
+import com.mowtiie.mesgard.ui.common.NoteField
 
 private val FieldSpacing = 12.dp
 
@@ -63,13 +61,13 @@ internal fun PlaceHoldDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(FieldSpacing)) {
                 Text(stringResource(target.explanationResource(), target.displayName()))
-                OutlinedTextField(
+                NoteField(
                     value = reason,
-                    onValueChange = { reason = it.take(REPORT_NOTE_MAX_LENGTH) },
-                    label = { Text(stringResource(R.string.legal_hold_reason_label)) },
-                    minLines = 2,
+                    onValueChange = { reason = it },
+                    label = R.string.legal_hold_reason_label,
+                    helper = stringResource(R.string.legal_hold_reason_helper, HOLD_REASON_MIN_LENGTH),
+                    maxLength = REPORT_NOTE_MAX_LENGTH,
                     enabled = !uiState.isPlacing,
-                    modifier = Modifier.fillMaxWidth(),
                 )
                 uiState.error?.let {
                     Text(

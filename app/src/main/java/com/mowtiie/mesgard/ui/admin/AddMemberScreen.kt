@@ -164,7 +164,7 @@ private fun NameField(uiState: AddMemberUiState, onChange: (String) -> Unit, onD
         singleLine = true,
         enabled = !uiState.isSaving,
         isError = message != null,
-        supportingText = message?.let { text -> { Text(text) } },
+        supportingText = { Text(message ?: stringResource(R.string.members_name_helper)) },
         modifier = Modifier.fillMaxWidth().semantics { message?.let { error(it) } },
     )
 }

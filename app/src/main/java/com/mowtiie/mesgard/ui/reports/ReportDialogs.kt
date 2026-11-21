@@ -2,14 +2,12 @@ package com.mowtiie.mesgard.ui.reports
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.REPORT_NOTE_MAX_LENGTH
 import com.mowtiie.mesgard.domain.model.ReportStatus
+import com.mowtiie.mesgard.ui.common.NoteField
 
 private val FieldSpacing = 12.dp
 
@@ -67,12 +66,12 @@ private fun DecisionDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(FieldSpacing)) {
-                OutlinedTextField(
+                NoteField(
                     value = note,
-                    onValueChange = { note = it.take(REPORT_NOTE_MAX_LENGTH) },
-                    label = { Text(stringResource(R.string.report_decide_note_label)) },
-                    minLines = 2,
-                    modifier = Modifier.fillMaxWidth(),
+                    onValueChange = { note = it },
+                    label = R.string.report_decide_note_label,
+                    helper = stringResource(R.string.report_decide_note_helper),
+                    maxLength = REPORT_NOTE_MAX_LENGTH,
                 )
                 if (hasMessage && isResolve) {
                     ListItem(
@@ -111,12 +110,13 @@ private fun RevealDialog(onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(FieldSpacing)) {
                 Text(stringResource(R.string.report_reveal_text))
-                OutlinedTextField(
+                NoteField(
                     value = reason,
-                    onValueChange = { reason = it.take(REPORT_NOTE_MAX_LENGTH) },
-                    label = { Text(stringResource(R.string.report_reveal_reason_label)) },
-                    minLines = 2,
-                    modifier = Modifier.fillMaxWidth().padding(top = FieldSpacing),
+                    onValueChange = { reason = it },
+                    label = R.string.report_reveal_reason_label,
+                    helper = stringResource(R.string.report_reveal_reason_helper, REVEAL_REASON_MIN_LENGTH),
+                    maxLength = REPORT_NOTE_MAX_LENGTH,
+                    modifier = Modifier.padding(top = FieldSpacing),
                 )
             }
         },
