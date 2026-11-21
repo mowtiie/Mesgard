@@ -27,6 +27,7 @@ class FakeApi implements AdminApi {
   order: string[] = [];
   files = new Map<string, string[]>();
   failRemovingFiles = false;
+  heldUsers = new Set<string>();
   private nextId = 1;
 
   getUserId(token: string) {
@@ -83,6 +84,9 @@ class FakeApi implements AdminApi {
   }
   wasRemovedFrom(_token: string, _orgId: string, userId: string) {
     return Promise.resolve(this.removedRecords.has(userId));
+  }
+  hasLegalHold(userId: string) {
+    return Promise.resolve(this.heldUsers.has(userId));
   }
   listAttachmentPaths(userId: string) {
     return Promise.resolve(this.files.get(userId) ?? []);
@@ -438,6 +442,19 @@ Deno.test("nothing is erased when the server turned erasure off", async () => {
   assertEquals(response.status, 409);
   assertEquals((await response.json()).error, "erasure_off");
   assertEquals(api.order, []);
+});
+
+Deno.test("a person under a legal hold is not removed, their files are not deleted and nothing is scrubbed", async () => {
+  const api = new FakeApi();
+  api.policy = "blank_messages";
+  api.heldUsers.add(MEMBER);
+
+  const response = await erase(api);
+
+  assertEquals(response.status, 409);
+  assertEquals((await response.json()).error, "legal_hold");
+  assertEquals(api.order, []);
+  assertEquals(api.audits.includes(`member.erased ${MEMBER}`), false);
 });
 
 Deno.test("an administrator cannot erase themselves", async () => {

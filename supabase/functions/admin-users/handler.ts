@@ -33,6 +33,8 @@ export interface AdminApi {
   getLoginEmail(userId: string): Promise<string | null>;
   /** True when the audit log shows that this organization removed the person. */
   wasRemovedFrom(token: string, orgId: string, userId: string): Promise<boolean>;
+  /** True when a legal hold or an open report protects the person, so nothing about them may be erased. */
+  hasLegalHold(userId: string): Promise<boolean>;
   /** The storage paths of every file the person uploaded, attached to a message or not. */
   listAttachmentPaths(userId: string): Promise<string[]>;
   /** Deletes files from Storage, which SQL cannot do. Files that are already gone are not an error. */
@@ -247,6 +249,8 @@ async function eraseMember(
   const policy = await api.erasurePolicy(token);
   if (policy === "off") return json({ error: "erasure_off" }, 409);
   if (request.userId === callerId) return json({ error: "cannot_erase_self" }, 400);
+  // Asked first, before the person is removed or any file is deleted, because none of that can be taken back.
+  if (await api.hasLegalHold(request.userId)) return json({ error: "legal_hold" }, 409);
 
   const refusal = await removeBeforeErasing(request, token, api);
   if (refusal) return refusal;

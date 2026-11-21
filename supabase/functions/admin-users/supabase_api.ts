@@ -220,6 +220,18 @@ export function createSupabaseApi({ url, anonKey, serviceRoleKey }: SupabaseApiS
       return (await response.json()).length > 0;
     },
 
+    async hasLegalHold(userId) {
+      const response = await expectOk(
+        await fetch(`${url}/rest/v1/rpc/legal_hold_blocks_erasure`, {
+          method: "POST",
+          headers: asService,
+          body: JSON.stringify({ target_user_id: userId }),
+        }),
+        "Checking for a legal hold",
+      );
+      return await response.json();
+    },
+
     async listAttachmentPaths(userId) {
       const response = await expectOk(
         await fetch(`${url}/rest/v1/rpc/list_user_attachment_paths`, {
