@@ -7,6 +7,7 @@ internal data class AdminNavigation(
     val onOpenFormerMembers: () -> Unit,
     val onOpenAuditLog: () -> Unit,
     val onOpenReportReviewers: () -> Unit,
+    val onOpenPrivacyNoticeSettings: () -> Unit,
     val onAddMember: () -> Unit,
     val onImportMembers: () -> Unit,
 )

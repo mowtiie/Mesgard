@@ -8,5 +8,6 @@ internal data class SettingsNavigation(
     val onOpenAppearance: () -> Unit,
     val onOpenNotifications: () -> Unit,
     val onOpenSecurity: () -> Unit,
+    val onOpenPrivacyNotice: () -> Unit,
     val onOpenAbout: () -> Unit,
 )

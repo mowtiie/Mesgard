@@ -19,6 +19,7 @@ import com.mowtiie.mesgard.ui.connectivity.LocalConnectionRetry
 import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.lock.LockScreenRoute
 import com.mowtiie.mesgard.ui.navigation.MesgardNavHost
+import com.mowtiie.mesgard.ui.privacy.PrivacyNoticeGate
 import com.mowtiie.mesgard.ui.server.LocalServerStatus
 import com.mowtiie.mesgard.ui.server.ServerStatusViewModel
 
@@ -48,11 +49,13 @@ internal fun MesgardApp(
                 state.mfaStep == MfaStep.VERIFY -> MfaCodeRoute()
                 state.mfaStep == MfaStep.ENROLL -> MfaEnrollmentRoute()
                 state.mustChangePassword -> PasswordChangeRoute()
-                else -> MesgardNavHost(
-                    onSignOut = viewModel::onSignOutClicked,
-                    conversationToOpen = conversationToOpen,
-                    onConversationOpened = onConversationOpened,
-                )
+                else -> PrivacyNoticeGate(userId = state.userId, content = {
+                    MesgardNavHost(
+                        onSignOut = viewModel::onSignOutClicked,
+                        conversationToOpen = conversationToOpen,
+                        onConversationOpened = onConversationOpened,
+                    )
+                })
             }
         }
     }

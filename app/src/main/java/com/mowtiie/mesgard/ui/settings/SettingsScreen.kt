@@ -97,6 +97,12 @@ internal fun SettingsScreen(
                 onClick = navigation.onOpenSecurity,
             )
             SettingsCategoryRow(
+                icon = { Icon(painterResource(R.drawable.ic_description), contentDescription = null) },
+                title = R.string.privacy_notice_title,
+                summary = stringResource(R.string.privacy_notice_summary),
+                onClick = navigation.onOpenPrivacyNotice,
+            )
+            SettingsCategoryRow(
                 icon = { Icon(Icons.Outlined.Info, contentDescription = null) },
                 title = R.string.about_title,
                 summary = stringResource(R.string.settings_about_summary, BuildConfig.VERSION_NAME),

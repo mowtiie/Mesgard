@@ -73,6 +73,12 @@ internal fun ManageSection(uiState: AdministrationUiState, navigation: AdminNavi
         onClick = navigation.onOpenGroups,
     )
     ManageRow(
+        icon = { Icon(painterResource(R.drawable.ic_description), contentDescription = null) },
+        title = R.string.privacy_notice_settings_title,
+        summary = stringResource(R.string.settings_privacy_notice_summary),
+        onClick = navigation.onOpenPrivacyNoticeSettings,
+    )
+    ManageRow(
         icon = { Icon(painterResource(R.drawable.ic_flag), contentDescription = null) },
         title = R.string.report_reviewers_title,
         summary = stringResource(R.string.settings_report_reviewers_summary),
