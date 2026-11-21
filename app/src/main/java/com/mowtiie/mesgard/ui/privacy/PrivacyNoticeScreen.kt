@@ -42,7 +42,7 @@ internal fun PrivacyNoticeScreenRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     TitledScreen(
-        title = stringResource(R.string.privacy_notice_title),
+        title = stringResource(R.string.your_data_title),
         modifier = modifier,
         navigationIcon = {
             IconButton(onClick = onBack) {

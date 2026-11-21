@@ -496,8 +496,8 @@
     <string name="legal_hold_release_title">Release legal hold</string>
     <string name="legal_hold_release_text">%1$s will no longer be protected by this hold.</string>
     <string name="legal_hold_release_note_label">Note (required)</string>
-    <string name="privacy_notice_title">Privacy notice</string>
-    <string name="privacy_notice_summary">How your data is handled and your organization\'s notice.</string>
+    <string name="your_data_title">Your data</string>
+    <string name="your_data_summary">How your data is handled</string>
     <string name="settings_privacy_notice_summary">Link your privacy notice.</string>
     <string name="privacy_summary_title">How your data is handled</string>
     <string name="privacy_summary_stored">Your messages and files are kept on your organization\'s server. Mesgard has no advertising, does not track you and does not sell your data.</string>
@@ -658,6 +658,15 @@
     <string name="about_error_open_link">No app on this device can open this link.</string>
     <string name="licenses_title">Open source licenses</string>
     <string name="licenses_note">The full license texts are in the repository of each project.</string>
+    <string name="settings_section_preferences">Preferences</string>
+    <string name="settings_section_privacy">Privacy</string>
+    <string name="settings_section_organization">Organization</string>
+    <string name="settings_account_organization">%1$s, %2$s</string>
+    <string name="settings_account_no_organization">No organization</string>
+    <plurals name="settings_account_organizations">
+        <item quantity="one">%d organization</item>
+        <item quantity="other">%d organizations</item>
+    </plurals>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_appearance_summary_dynamic">%1$s, dynamic color</string>
     <string name="settings_notifications_title">Notifications</string>

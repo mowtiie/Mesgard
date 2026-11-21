@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.BuildConfig
@@ -29,8 +30,8 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.DeviceSettings
 import com.mowtiie.mesgard.ui.account.SignOutDialog
 import com.mowtiie.mesgard.ui.common.ScrollingPage
+import com.mowtiie.mesgard.ui.common.SectionHeader
 import com.mowtiie.mesgard.ui.common.TitledScreen
-import com.mowtiie.mesgard.ui.reports.ReportsEntry
 import com.mowtiie.mesgard.ui.theme.IsDynamicColorSupported
 
 @Composable
@@ -73,8 +74,7 @@ internal fun SettingsScreen(
     ) { padding ->
         ScrollingPage(padding) {
             AccountSummary(navigation.onOpenAccount)
-            AdministrationEntry(navigation.onOpenAdministration)
-            ReportsEntry(navigation.onOpenReports)
+            SectionHeader(R.string.settings_section_preferences)
             SettingsCategoryRow(
                 icon = { Icon(painterResource(R.drawable.ic_palette), contentDescription = null) },
                 title = R.string.settings_appearance,
@@ -87,6 +87,7 @@ internal fun SettingsScreen(
                 summary = notificationsSummary(uiState.pushDistributorName),
                 onClick = navigation.onOpenNotifications,
             )
+            SectionHeader(R.string.settings_section_privacy)
             SettingsCategoryRow(
                 icon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                 title = R.string.settings_privacy_security,
@@ -95,17 +96,19 @@ internal fun SettingsScreen(
             )
             SettingsCategoryRow(
                 icon = { Icon(painterResource(R.drawable.ic_description), contentDescription = null) },
-                title = R.string.privacy_notice_title,
-                summary = stringResource(R.string.privacy_notice_summary),
+                title = R.string.your_data_title,
+                summary = stringResource(R.string.your_data_summary),
                 onClick = navigation.onOpenPrivacyNotice,
             )
+            OrganizationSection(navigation)
+            SectionHeader(R.string.about_section_app)
             SettingsCategoryRow(
                 icon = { Icon(Icons.Outlined.Info, contentDescription = null) },
                 title = R.string.about_title,
                 summary = stringResource(R.string.settings_about_summary, BuildConfig.VERSION_NAME),
                 onClick = navigation.onOpenAbout,
             )
-            HorizontalDivider()
+            HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
             SignOutRow { isSignOutConfirmationShown = true }
         }
     }
