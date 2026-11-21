@@ -53,13 +53,13 @@ internal fun SecuritySettingsScreenRoute(
         error = uiState.error,
         onErrorShown = viewModel::onErrorShown,
     ) {
+        SectionHeader(R.string.settings_section_device)
         SwitchRow(
             title = R.string.settings_screen_privacy,
             summary = R.string.settings_screen_privacy_summary,
             checked = uiState.settings.screenPrivacyEnabled,
             onCheckedChange = viewModel::onScreenPrivacyChanged,
         )
-        OnlineStatusRow()
         SwitchRow(
             title = R.string.settings_app_lock,
             summary = R.string.settings_app_lock_summary,
@@ -74,6 +74,8 @@ internal fun SecuritySettingsScreenRoute(
                 onSelected = viewModel::onLockTimeoutSelected,
             )
         }
+        SectionHeader(R.string.settings_section_visibility)
+        OnlineStatusRow()
     }
 }
 

@@ -470,7 +470,9 @@
     <string name="messaging_rules_time_zone">Times are in the time zone %1$s.</string>
     <string name="messaging_rules_time_set">Set</string>
     <string name="settings_online_status">Show when I am online</string>
-    <string name="settings_online_status_summary">People in your organization see Online next to your name while Mesgard is open. Students are hidden until they choose to show it.</string>
+    <string name="settings_online_status_summary">People in your organizations see Online next to your name while Mesgard is open. This applies to every organization you belong to.</string>
+    <string name="settings_section_device">On this phone</string>
+    <string name="settings_section_visibility">Visibility</string>
     <string name="privacy_summary_online">Others see that you are online only if you choose. Students start hidden.</string>
     <string name="legal_holds_title">Legal holds</string>
     <string name="settings_legal_holds_summary">Protect data during a case or a legal order.</string>

@@ -22,18 +22,21 @@ import kotlinx.coroutines.launch
 
 private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
 
-/** Whether the person is shown online: their own choice, or the default of their role until they choose. */
+/**
+ * Whether the person is shown online: their own choice, or the default of their role until they choose. It is null
+ * until the account is known, because the default depends on the role and a guess would flash the wrong state.
+ */
 @HiltViewModel
 internal class OnlineStatusViewModel @Inject constructor(
     private val onlineStatus: OnlineStatusRepository,
     accountRepository: AccountRepository,
 ) : ViewModel() {
-    val isShown: StateFlow<Boolean> = combine(onlineStatus.choice, accountRepository.observeAccount()) {
+    val isShown: StateFlow<Boolean?> = combine(onlineStatus.choice, accountRepository.observeAccount()) {
             choice,
             account,
         ->
-        choice ?: onlineStatusDefault(isStudent = account.isOnlyStudent())
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), false)
+        choice ?: account?.let { onlineStatusDefault(isStudent = it.isOnlyStudent()) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), null)
 
     init {
         viewModelScope.launch { onlineStatus.refresh() }
@@ -44,9 +47,7 @@ internal class OnlineStatusViewModel @Inject constructor(
     }
 }
 
-private fun Account?.isOnlyStudent() = this != null &&
-    memberships.isNotEmpty() &&
-    memberships.all { it.role == OrgRole.MEMBER }
+private fun Account.isOnlyStudent() = memberships.isNotEmpty() && memberships.all { it.role == OrgRole.MEMBER }
 
 @Composable
 internal fun OnlineStatusRow(viewModel: OnlineStatusViewModel = hiltViewModel()) {
@@ -54,7 +55,8 @@ internal fun OnlineStatusRow(viewModel: OnlineStatusViewModel = hiltViewModel())
     SwitchRow(
         title = R.string.settings_online_status,
         summary = R.string.settings_online_status_summary,
-        checked = isShown,
+        checked = isShown == true,
         onCheckedChange = viewModel::onChanged,
+        enabled = isShown != null,
     )
 }

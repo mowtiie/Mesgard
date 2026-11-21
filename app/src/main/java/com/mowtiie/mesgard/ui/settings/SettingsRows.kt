@@ -22,12 +22,18 @@ internal fun SwitchRow(
     @StringRes summary: Int,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true,
 ) {
     ListItem(
-        modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
+        modifier = Modifier.toggleable(
+            value = checked,
+            enabled = enabled,
+            role = Role.Switch,
+            onValueChange = onCheckedChange,
+        ),
         headlineContent = { Text(stringResource(title)) },
         supportingContent = { Text(stringResource(summary)) },
-        trailingContent = { Switch(checked = checked, onCheckedChange = null) },
+        trailingContent = { Switch(checked = checked, onCheckedChange = null, enabled = enabled) },
     )
 }
 

@@ -15,8 +15,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 
@@ -40,26 +40,33 @@ class OnlineStatusViewModelTest {
 
     @Test
     fun `a student is hidden until they choose`() = runTest {
-        viewModel(OrgRole.MEMBER).isShown.test { assertFalse(expectMostRecentItem()) }
+        viewModel(OrgRole.MEMBER).isShown.test { assertEquals(false, expectMostRecentItem()) }
     }
 
     @Test
     fun `staff and administrators are shown until they choose`() = runTest {
-        viewModel(OrgRole.STAFF).isShown.test { assertTrue(expectMostRecentItem()) }
-        viewModel(OrgRole.ORG_ADMIN).isShown.test { assertTrue(expectMostRecentItem()) }
+        viewModel(OrgRole.STAFF).isShown.test { assertEquals(true, expectMostRecentItem()) }
+        viewModel(OrgRole.ORG_ADMIN).isShown.test { assertEquals(true, expectMostRecentItem()) }
     }
 
     @Test
     fun `a person who is a student in one place and staff in another is shown`() = runTest {
-        viewModel(OrgRole.MEMBER, OrgRole.STAFF).isShown.test { assertTrue(expectMostRecentItem()) }
+        viewModel(OrgRole.MEMBER, OrgRole.STAFF).isShown.test { assertEquals(true, expectMostRecentItem()) }
     }
 
     @Test
     fun `an own choice beats the default`() = runTest {
         choice.value = true
-        viewModel(OrgRole.MEMBER).isShown.test { assertTrue(expectMostRecentItem()) }
+        viewModel(OrgRole.MEMBER).isShown.test { assertEquals(true, expectMostRecentItem()) }
         choice.value = false
-        viewModel(OrgRole.STAFF).isShown.test { assertFalse(expectMostRecentItem()) }
+        viewModel(OrgRole.STAFF).isShown.test { assertEquals(false, expectMostRecentItem()) }
+    }
+
+    @Test
+    fun `nothing is decided until the account is known`() = runTest {
+        every { accountRepository.observeAccount() } returns flowOf<Account?>(null)
+
+        OnlineStatusViewModel(onlineStatus, accountRepository).isShown.test { assertNull(expectMostRecentItem()) }
     }
 
     @Test
