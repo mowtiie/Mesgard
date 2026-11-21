@@ -51,6 +51,7 @@ private val Templates = mapOf(
     "organization.privacy_notice_changed" to Template(R.string.audit_privacy_notice_changed, listOf(Slot.ACTOR)),
     "organization.retention_changed" to Template(R.string.audit_retention_changed, listOf(Slot.ACTOR)),
     "member.data_exported" to Template(R.string.audit_member_data_exported, listOf(Slot.ACTOR, Slot.PERSON)),
+    "organization.messaging_rules_changed" to Template(R.string.audit_messaging_rules_changed, listOf(Slot.ACTOR)),
     "legal_hold.placed" to Template(R.string.audit_legal_hold_placed, listOf(Slot.ACTOR)),
     "legal_hold.released" to Template(R.string.audit_legal_hold_released, listOf(Slot.ACTOR)),
 )

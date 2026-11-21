@@ -73,6 +73,12 @@ internal fun ManageSection(uiState: AdministrationUiState, navigation: AdminNavi
         onClick = navigation.onOpenGroups,
     )
     ManageRow(
+        icon = { Icon(painterResource(R.drawable.ic_chat_outline), contentDescription = null) },
+        title = R.string.messaging_rules_title,
+        summary = stringResource(R.string.settings_messaging_rules_summary),
+        onClick = navigation.onOpenMessagingRules,
+    )
+    ManageRow(
         icon = { Icon(painterResource(R.drawable.ic_schedule), contentDescription = null) },
         title = R.string.retention_title,
         summary = stringResource(R.string.settings_retention_summary),
