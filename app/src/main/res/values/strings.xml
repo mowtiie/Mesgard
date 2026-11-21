@@ -469,6 +469,9 @@
     <string name="messaging_rules_quiet_until">Until</string>
     <string name="messaging_rules_time_zone">Times are in the time zone %1$s.</string>
     <string name="messaging_rules_time_set">Set</string>
+    <string name="settings_online_status">Show when I am online</string>
+    <string name="settings_online_status_summary">People in your organization see Online next to your name while Mesgard is open. Students are hidden until they choose to show it.</string>
+    <string name="privacy_summary_online">Others see that you are online only if you choose. Students start hidden.</string>
     <string name="legal_holds_title">Legal holds</string>
     <string name="settings_legal_holds_summary">Protect data during a case or a legal order.</string>
     <string name="legal_holds_intro">While a hold is active, what your organization keeps about the person or the group is not erased or deleted. Open reports protect the people involved without a hold.</string>

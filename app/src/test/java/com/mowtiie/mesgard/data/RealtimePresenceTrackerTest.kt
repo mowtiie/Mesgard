@@ -1,11 +1,14 @@
 package com.mowtiie.mesgard.data
 
 import com.mowtiie.mesgard.data.lifecycle.InMemoryAppVisibility
+import com.mowtiie.mesgard.data.remote.PresenceMembership
 import com.mowtiie.mesgard.data.remote.PresenceRemoteSource
 import com.mowtiie.mesgard.data.sync.RealtimePresenceTracker
 import com.mowtiie.mesgard.domain.repository.AuthRepository
+import com.mowtiie.mesgard.domain.repository.OnlineStatusRepository
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -27,23 +30,32 @@ class RealtimePresenceTrackerTest {
     private var openSessions = 0
     private var failuresBeforeFetching = 0
     private var organizationIds = listOf("org-a")
+    private val studentOrganizations = mutableSetOf<String>()
+    private val announcements = mutableMapOf<String, Boolean>()
+    private val choice = MutableStateFlow<Boolean?>(null)
+    private val onlineStatus = mockk<OnlineStatusRepository>(relaxed = true) {
+        every { this@mockk.choice } returns
+            this@RealtimePresenceTrackerTest.choice
+    }
     private val source = object : PresenceRemoteSource {
-        override suspend fun fetchOrganizationIds(userId: String): List<String> {
+        override suspend fun fetchMemberships(userId: String): List<PresenceMembership> {
             if (failuresBeforeFetching > 0) {
                 failuresBeforeFetching--
                 throw IOException("offline")
             }
-            return organizationIds
+            return organizationIds.map { PresenceMembership(it, isStudent = it in studentOrganizations) }
         }
 
-        override fun session(organizationId: String, userId: String): Flow<Set<String>> =
-            onlineByOrganization.getOrPut(organizationId) { MutableStateFlow(emptySet()) }
+        override fun session(organizationId: String, userId: String, announce: Boolean): Flow<Set<String>> {
+            announcements[organizationId] = announce
+            return onlineByOrganization.getOrPut(organizationId) { MutableStateFlow(emptySet()) }
                 .onStart { openSessions++ }
                 .onCompletion { openSessions-- }
+        }
     }
     private val authRepository = mockk<AuthRepository> { every { currentUserId } returns "me" }
     private val visibility = InMemoryAppVisibility()
-    private val tracker = RealtimePresenceTracker(source, authRepository, visibility)
+    private val tracker = RealtimePresenceTracker(source, authRepository, visibility, onlineStatus)
 
     @Test
     fun `does not track while the app is in the background`() = runTest {
@@ -143,6 +155,64 @@ class RealtimePresenceTrackerTest {
         runCurrent()
 
         assertEquals(0, openSessions)
+    }
+
+    @Test
+    fun `a student is not announced until they choose to be`() = runTest {
+        organizationIds = listOf("school", "club")
+        studentOrganizations += "school"
+        tracker.start(backgroundScope)
+        visibility.setForeground(true)
+        runCurrent()
+
+        assertEquals(false, announcements["school"])
+        assertEquals(true, announcements["club"])
+    }
+
+    @Test
+    fun `a choice to be shown applies to a student too`() = runTest {
+        studentOrganizations += "org-a"
+        choice.value = true
+        tracker.start(backgroundScope)
+        visibility.setForeground(true)
+        runCurrent()
+
+        assertEquals(true, announcements["org-a"])
+    }
+
+    @Test
+    fun `a choice to hide applies to staff and the person still sees who is online`() = runTest {
+        choice.value = false
+        tracker.start(backgroundScope)
+        visibility.setForeground(true)
+        runCurrent()
+        onlineByOrganization.getValue("org-a").value = setOf("ana")
+        runCurrent()
+
+        assertEquals(false, announcements["org-a"])
+        assertEquals(setOf("ana"), tracker.onlineUserIds.value)
+    }
+
+    @Test
+    fun `changing the choice announces again without leaving the screen`() = runTest {
+        tracker.start(backgroundScope)
+        visibility.setForeground(true)
+        runCurrent()
+        assertEquals(true, announcements["org-a"])
+
+        choice.value = false
+        runCurrent()
+
+        assertEquals(false, announcements["org-a"])
+        assertEquals(1, openSessions)
+    }
+
+    @Test
+    fun `stopping forgets the choice of the person`() = runTest {
+        tracker.start(backgroundScope)
+        tracker.stop()
+
+        verify { onlineStatus.clear() }
     }
 
     private companion object {

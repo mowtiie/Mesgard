@@ -1,10 +1,13 @@
 package com.mowtiie.mesgard.data.sync
 
 import android.util.Log
+import com.mowtiie.mesgard.data.remote.PresenceMembership
 import com.mowtiie.mesgard.data.remote.PresenceRemoteSource
 import com.mowtiie.mesgard.domain.lifecycle.AppVisibility
 import com.mowtiie.mesgard.domain.presence.PresenceTracker
 import com.mowtiie.mesgard.domain.repository.AuthRepository
+import com.mowtiie.mesgard.domain.repository.OnlineStatusRepository
+import com.mowtiie.mesgard.domain.repository.onlineStatusDefault
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.min
@@ -34,6 +37,7 @@ internal class RealtimePresenceTracker @Inject constructor(
     private val source: PresenceRemoteSource,
     private val authRepository: AuthRepository,
     private val appVisibility: AppVisibility,
+    private val onlineStatus: OnlineStatusRepository,
 ) : PresenceTracker {
     private val mutableOnlineUserIds = MutableStateFlow(emptySet<String>())
     private var job: Job? = null
@@ -53,13 +57,15 @@ internal class RealtimePresenceTracker @Inject constructor(
         job?.cancel()
         job = null
         mutableOnlineUserIds.value = emptySet()
+        onlineStatus.clear()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun trackPresence() {
         val userId = authRepository.currentUserId ?: return
-        flow { emit(source.fetchOrganizationIds(userId)) }
-            .flatMapLatest { organizationIds -> onlineIn(organizationIds, userId) }
+        onlineStatus.refresh()
+        combine(flow { emit(source.fetchMemberships(userId)) }, onlineStatus.choice, ::Pair)
+            .flatMapLatest { (memberships, choice) -> onlineIn(memberships, userId, choice) }
             .retryWhen { cause, attempt ->
                 Log.w(TAG, "The presence subscription failed, retrying", cause)
                 delay(min(RETRY_BASE_DELAY_MS shl min(attempt.toInt(), MAX_BACKOFF_EXPONENT), RETRY_MAX_DELAY_MS))
@@ -68,9 +74,13 @@ internal class RealtimePresenceTracker @Inject constructor(
             .collect { mutableOnlineUserIds.value = it }
     }
 
-    private fun onlineIn(organizationIds: List<String>, userId: String): Flow<Set<String>> {
-        if (organizationIds.isEmpty()) return emptyFlow()
-        return combine(organizationIds.map { source.session(it, userId) }) { perOrganization ->
+    /** A person who has not chosen is shown unless they are a student there. A choice applies everywhere. */
+    private fun onlineIn(memberships: List<PresenceMembership>, userId: String, choice: Boolean?): Flow<Set<String>> {
+        if (memberships.isEmpty()) return emptyFlow()
+        val sessions = memberships.map {
+            source.session(it.organizationId, userId, announce = choice ?: onlineStatusDefault(it.isStudent))
+        }
+        return combine(sessions) { perOrganization ->
             perOrganization.fold(emptySet()) { all, online -> all + online }
         }
     }

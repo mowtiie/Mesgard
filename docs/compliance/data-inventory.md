@@ -21,7 +21,7 @@ What Mesgard stores, where it lives and who can read it. The institution can use
 | Notification preview mode | `user_settings`, `organizations.notification_preview_default` | The person, administrators for the default | |
 | Push subscription (endpoint and keys) | `push_subscriptions` | The Edge Function `send-push` (service role) | The endpoint is a capability URL. Keep it out of logs |
 | Administrative actions | `audit_logs` | Organization administrators | Append only |
-| Online status and typing | Realtime Presence and Broadcast | Members of the organization or conversation | Not stored. Visible to every member of the organization today |
+| Online status and typing | Realtime Presence and Broadcast | Members of the organization or conversation | Not stored. A person is shown online only when they choose; until then administrators and staff are shown and students are not. The choice is `user_settings.show_online_status`, private to the person. A modified app could still announce itself, so this is a privacy default, not an access control |
 
 ## On the device (Android)
 

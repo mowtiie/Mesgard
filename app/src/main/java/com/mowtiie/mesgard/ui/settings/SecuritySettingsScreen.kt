@@ -58,6 +58,7 @@ internal fun SecuritySettingsScreenRoute(
             checked = uiState.settings.screenPrivacyEnabled,
             onCheckedChange = viewModel::onScreenPrivacyChanged,
         )
+        OnlineStatusRow()
         SwitchRow(
             title = R.string.settings_app_lock,
             summary = R.string.settings_app_lock_summary,
