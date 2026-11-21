@@ -2,15 +2,22 @@ package com.mowtiie.mesgard.ui.settings
 
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -18,6 +25,8 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.NotificationPreview
 import com.mowtiie.mesgard.ui.common.SectionHeader
 import org.unifiedpush.android.connector.UnifiedPush
+
+private val PushButtonSpacing = 8.dp
 
 @Composable
 internal fun NotificationSettingsScreenRoute(
@@ -57,23 +66,34 @@ internal fun NotificationSettingsScreenRoute(
     }
 }
 
+/** Until a distributor app is chosen nothing arrives while Mesgard is closed, so the way to fix it is a button. */
 @Composable
-private fun PushSetupRow(distributorName: String?, onClick: () -> Unit) {
+private fun PushSetupRow(distributorName: String?, onChoose: () -> Unit) {
+    val isSetUp = distributorName != null
     ListItem(
-        modifier = Modifier.clickable(
-            onClickLabel = stringResource(R.string.settings_push_choose),
-            role = Role.Button,
-            onClick = onClick,
-        ),
+        leadingContent = {
+            if (isSetUp) {
+                Icon(Icons.Outlined.Notifications, contentDescription = null)
+            } else {
+                Icon(painterResource(R.drawable.ic_notifications_off), contentDescription = null)
+            }
+        },
         headlineContent = { Text(stringResource(R.string.settings_push)) },
         supportingContent = {
-            Text(
-                if (distributorName == null) {
-                    stringResource(R.string.settings_push_not_set_up)
+            Column(verticalArrangement = Arrangement.spacedBy(PushButtonSpacing)) {
+                Text(
+                    if (distributorName == null) {
+                        stringResource(R.string.settings_push_not_set_up)
+                    } else {
+                        stringResource(R.string.settings_push_using, distributorName)
+                    },
+                )
+                if (isSetUp) {
+                    OutlinedButton(onClick = onChoose) { Text(stringResource(R.string.settings_push_change)) }
                 } else {
-                    stringResource(R.string.settings_push_using, distributorName)
-                },
-            )
+                    FilledTonalButton(onClick = onChoose) { Text(stringResource(R.string.settings_push_choose_button)) }
+                }
+            }
         },
     )
 }
