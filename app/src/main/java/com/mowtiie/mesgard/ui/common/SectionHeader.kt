@@ -18,8 +18,13 @@ private val HeaderBottom = 4.dp
 /** The title of a group of rows. The space above separates it from the group before. */
 @Composable
 internal fun SectionHeader(@StringRes title: Int, modifier: Modifier = Modifier) {
+    SectionHeader(stringResource(title), modifier)
+}
+
+@Composable
+internal fun SectionHeader(title: String, modifier: Modifier = Modifier) {
     Text(
-        text = stringResource(title),
+        text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier.padding(start = HeaderSide, end = HeaderSide, top = HeaderTop, bottom = HeaderBottom)

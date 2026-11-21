@@ -1,85 +1,79 @@
 package com.mowtiie.mesgard.ui.privacy
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.PrivacyNotice
+import com.mowtiie.mesgard.ui.common.ExternalLinkIcon
+import com.mowtiie.mesgard.ui.common.SectionHeader
 
 private val ContentPadding = 16.dp
-private val ParagraphSpacing = 12.dp
+private val BlockPadding = 8.dp
 
-private val SummaryParagraphs = listOf(
-    R.string.privacy_summary_stored,
-    R.string.privacy_summary_not_encrypted,
-    R.string.privacy_summary_edits,
-    R.string.privacy_summary_retention,
-    R.string.privacy_summary_online,
-    R.string.privacy_summary_reports,
-    R.string.privacy_summary_device,
-    R.string.privacy_summary_questions,
+private class SummaryBlock(@StringRes val title: Int, @StringRes val text: Int)
+
+private val SummaryBlocks = listOf(
+    SummaryBlock(R.string.privacy_block_stored, R.string.privacy_summary_stored),
+    SummaryBlock(R.string.privacy_block_readers, R.string.privacy_summary_not_encrypted),
+    SummaryBlock(R.string.privacy_block_edits, R.string.privacy_summary_edits),
+    SummaryBlock(R.string.privacy_block_retention, R.string.privacy_summary_retention),
+    SummaryBlock(R.string.privacy_block_online, R.string.privacy_summary_online),
+    SummaryBlock(R.string.privacy_block_reports, R.string.privacy_summary_reports),
+    SummaryBlock(R.string.privacy_block_device, R.string.privacy_summary_device),
+    SummaryBlock(R.string.privacy_block_questions, R.string.privacy_summary_questions),
 )
 
 /** Plain language about how the app handles data, true for every organization, for adults and for children alike. */
 @Composable
 internal fun DataSummary() {
-    Column(
-        modifier = Modifier.padding(ContentPadding),
-        verticalArrangement = Arrangement.spacedBy(ParagraphSpacing),
-    ) {
-        Text(
-            text = stringResource(R.string.privacy_summary_title),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics { heading() },
-        )
-        SummaryParagraphs.forEach { paragraph ->
-            Text(text = stringResource(paragraph), style = MaterialTheme.typography.bodyMedium)
+    SectionHeader(R.string.privacy_summary_title)
+    SummaryBlocks.forEach { block ->
+        Column(modifier = Modifier.padding(horizontal = ContentPadding, vertical = BlockPadding)) {
+            Text(text = stringResource(block.title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = stringResource(block.text),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
 
 /** The links of one organization, or a note that it has not added a notice yet. */
 @Composable
-internal fun NoticeLinks(notice: PrivacyNotice, showOrganization: Boolean) {
-    val uriHandler = LocalUriHandler.current
-    Column(
-        modifier = Modifier.padding(ContentPadding),
-        verticalArrangement = Arrangement.spacedBy(ParagraphSpacing),
-    ) {
-        if (showOrganization) {
-            Text(
-                text = notice.orgName,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.semantics { heading() },
-            )
-        }
-        if (!notice.hasLinks) {
-            Text(
-                text = stringResource(R.string.privacy_notice_missing),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        notice.noticeUrl?.let { url ->
-            OutlinedButton(onClick = { uriHandler.openUri(url) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.privacy_notice_read))
-            }
-        }
-        notice.childNoticeUrl?.let { url ->
-            OutlinedButton(onClick = { uriHandler.openUri(url) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.privacy_notice_read_children))
-            }
-        }
+internal fun NoticeLinks(notice: PrivacyNotice) {
+    if (!notice.hasLinks) {
+        Text(
+            text = stringResource(R.string.privacy_notice_missing),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = ContentPadding, vertical = BlockPadding),
+        )
     }
+    notice.noticeUrl?.let { NoticeLinkRow(R.string.privacy_notice_read, it) }
+    notice.childNoticeUrl?.let { NoticeLinkRow(R.string.privacy_notice_read_children, it) }
+}
+
+@Composable
+private fun NoticeLinkRow(@StringRes title: Int, url: String) {
+    val uriHandler = LocalUriHandler.current
+    ListItem(
+        modifier = Modifier.clickable(role = Role.Button) { uriHandler.openUri(url) },
+        leadingContent = { Icon(painterResource(R.drawable.ic_description), contentDescription = null) },
+        headlineContent = { Text(stringResource(title)) },
+        trailingContent = { ExternalLinkIcon() },
+    )
 }

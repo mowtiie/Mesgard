@@ -29,6 +29,8 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.PrivacyNotice
 import com.mowtiie.mesgard.ui.admin.messageResource
+import com.mowtiie.mesgard.ui.common.ScrollingPage
+import com.mowtiie.mesgard.ui.common.SectionHeader
 import com.mowtiie.mesgard.ui.common.TitledScreen
 
 private val ContentPadding = 16.dp
@@ -50,10 +52,17 @@ internal fun PrivacyNoticeScreenRoute(
             }
         },
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+        ScrollingPage(padding) {
             if (uiState.isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            uiState.notices.forEach { notice ->
+                if (uiState.notices.size > 1) {
+                    SectionHeader(notice.orgName)
+                } else {
+                    SectionHeader(R.string.privacy_notice_section)
+                }
+                NoticeLinks(notice)
+            }
             DataSummary()
-            uiState.notices.forEach { NoticeLinks(it, showOrganization = uiState.notices.size > 1) }
             uiState.error?.let { ErrorText(it) }
         }
     }
@@ -81,7 +90,7 @@ internal fun PrivacyNoticeGateScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(start = ContentPadding, top = ContentPadding, end = ContentPadding),
             )
-            NoticeLinks(notice, showOrganization = false)
+            NoticeLinks(notice)
             DataSummary()
             error?.let { ErrorText(it) }
             Button(
