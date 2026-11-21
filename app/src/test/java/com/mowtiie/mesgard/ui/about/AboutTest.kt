@@ -5,6 +5,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+private const val FINGERPRINT_BYTES = 32
+
 class AboutTest {
     @Test
     fun `formats a digest as upper case pairs separated by colons`() {
@@ -19,6 +21,17 @@ class AboutTest {
             "E3:B0:C4:42:98:FC:1C:14:9A:FB:F4:C8:99:6F:B9:24:27:AE:41:E4:64:9B:93:4C:A4:95:99:1B:78:52:B8:55",
             formatFingerprint(digest),
         )
+    }
+
+    @Test
+    fun `breaks a fingerprint into lines of eight bytes without splitting a pair`() {
+        val fingerprint = formatFingerprint(ByteArray(FINGERPRINT_BYTES) { it.toByte() })
+
+        val lines = fingerprintLines(fingerprint).lines()
+
+        assertEquals(4, lines.size)
+        assertTrue(lines.all { it.split(":").size == 8 })
+        assertEquals(fingerprint, lines.joinToString(":"))
     }
 
     @Test

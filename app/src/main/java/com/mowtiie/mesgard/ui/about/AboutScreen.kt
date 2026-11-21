@@ -148,7 +148,7 @@ private fun AppSection(
         headlineContent = { Text(stringResource(R.string.about_signature)) },
         supportingContent = {
             Text(
-                text = fingerprint ?: stringResource(R.string.about_signature_unavailable),
+                text = fingerprint?.let(::fingerprintLines) ?: stringResource(R.string.about_signature_unavailable),
                 fontFamily = FontFamily.Monospace,
             )
         },
