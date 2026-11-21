@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="220dp"
+    android:viewportWidth="300"
+    android:viewportHeight="220">
+    <path
+        android:fillColor="@color/illustration_outline"
+        android:pathData="M60,200a90,10 0 1,0 180,0a90,10 0 1,0 -180,0z" />
+    <path
+        android:fillColor="@color/illustration_ink"
+        android:pathData="M150,38c-30,0 -50,22 -50,50v30l-14,22h128l-14,-22v-30c0,-28 -20,-50 -50,-50z" />
+    <path
+        android:fillColor="@color/illustration_ink"
+        android:pathData="M143,30a7,7 0 1,0 14,0a7,7 0 1,0 -14,0z" />
+    <path
+        android:fillColor="@color/illustration_ink_deep"
+        android:pathData="M132,146a18,18 0 0,0 36,0z" />
+    <path
+        android:fillColor="@color/illustration_ink_soft"
+        android:pathData="M118,92c0,-20 12,-34 28,-38c-14,6 -20,18 -20,38v24h-8z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M74,62c-8,10 -12,22 -12,34"
+        android:strokeColor="@color/illustration_accent"
+        android:strokeLineCap="round"
+        android:strokeWidth="6" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M58,42c-14,16 -20,36 -20,56"
+        android:strokeColor="@color/illustration_accent"
+        android:strokeLineCap="round"
+        android:strokeWidth="6" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M226,62c8,10 12,22 12,34"
+        android:strokeColor="@color/illustration_accent"
+        android:strokeLineCap="round"
+        android:strokeWidth="6" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M242,42c14,16 20,36 20,56"
+        android:strokeColor="@color/illustration_accent"
+        android:strokeLineCap="round"
+        android:strokeWidth="6" />
+    <path
+        android:fillColor="@color/illustration_accent"
+        android:pathData="M182,56a14,14 0 1,0 28,0a14,14 0 1,0 -28,0z" />
+</vector>

@@ -29,6 +29,7 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.PrivacyNotice
 import com.mowtiie.mesgard.ui.admin.messageResource
+import com.mowtiie.mesgard.ui.common.PageIllustration
 import com.mowtiie.mesgard.ui.common.ScrollingPage
 import com.mowtiie.mesgard.ui.common.SectionHeader
 import com.mowtiie.mesgard.ui.common.TitledScreen
@@ -79,6 +80,7 @@ internal fun PrivacyNoticeGateScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState())) {
+            PageIllustration(R.drawable.illustration_privacy)
             Text(
                 text = stringResource(R.string.privacy_gate_title),
                 style = MaterialTheme.typography.headlineSmall,
