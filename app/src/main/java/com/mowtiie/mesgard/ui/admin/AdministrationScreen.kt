@@ -25,8 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.domain.admin.RuleSummaries
 import com.mowtiie.mesgard.ui.common.ReadableWidth
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.server.ServerStatusNotice
@@ -37,8 +39,15 @@ internal fun AdministrationScreenRoute(
     navigation: AdminNavigation,
     modifier: Modifier = Modifier,
     viewModel: AdministrationViewModel = hiltViewModel(),
+    summaryViewModel: AdministrationSummaryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val summaries by summaryViewModel.summaries.collectAsStateWithLifecycle()
+    // A rule may have been changed on the page that was just closed, so read them again each time this one is shown.
+    LifecycleResumeEffect(Unit) {
+        summaryViewModel.refresh()
+        onPauseOrDispose {}
+    }
     var wasAdmin by remember { mutableStateOf(false) }
     // A person who loses the role while this page is open goes back. The server refuses their requests anyway.
     LaunchedEffect(uiState.isAdmin) {
@@ -50,6 +59,7 @@ internal fun AdministrationScreenRoute(
     }
     AdministrationScreen(
         uiState = uiState,
+        summaries = summaries,
         navigation = navigation,
         onBack = onBack,
         onRefresh = viewModel::onRefresh,
@@ -62,6 +72,7 @@ internal fun AdministrationScreenRoute(
 @Composable
 internal fun AdministrationScreen(
     uiState: AdministrationUiState,
+    summaries: RuleSummaries,
     navigation: AdminNavigation,
     onBack: () -> Unit,
     onRefresh: () -> Unit,
@@ -99,8 +110,8 @@ internal fun AdministrationScreen(
             ) {
                 ServerStatusNotice(forAdministrator = true, modifier = Modifier.padding(16.dp))
                 QuickActions(navigation)
-                ManageSection(uiState, navigation)
-                RecentActivitySection(uiState, navigation.onOpenAuditLog)
+                ManageSections(uiState, summaries, navigation)
+                RecentActivitySection(uiState)
             }
         }
     }
