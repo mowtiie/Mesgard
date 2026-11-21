@@ -26,6 +26,9 @@ import com.mowtiie.mesgard.ui.auth.MfaSetupScreenRoute
 import com.mowtiie.mesgard.ui.chats.ArchivedScreenRoute
 import com.mowtiie.mesgard.ui.contacts.ContactsScreenRoute
 import com.mowtiie.mesgard.ui.conversation.ConversationScreenRoute
+import com.mowtiie.mesgard.ui.reports.ReportDetailScreenRoute
+import com.mowtiie.mesgard.ui.reports.ReportReviewersScreenRoute
+import com.mowtiie.mesgard.ui.reports.ReportsScreenRoute
 import com.mowtiie.mesgard.ui.settings.AppearanceSettingsScreenRoute
 import com.mowtiie.mesgard.ui.settings.NotificationSettingsScreenRoute
 import com.mowtiie.mesgard.ui.settings.SecuritySettingsScreenRoute
@@ -61,6 +64,7 @@ internal fun MesgardNavHost(
                 navigation = SettingsNavigation(
                     onOpenAccount = { navController.navigate(AccountRoute) },
                     onOpenAdministration = { navController.navigate(AdministrationRoute) },
+                    onOpenReports = { navController.navigate(ReportsRoute) },
                     onOpenAppearance = { navController.navigate(AppearanceSettingsRoute) },
                     onOpenNotifications = { navController.navigate(NotificationSettingsRoute) },
                     onOpenSecurity = { navController.navigate(SecuritySettingsRoute) },
@@ -110,6 +114,7 @@ internal fun MesgardNavHost(
                     onOpenGroups = { navController.navigate(GroupsRoute) },
                     onOpenFormerMembers = { navController.navigate(FormerMembersRoute) },
                     onOpenAuditLog = { navController.navigate(AuditLogRoute) },
+                    onOpenReportReviewers = { navController.navigate(ReportReviewersRoute) },
                     onAddMember = { navController.navigate(AddMemberRoute) },
                     onImportMembers = { navController.navigate(ImportMembersRoute) },
                 ),
@@ -140,6 +145,18 @@ internal fun MesgardNavHost(
         }
         composable<FormerMembersRoute> {
             FormerMembersScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<ReportsRoute> {
+            ReportsScreenRoute(
+                onBack = { navController.popBackStack() },
+                onOpenReport = { navController.navigate(ReportRoute(it)) },
+            )
+        }
+        composable<ReportRoute> {
+            ReportDetailScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<ReportReviewersRoute> {
+            ReportReviewersScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<AuditLogRoute> {
             AuditLogScreenRoute(onBack = { navController.popBackStack() })

@@ -4,6 +4,7 @@ package com.mowtiie.mesgard.ui.settings
 internal data class SettingsNavigation(
     val onOpenAccount: () -> Unit,
     val onOpenAdministration: () -> Unit,
+    val onOpenReports: () -> Unit,
     val onOpenAppearance: () -> Unit,
     val onOpenNotifications: () -> Unit,
     val onOpenSecurity: () -> Unit,

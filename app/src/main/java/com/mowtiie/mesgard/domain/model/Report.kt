@@ -1,5 +1,7 @@
 package com.mowtiie.mesgard.domain.model
 
+internal const val REPORT_NOTE_MAX_LENGTH = 1000
+
 internal enum class ReportCategory {
     BULLYING,
     HARASSMENT,

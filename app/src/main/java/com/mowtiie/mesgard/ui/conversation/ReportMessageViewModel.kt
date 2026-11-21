@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.mowtiie.mesgard.domain.model.MessageReport
+import com.mowtiie.mesgard.domain.model.REPORT_NOTE_MAX_LENGTH
 import com.mowtiie.mesgard.domain.model.ReportCategory
 import com.mowtiie.mesgard.domain.model.ReportError
 import com.mowtiie.mesgard.domain.model.ReportResult
@@ -18,8 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-internal const val REPORT_NOTE_MAX_LENGTH = 1000
 
 internal enum class ReportStage { FORM, SENDING, SENT }
 

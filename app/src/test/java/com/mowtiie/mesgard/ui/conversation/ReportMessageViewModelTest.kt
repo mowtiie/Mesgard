@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.ui.conversation
 
 import androidx.lifecycle.SavedStateHandle
 import com.mowtiie.mesgard.domain.model.MessageReport
+import com.mowtiie.mesgard.domain.model.REPORT_NOTE_MAX_LENGTH
 import com.mowtiie.mesgard.domain.model.ReportCategory
 import com.mowtiie.mesgard.domain.model.ReportError
 import com.mowtiie.mesgard.domain.model.ReportResult

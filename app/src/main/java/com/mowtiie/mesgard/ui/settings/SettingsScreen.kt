@@ -33,6 +33,7 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.DeviceSettings
 import com.mowtiie.mesgard.ui.account.SignOutDialog
 import com.mowtiie.mesgard.ui.common.TitledScreen
+import com.mowtiie.mesgard.ui.reports.ReportsEntry
 import com.mowtiie.mesgard.ui.theme.IsDynamicColorSupported
 
 @Composable
@@ -76,6 +77,7 @@ internal fun SettingsScreen(
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
             AccountSummary(navigation.onOpenAccount)
             AdministrationEntry(navigation.onOpenAdministration)
+            ReportsEntry(navigation.onOpenReports)
             SettingsCategoryRow(
                 icon = { Icon(painterResource(R.drawable.ic_palette), contentDescription = null) },
                 title = R.string.settings_appearance,

@@ -66,4 +66,13 @@ internal data class AddGroupMembersRoute(val groupId: String)
 internal data object AuditLogRoute
 
 @Serializable
+internal data object ReportsRoute
+
+@Serializable
+internal data class ReportRoute(val reportId: String)
+
+@Serializable
+internal data object ReportReviewersRoute
+
+@Serializable
 internal data object FormerMembersRoute

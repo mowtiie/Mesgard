@@ -73,6 +73,12 @@ internal fun ManageSection(uiState: AdministrationUiState, navigation: AdminNavi
         onClick = navigation.onOpenGroups,
     )
     ManageRow(
+        icon = { Icon(painterResource(R.drawable.ic_flag), contentDescription = null) },
+        title = R.string.report_reviewers_title,
+        summary = stringResource(R.string.settings_report_reviewers_summary),
+        onClick = navigation.onOpenReportReviewers,
+    )
+    ManageRow(
         icon = { Icon(Icons.AutoMirrored.Outlined.List, contentDescription = null) },
         title = R.string.audit_title,
         summary = stringResource(R.string.settings_audit_summary),

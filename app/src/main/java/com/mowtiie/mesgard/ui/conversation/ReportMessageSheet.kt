@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -58,7 +59,12 @@ internal data class ReportMessageActions(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ReportMessageSheet(state: ReportMessageUiState, actions: ReportMessageActions) {
-    ModalBottomSheet(onDismissRequest = actions.onDismiss) {
+    // The rows are list items on the surface color, so the sheet takes it too, and it opens fully, as it is a form.
+    ModalBottomSheet(
+        onDismissRequest = actions.onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
         Column(
             modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = SheetPadding),
             verticalArrangement = Arrangement.spacedBy(SheetSpacing),
