@@ -450,6 +450,14 @@
         <item quantity="other">Keep for %d days</item>
     </plurals>
     <string name="retention_job_note">The limit only takes effect when the retention job runs on your server. Your server administrator schedules it; see the compliance guide in the repository.</string>
+    <string name="audit_member_data_exported">%1$s exported the data of %2$s</string>
+    <string name="export_menu">Export data</string>
+    <string name="export_title">Export data</string>
+    <string name="export_text">Create a file with the data your organization holds about %1$s, for an access request. It is recorded in the audit log. It holds the account, profile, groups, conversations and the messages they sent, not messages of other people, reports or the files themselves.</string>
+    <string name="export_confirm">Create file</string>
+    <string name="export_ready_title">Export ready</string>
+    <string name="export_ready_text">%1$s holds personal data. Share it only with the person who asked, or as the law requires. It is removed from this phone when you sign out.</string>
+    <string name="export_share">Share</string>
     <string name="legal_holds_title">Legal holds</string>
     <string name="settings_legal_holds_summary">Protect data during a case or a legal order.</string>
     <string name="legal_holds_intro">While a hold is active, what your organization keeps about the person or the group is not erased or deleted. Open reports protect the people involved without a hold.</string>

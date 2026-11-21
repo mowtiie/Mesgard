@@ -48,6 +48,7 @@ import com.mowtiie.mesgard.ui.common.SearchAction
 import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.labelResource
+import com.mowtiie.mesgard.ui.export.ExportDataDialog
 import com.mowtiie.mesgard.ui.legalhold.PlaceHoldDialog
 
 @Composable
@@ -103,6 +104,7 @@ internal fun MembersScreen(
     }
     var isSearching by rememberSaveable { mutableStateOf(false) }
     var holdTarget by remember { mutableStateOf<HoldTarget?>(null) }
+    var exportTarget by remember { mutableStateOf<Contact?>(null) }
 
     TitledScreen(
         title = stringResource(R.string.members_title),
@@ -151,13 +153,16 @@ internal fun MembersScreen(
                 onRefresh = onRefresh,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                MemberList(uiState, onMemberAction, onLegalHold = {
-                    holdTarget =
-                        HoldTarget.Person(it.userId, it.displayName)
-                })
+                MemberList(
+                    uiState = uiState,
+                    onMemberAction = onMemberAction,
+                    onLegalHold = { holdTarget = HoldTarget.Person(it.userId, it.displayName) },
+                    onExportData = { exportTarget = it },
+                )
             }
         }
     }
+    exportTarget?.let { ExportDataDialog(it.userId, it.displayName, onDismiss = { exportTarget = null }) }
     holdTarget?.let { PlaceHoldDialog(it, onDismiss = { holdTarget = null }, onPlaced = { holdTarget = null }) }
     MembersDialogs(
         dialog = uiState.dialog,
@@ -175,6 +180,7 @@ private fun MemberList(
     uiState: MembersUiState,
     onMemberAction: (Contact, MemberAction) -> Unit,
     onLegalHold: (Contact) -> Unit,
+    onExportData: (Contact) -> Unit,
 ) {
     if (uiState.showNoResults) {
         NoResultsState()
@@ -187,7 +193,7 @@ private fun MemberList(
                 leadingContent = { InitialAvatar(member.displayName) },
                 headlineContent = { Text(member.displayName) },
                 supportingContent = { Text(stringResource(member.role.labelResource())) },
-                trailingContent = { MemberMenu(member, onMemberAction, onLegalHold) },
+                trailingContent = { MemberMenu(member, onMemberAction, onLegalHold, onExportData) },
             )
         }
     }
@@ -198,6 +204,7 @@ private fun MemberMenu(
     member: Contact,
     onMemberAction: (Contact, MemberAction) -> Unit,
     onLegalHold: (Contact) -> Unit,
+    onExportData: (Contact) -> Unit,
 ) {
     OverflowMenu(description = stringResource(R.string.members_actions, member.displayName)) { dismiss ->
         MemberMenuItem(R.string.members_change_role) {
@@ -211,6 +218,10 @@ private fun MemberMenu(
         MemberMenuItem(R.string.members_reset_mfa) {
             dismiss()
             onMemberAction(member, MemberAction.RESET_MFA)
+        }
+        MemberMenuItem(R.string.export_menu) {
+            dismiss()
+            onExportData(member)
         }
         MemberMenuItem(R.string.legal_hold_menu) {
             dismiss()

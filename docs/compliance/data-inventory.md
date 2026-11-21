@@ -52,7 +52,7 @@ Android backup and device transfer are off. Signing out erases the database and 
 
 | Right | Today |
 |---|---|
-| Access and portability | No export in the app. The administrator must query the database |
+| Access and portability | An organization admin exports one person's data as a JSON file (Members, Export data). It holds the account, profile, groups, conversations and the messages the person sent, with the originals of deleted messages, earlier versions of edited ones and the details of files. It does not hold messages of other people, reports, legal holds or the files themselves. Each export is recorded in the audit log |
 | Correction | Administrators can change roles. The database lets a person update their own profile name, status and avatar path, but the app has no screen for it yet, so a correction goes through the administrator |
 | Erasure | The erase flow described above |
 | Objection and complaint | Outside the app, through the institution's Data Protection Officer |

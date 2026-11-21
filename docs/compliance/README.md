@@ -44,4 +44,4 @@ This pack helps a school or institution that runs Mesgard prepare its own compli
 
 ## Not yet built
 
-Built: reporting a message, designated reviewers, a legal hold, a privacy notice link and a retention limit. Planned and not built yet: reporting a person from a screen, a data export for access requests, wiping an account from a phone, limits on staff to student messages and hiding online status. Until they exist, the institution handles those duties outside the app.
+Built: reporting a message, designated reviewers, a legal hold, a privacy notice link, a retention limit and a data export for access requests. Planned and not built yet: reporting a person from a screen, wiping an account from a phone, limits on staff to student messages and hiding online status. Until they exist, the institution handles those duties outside the app.
