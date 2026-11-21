@@ -1,22 +1,16 @@
 package com.mowtiie.mesgard.ui.account
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.ExitToApp
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,10 +25,11 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Account
 import com.mowtiie.mesgard.domain.model.AccountMembership
 import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.ui.common.ScrollingPage
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
-private val ButtonPadding = 16.dp
+private val ContentPadding = 8.dp
 
 @Composable
 internal fun AccountScreenRoute(
@@ -97,7 +92,7 @@ internal fun AccountScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+        ScrollingPage(padding) {
             if (uiState.isRefreshing && uiState.account == null) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
@@ -105,13 +100,8 @@ internal fun AccountScreen(
                 AccountHeader(account)
                 AccountDetails(account, uiState.mfa, onChangePassword, onMfaClicked)
             }
-            OutlinedButton(
-                onClick = onSignOutClicked,
-                modifier = Modifier.fillMaxWidth().padding(ButtonPadding),
-            ) {
-                Icon(Icons.AutoMirrored.Outlined.ExitToApp, contentDescription = null)
-                Text(stringResource(R.string.sign_out_button), modifier = Modifier.padding(start = ButtonPadding / 2))
-            }
+            HorizontalDivider(modifier = Modifier.padding(top = ContentPadding))
+            SignOutRow(onSignOutClicked)
         }
     }
 
