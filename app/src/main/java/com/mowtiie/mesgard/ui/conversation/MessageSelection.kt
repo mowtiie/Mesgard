@@ -20,6 +20,7 @@ internal data class MessageSelectionCallbacks(
     val onInfo: (String) -> Unit = {},
     val onPin: (String) -> Unit = {},
     val onUnpin: (String) -> Unit = {},
+    val onReport: (String) -> Unit = {},
 )
 
 /** The chosen messages, with what the person may do to pins, for the list and the selection bar. */
@@ -38,6 +39,7 @@ internal data class MessageSelectionActions(
     val canDelete: Boolean,
     val canEdit: Boolean,
     val canShowInfo: Boolean,
+    val canReport: Boolean,
     /** Whether the person may pin at all. A person who may not never sees the item, so it is not shown disabled. */
     val canManagePins: Boolean,
     val pin: PinChoice,
@@ -60,6 +62,7 @@ internal fun selectionActionsFor(
         canDelete = selected.isNotEmpty() && selected.all { it.isOwn && it.isSent() },
         canEdit = isSentSingle && single?.isOwn == true && single.body.isNotEmpty(),
         canShowInfo = isSentSingle && single?.isOwn == true,
+        canReport = isSentSingle && single?.isOwn == false,
         canManagePins = canPin,
         pin = when {
             !isSentSingle || !canPin || single == null -> PinChoice.NONE

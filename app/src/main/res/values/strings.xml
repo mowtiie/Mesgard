@@ -355,6 +355,26 @@
     </plurals>
     <string name="message_info_empty">Nobody has seen this message yet.</string>
     <string name="message_info_error">Unable to load this. Check your connection and try again.</string>
+    <string name="message_report">Report</string>
+    <string name="report_title">Report message</string>
+    <string name="report_intro">The reviewers your organization has chosen will see this message and the messages before it. The sender is not told.</string>
+    <string name="report_category_bullying">Bullying or cyberbullying</string>
+    <string name="report_category_harassment">Harassment</string>
+    <string name="report_category_child_safety">Sexual content involving a minor</string>
+    <string name="report_category_child_safety_summary">It is also a crime. Tell the authorities as well.</string>
+    <string name="report_category_other">Something else</string>
+    <string name="report_note_label">Add details (optional)</string>
+    <string name="report_anonymous_title">Report anonymously</string>
+    <string name="report_anonymous_summary">Reviewers will not see your name. An organization admin can still find out who reported, and that is recorded.</string>
+    <string name="report_send">Send report</string>
+    <string name="report_sending">Sending</string>
+    <string name="report_done">Done</string>
+    <string name="report_sent_title">Report sent</string>
+    <string name="report_sent_text">A reviewer at your organization will look at it.</string>
+    <string name="report_already_sent_text">You have already reported this message.</string>
+    <string name="report_error_network">Unable to send the report. Check your connection and try again.</string>
+    <string name="report_error_not_allowed">You cannot report this message.</string>
+    <string name="report_error_unknown">Unable to send the report. Try again.</string>
     <string name="conversation_mute">Mute notifications</string>
     <string name="conversation_unmute">Unmute notifications</string>
     <string name="conversation_muted">Notifications muted</string>

@@ -6,6 +6,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -93,7 +94,7 @@ internal fun MessageSelectionBar(
 }
 
 private fun hasMenuActions(actions: MessageSelectionActions) =
-    actions.canEdit || actions.canShowInfo || actions.pin != PinChoice.NONE
+    actions.canEdit || actions.canShowInfo || actions.canReport || actions.pin != PinChoice.NONE
 
 @Composable
 private fun MenuActions(
@@ -130,4 +131,14 @@ private fun MenuActions(
             },
         )
     }
+    // Reporting is not a message edit, so it is set apart at the end of the menu.
+    HorizontalDivider()
+    DropdownMenuItem(
+        text = { Text(stringResource(R.string.message_report)) },
+        enabled = actions.canReport,
+        onClick = {
+            onChosen()
+            callbacks.onReport(message.id)
+        },
+    )
 }

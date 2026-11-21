@@ -71,6 +71,7 @@ internal fun ConversationScreenRoute(
     searchViewModel: ConversationSearchViewModel = hiltViewModel(),
     pinsViewModel: PinsViewModel = hiltViewModel(),
     selectionViewModel: MessageSelectionViewModel = hiltViewModel(),
+    reportViewModel: ReportMessageViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
@@ -89,6 +90,19 @@ internal fun ConversationScreenRoute(
         )
     }
     messageActions.readers?.let { MessageInfoSheet(it, onDismiss = actionsViewModel::onInfoDismissed) }
+    val report by reportViewModel.uiState.collectAsStateWithLifecycle()
+    if (report.isOpen) {
+        ReportMessageSheet(
+            state = report,
+            actions = ReportMessageActions(
+                onCategoryChanged = reportViewModel::onCategoryChanged,
+                onNoteChanged = reportViewModel::onNoteChanged,
+                onAnonymousChanged = reportViewModel::onAnonymousChanged,
+                onSend = reportViewModel::onSendClicked,
+                onDismiss = reportViewModel::onDismissed,
+            ),
+        )
+    }
     val edit by editViewModel.uiState.collectAsStateWithLifecycle()
     val reply by replyViewModel.target.collectAsStateWithLifecycle()
     val mentions by mentionViewModel.uiState.collectAsStateWithLifecycle()
@@ -106,6 +120,7 @@ internal fun ConversationScreenRoute(
             onInfo = actionsViewModel::onInfoRequested,
             onPin = pinsViewModel::onPin,
             onUnpin = pinsViewModel::onUnpin,
+            onReport = reportViewModel::onReportRequested,
         )
     }
     val bubbleActions = remember {

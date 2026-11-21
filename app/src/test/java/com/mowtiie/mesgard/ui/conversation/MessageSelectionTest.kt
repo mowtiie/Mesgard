@@ -67,6 +67,15 @@ class MessageSelectionTest {
     }
 
     @Test
+    fun `only one sent message from someone else can be reported`() {
+        assertTrue(actions(message("m1", isOwn = false)).canReport)
+        assertFalse(actions(message("m1")).canReport)
+        assertFalse(actions(message("m1", isOwn = false), message("m2", isOwn = false)).canReport)
+        assertFalse(actions(message("m1", isOwn = false, status = MessageStatus.PENDING)).canReport)
+        assertFalse(actions(message("m1", isOwn = false, isDeleted = true)).canReport)
+    }
+
+    @Test
     fun `delete is offered only when every selected message is yours and sent`() {
         assertFalse(actions(message("m1"), message("m2", isOwn = false)).canDelete)
         assertFalse(actions(message("m1"), message("m2", status = MessageStatus.PENDING)).canDelete)
