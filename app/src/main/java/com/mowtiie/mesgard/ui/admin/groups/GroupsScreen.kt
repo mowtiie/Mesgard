@@ -132,7 +132,7 @@ internal fun GroupsScreen(
         }
     }
     if (isCreateDialogShown) {
-        NewGroupDialog(
+        NewGroupSheet(
             isWorking = uiState.isWorking,
             onConfirm = { name, settings ->
                 onCreateConfirmed(name, settings)

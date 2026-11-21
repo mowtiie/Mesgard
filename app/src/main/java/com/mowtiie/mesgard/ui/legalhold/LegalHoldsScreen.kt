@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +40,7 @@ import com.mowtiie.mesgard.domain.model.LegalHoldScope
 import com.mowtiie.mesgard.domain.model.REPORT_NOTE_MAX_LENGTH
 import com.mowtiie.mesgard.ui.admin.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
+import com.mowtiie.mesgard.ui.common.FormSheet
 import com.mowtiie.mesgard.ui.common.NoteField
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.reports.rememberDateTimeFormatter
@@ -65,7 +65,7 @@ internal fun LegalHoldsScreenRoute(
     }
     var isPlacingOrganizationHold by rememberSaveable { mutableStateOf(false) }
     if (isPlacingOrganizationHold) {
-        PlaceHoldDialog(
+        PlaceHoldSheet(
             target = HoldTarget.Organization,
             onDismiss = { isPlacingOrganizationHold = false },
             onPlaced = {
@@ -75,7 +75,7 @@ internal fun LegalHoldsScreenRoute(
         )
     }
     uiState.holdToRelease?.let { hold ->
-        ReleaseDialog(hold, onConfirm = viewModel::onReleaseConfirmed, onDismiss = viewModel::onReleaseDismissed)
+        ReleaseSheet(hold, onConfirm = viewModel::onReleaseConfirmed, onDismiss = viewModel::onReleaseDismissed)
     }
     TitledScreen(
         title = stringResource(R.string.legal_holds_title),
@@ -154,34 +154,28 @@ private fun HoldList(uiState: LegalHoldsUiState, onRelease: (LegalHold) -> Unit,
 
 /** Releasing ends the protection, so a note says why. */
 @Composable
-private fun ReleaseDialog(hold: LegalHold, onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
+private fun ReleaseSheet(hold: LegalHold, onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
     var note by rememberSaveable { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.legal_hold_release_title)) },
-        text = {
-            Column {
-                Text(stringResource(R.string.legal_hold_release_text, hold.targetName()))
-                NoteField(
-                    value = note,
-                    onValueChange = { note = it },
-                    label = R.string.legal_hold_release_note_label,
-                    helper = stringResource(R.string.legal_hold_release_note_helper),
-                    maxLength = REPORT_NOTE_MAX_LENGTH,
-                    modifier = Modifier.padding(top = ContentPadding),
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onConfirm(note) },
-                enabled = note.trim().length >= HOLD_RELEASE_NOTE_MIN_LENGTH,
-            ) {
-                Text(stringResource(R.string.legal_hold_release))
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
-    )
+    FormSheet(
+        title = stringResource(R.string.legal_hold_release_title),
+        confirmLabel = stringResource(R.string.legal_hold_release),
+        onConfirm = { onConfirm(note) },
+        onDismiss = onDismiss,
+        confirmEnabled = note.trim().length >= HOLD_RELEASE_NOTE_MIN_LENGTH,
+    ) {
+        Text(
+            text = stringResource(R.string.legal_hold_release_text, hold.targetName()),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        NoteField(
+            value = note,
+            onValueChange = { note = it },
+            label = R.string.legal_hold_release_note_label,
+            helper = stringResource(R.string.legal_hold_release_note_helper),
+            maxLength = REPORT_NOTE_MAX_LENGTH,
+        )
+    }
 }
 
 @Composable

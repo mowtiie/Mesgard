@@ -44,7 +44,7 @@ import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.TitledScreen
-import com.mowtiie.mesgard.ui.legalhold.PlaceHoldDialog
+import com.mowtiie.mesgard.ui.legalhold.PlaceHoldSheet
 
 private val FabClearance = 88.dp
 
@@ -60,7 +60,7 @@ internal fun GroupDetailScreenRoute(
     LaunchedEffect(uiState.isDeleted) { if (uiState.isDeleted) onBack() }
     var isHoldDialogShown by remember { mutableStateOf(false) }
     if (isHoldDialogShown) {
-        PlaceHoldDialog(
+        PlaceHoldSheet(
             target = HoldTarget.Group(groupId, uiState.name),
             onDismiss = { isHoldDialogShown = false },
             onPlaced = { isHoldDialogShown = false },
@@ -218,7 +218,7 @@ private fun GroupDetailDialogs(
     onDismiss: () -> Unit,
 ) {
     when (val dialog = uiState.dialog) {
-        GroupDetailDialog.Rename -> GroupNameDialog(
+        GroupDetailDialog.Rename -> GroupNameSheet(
             title = R.string.group_rename_title,
             confirmLabel = R.string.group_rename_confirm,
             initialName = uiState.name,

@@ -48,8 +48,8 @@ import com.mowtiie.mesgard.ui.common.SearchAction
 import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.labelResource
-import com.mowtiie.mesgard.ui.export.ExportDataDialog
-import com.mowtiie.mesgard.ui.legalhold.PlaceHoldDialog
+import com.mowtiie.mesgard.ui.export.ExportDataSheet
+import com.mowtiie.mesgard.ui.legalhold.PlaceHoldSheet
 
 @Composable
 internal fun MembersScreenRoute(
@@ -162,8 +162,8 @@ internal fun MembersScreen(
             }
         }
     }
-    exportTarget?.let { ExportDataDialog(it.userId, it.displayName, onDismiss = { exportTarget = null }) }
-    holdTarget?.let { PlaceHoldDialog(it, onDismiss = { holdTarget = null }, onPlaced = { holdTarget = null }) }
+    exportTarget?.let { ExportDataSheet(it.userId, it.displayName, onDismiss = { exportTarget = null }) }
+    holdTarget?.let { PlaceHoldSheet(it, onDismiss = { holdTarget = null }, onPlaced = { holdTarget = null }) }
     MembersDialogs(
         dialog = uiState.dialog,
         isWorking = uiState.isWorking,

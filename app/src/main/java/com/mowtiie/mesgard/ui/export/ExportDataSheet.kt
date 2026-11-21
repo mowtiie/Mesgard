@@ -3,11 +3,9 @@ package com.mowtiie.mesgard.ui.export
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
@@ -18,13 +16,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.repository.ExportFile
 import com.mowtiie.mesgard.ui.admin.messageResource
+import com.mowtiie.mesgard.ui.common.FormSheet
 import java.io.File
 
 private const val EXPORT_MIME_TYPE = "application/json"
 
 /** Explains what an export holds, creates it, then offers it to share. It is recorded in the audit log. */
 @Composable
-internal fun ExportDataDialog(
+internal fun ExportDataSheet(
     userId: String,
     personName: String,
     onDismiss: () -> Unit,
@@ -37,36 +36,28 @@ internal fun ExportDataDialog(
         onDismiss()
     }
     val file = uiState.file
-    AlertDialog(
-        onDismissRequest = { if (!uiState.isExporting) close() },
-        title = { Text(stringResource(if (file == null) R.string.export_title else R.string.export_ready_title)) },
-        text = {
-            val error = uiState.error
-            when {
-                uiState.isExporting -> CircularProgressIndicator()
-                file != null -> Text(stringResource(R.string.export_ready_text, file.fileName))
-                error != null -> Text(stringResource(error.messageResource()), color = MaterialTheme.colorScheme.error)
-                else -> Text(stringResource(R.string.export_text, personName))
+    FormSheet(
+        title = stringResource(if (file == null) R.string.export_title else R.string.export_ready_title),
+        confirmLabel = stringResource(if (file == null) R.string.export_confirm else R.string.export_share),
+        onConfirm = {
+            if (file == null) {
+                viewModel.onExportClicked(userId, personName)
+            } else if (shareExport(context, file)) {
+                close()
             }
         },
-        confirmButton = {
-            if (file != null) {
-                TextButton(onClick = { if (shareExport(context, file)) close() }) {
-                    Text(stringResource(R.string.export_share))
-                }
-            } else {
-                TextButton(
-                    onClick = { viewModel.onExportClicked(userId, personName) },
-                    enabled = !uiState.isExporting,
-                ) {
-                    Text(stringResource(R.string.export_confirm))
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = close, enabled = !uiState.isExporting) { Text(stringResource(R.string.cancel)) }
-        },
-    )
+        onDismiss = { if (!uiState.isExporting) close() },
+        confirmEnabled = !uiState.isExporting,
+        dismissEnabled = !uiState.isExporting,
+    ) {
+        val error = uiState.error
+        when {
+            uiState.isExporting -> CircularProgressIndicator()
+            file != null -> Text(stringResource(R.string.export_ready_text, file.fileName))
+            error != null -> Text(stringResource(error.messageResource()), color = MaterialTheme.colorScheme.error)
+            else -> Text(stringResource(R.string.export_text, personName))
+        }
+    }
 }
 
 /** Offers the file to another app. Returns false when no app can take it. */

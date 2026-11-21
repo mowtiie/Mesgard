@@ -16,12 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.ui.common.FormSheet
 
 private const val MAX_GROUP_NAME_LENGTH = 200
 
-/** Asks for the name of a group, to create one or to rename one. */
+/** Asks for the name of a group, to rename one. */
 @Composable
-internal fun GroupNameDialog(
+internal fun GroupNameSheet(
     @StringRes title: Int,
     @StringRes confirmLabel: Int,
     initialName: String,
@@ -30,27 +31,23 @@ internal fun GroupNameDialog(
     onDismiss: () -> Unit,
 ) {
     var name by rememberSaveable { mutableStateOf(initialName) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(title)) },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { if (it.length <= MAX_GROUP_NAME_LENGTH) name = it },
-                label = { Text(stringResource(R.string.groups_name_label)) },
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-                singleLine = true,
-                enabled = !isWorking,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(name) }, enabled = name.isNotBlank() && !isWorking) {
-                Text(stringResource(confirmLabel))
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
-    )
+    FormSheet(
+        title = stringResource(title),
+        confirmLabel = stringResource(confirmLabel),
+        onConfirm = { onConfirm(name) },
+        onDismiss = onDismiss,
+        confirmEnabled = name.isNotBlank() && !isWorking,
+    ) {
+        OutlinedTextField(
+            value = name,
+            onValueChange = { if (it.length <= MAX_GROUP_NAME_LENGTH) name = it },
+            label = { Text(stringResource(R.string.groups_name_label)) },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+            singleLine = true,
+            enabled = !isWorking,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }
 
 @Composable

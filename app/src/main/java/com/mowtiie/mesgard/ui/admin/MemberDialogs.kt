@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.ErasureMode
 import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.ui.common.FormSheet
 import com.mowtiie.mesgard.ui.common.labelResource
 import com.mowtiie.mesgard.ui.settings.RadioGroup
 import com.mowtiie.mesgard.ui.settings.RadioLabel
@@ -42,7 +43,7 @@ internal fun MembersDialogs(
     onDismiss: () -> Unit,
 ) {
     when (dialog) {
-        is MembersDialog.ChangeRole -> ChangeRoleDialog(dialog, isWorking, onRoleSelected, onConfirm, onDismiss)
+        is MembersDialog.ChangeRole -> ChangeRoleSheet(dialog, isWorking, onRoleSelected, onConfirm, onDismiss)
         is MembersDialog.ConfirmResetPassword -> ConfirmDialog(
             title = R.string.members_reset_title,
             message = stringResource(R.string.members_reset_message, dialog.member.displayName),
@@ -67,31 +68,27 @@ internal fun MembersDialogs(
 }
 
 @Composable
-private fun ChangeRoleDialog(
+private fun ChangeRoleSheet(
     dialog: MembersDialog.ChangeRole,
     isWorking: Boolean,
     onRoleSelected: (OrgRole) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.members_role_title, dialog.member.displayName)) },
-        text = {
-            RadioGroup(
-                options = AssignableRoles.map { it to RadioLabel(it.labelResource()) },
-                selected = dialog.selected,
-                onSelected = onRoleSelected,
-                enabled = !isWorking,
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm, enabled = !isWorking && dialog.selected != dialog.member.role) {
-                Text(stringResource(R.string.members_role_confirm))
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
-    )
+    FormSheet(
+        title = stringResource(R.string.members_role_title, dialog.member.displayName),
+        confirmLabel = stringResource(R.string.members_role_confirm),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+        confirmEnabled = !isWorking && dialog.selected != dialog.member.role,
+    ) {
+        RadioGroup(
+            options = AssignableRoles.map { it to RadioLabel(it.labelResource()) },
+            selected = dialog.selected,
+            onSelected = onRoleSelected,
+            enabled = !isWorking,
+        )
+    }
 }
 
 /** The choice to erase is only there when the server allows it, and it says what this server does. */
