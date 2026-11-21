@@ -1,5 +1,7 @@
 package com.mowtiie.mesgard.di
 
+import com.mowtiie.mesgard.data.attachment.AesGcmContentCipher
+import com.mowtiie.mesgard.data.attachment.ContentCipher
 import com.mowtiie.mesgard.data.local.security.KeystoreSecretCipher
 import com.mowtiie.mesgard.data.local.security.SecretCipher
 import dagger.Module
@@ -14,4 +16,8 @@ internal object SecurityModule {
     @Provides
     @Singleton
     fun provideSecretCipher(): SecretCipher = KeystoreSecretCipher()
+
+    @Provides
+    @Singleton
+    fun provideContentCipher(): ContentCipher = AesGcmContentCipher()
 }

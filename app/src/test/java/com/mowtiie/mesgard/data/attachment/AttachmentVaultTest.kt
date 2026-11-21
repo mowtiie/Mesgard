@@ -22,7 +22,32 @@ private class FlippingCipher : SecretCipher {
     override fun decrypt(payload: ByteArray) = ByteArray(payload.size) { (payload[it].toInt() xor 0x5A).toByte() }
 }
 
-/** A plain JVM test: Robolectric cannot start the standard AES provider. */
+/**
+ * Stands in for AES-GCM, whose provider does not start reliably in the unit test JVM after Robolectric ran. It hides
+ * the content with the key and adds a checksum, so a changed file is refused like GCM refuses it. The real cipher was
+ * seen working on a device.
+ */
+private class ChecksumContentCipher : ContentCipher {
+    override fun encrypt(key: ByteArray, initializationVector: ByteArray, plain: ByteArray): ByteArray {
+        val hidden = mask(key, initializationVector, plain)
+        return hidden + checksum(hidden)
+    }
+
+    override fun decrypt(key: ByteArray, initializationVector: ByteArray, encrypted: ByteArray): ByteArray {
+        val hidden = encrypted.copyOfRange(0, encrypted.size - 1)
+        require(encrypted.last() == checksum(hidden)[0]) { "The file was changed" }
+        return mask(key, initializationVector, hidden)
+    }
+
+    private fun mask(key: ByteArray, initializationVector: ByteArray, input: ByteArray) = ByteArray(input.size) {
+        val keyByte = key[it % key.size].toInt()
+        (input[it].toInt() xor keyByte xor initializationVector[0].toInt()).toByte()
+    }
+
+    private fun checksum(bytes: ByteArray) = byteArrayOf(bytes.fold(0) { sum, byte -> sum + byte }.toByte())
+}
+
+/** A plain JVM test. */
 class AttachmentVaultTest {
     @get:Rule
     val folder = TemporaryFolder()
@@ -34,7 +59,7 @@ class AttachmentVaultTest {
     fun createVault() {
         directory = folder.newFolder("stored")
         val context = mockk<Context> { every { cacheDir } returns folder.newFolder("cache") }
-        vault = AttachmentVault(FlippingCipher(), context)
+        vault = AttachmentVault(FlippingCipher(), ChecksumContentCipher(), context)
     }
 
     private fun file(name: String, content: ByteArray) = File(directory, name).also { it.writeBytes(content) }

@@ -9,9 +9,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,11 +19,9 @@ private const val SEALING_SUFFIX = ".sealing"
 private const val PARTIAL_SUFFIX = ".part"
 private const val DATA_KEY_BYTES = 32
 private const val INITIALIZATION_VECTOR_BYTES = 12
-private const val AUTHENTICATION_TAG_BITS = 128
 private const val LENGTH_BYTES = 2
 private const val BYTE_MASK = 0xFF
 private const val BITS_PER_BYTE = 8
-private const val TRANSFORMATION = "AES/GCM/NoPadding"
 
 /**
  * Keeps attachment files encrypted on the phone. Each file gets its own random AES-256 key, and that key is wrapped by
@@ -37,6 +32,7 @@ private const val TRANSFORMATION = "AES/GCM/NoPadding"
 @Singleton
 internal class AttachmentVault @Inject constructor(
     private val cipher: SecretCipher,
+    private val content: ContentCipher,
     @ApplicationContext private val context: Context,
 ) {
     private val random = SecureRandom()
@@ -99,21 +95,14 @@ internal class AttachmentVault @Inject constructor(
         val dataKey = ByteArray(DATA_KEY_BYTES).also(random::nextBytes)
         val wrapped = cipher.encrypt(dataKey)
         val initializationVector = ByteArray(INITIALIZATION_VECTOR_BYTES).also(random::nextBytes)
-        val content = Cipher.getInstance(TRANSFORMATION).run {
-            init(
-                Cipher.ENCRYPT_MODE,
-                SecretKeySpec(dataKey, "AES"),
-                GCMParameterSpec(AUTHENTICATION_TAG_BITS, initializationVector),
-            )
-            doFinal(plain)
-        }
+        val encrypted = content.encrypt(dataKey, initializationVector, plain)
         return ByteArrayOutputStream().apply {
             write(MAGIC)
             write(wrapped.size shr BITS_PER_BYTE)
             write(wrapped.size and BYTE_MASK)
             write(wrapped)
             write(initializationVector)
-            write(content)
+            write(encrypted)
         }.toByteArray()
     }
 
@@ -126,14 +115,7 @@ internal class AttachmentVault @Inject constructor(
         offset += wrappedLength
         val initializationVector = sealed.copyOfRange(offset, offset + INITIALIZATION_VECTOR_BYTES)
         offset += INITIALIZATION_VECTOR_BYTES
-        return Cipher.getInstance(TRANSFORMATION).run {
-            init(
-                Cipher.DECRYPT_MODE,
-                SecretKeySpec(dataKey, "AES"),
-                GCMParameterSpec(AUTHENTICATION_TAG_BITS, initializationVector),
-            )
-            doFinal(sealed, offset, sealed.size - offset)
-        }
+        return content.decrypt(dataKey, initializationVector, sealed.copyOfRange(offset, sealed.size))
     }
 
     private fun startsWithMagic(bytes: ByteArray) =
