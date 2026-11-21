@@ -43,10 +43,10 @@ Android backup and device transfer are off. Signing out erases the database and 
 
 ## Retention and erasure today
 
-- There is no automatic retention limit. Messages, files and the audit log stay until someone deletes them.
+- An organization admin can set a retention limit (30 days to 10 years). A job then erases older messages and their files, except what a legal hold or an open report protects; see [message retention](retention.md). Without a limit, or without the job running, messages and files stay until someone deletes them. The audit log is never erased.
 - Deleting a message blanks its text. The original goes to `deleted_message_bodies` for administrators.
 - Removing a member keeps the account, profile and messages (foreign keys). The administrator can run the erase flow, which depends on the server setting `private.erasure_settings.mode`: `off`, `keep_messages` (default) or `blank_messages`.
-- There is no legal hold yet. The `blank_messages` mode and the erase flow can destroy material a case or an order may require. The institution must decide before using them, until the legal hold exists.
+- A legal hold (Administration, Legal holds) on a person, a group or the whole organization, and any open report about or by a person, stops the erase flow and the retention job from touching them. Reports keep a frozen copy of the reported message.
 
 ## Data subject rights
 

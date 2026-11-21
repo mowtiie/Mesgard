@@ -5,6 +5,7 @@ import { parseArgs } from "./args.mjs";
 import { runDoctor } from "./doctor.mjs";
 import { runPush } from "./push.mjs";
 import { runReset } from "./reset.mjs";
+import { runRetention } from "./retention.mjs";
 import { createLogin, runSetup } from "./setup.mjs";
 import { CliError } from "./supabase.mjs";
 import { realTools } from "./tools.mjs";
@@ -22,6 +23,9 @@ Commands:
             organization and its administrator, then print the link that connects the app.
   push      Set up push notifications: deploy the push function, create its secret, tell the database and
             check that they agree. Run it again with --rotate to replace the secret.
+  retention Erase messages and files older than the limit each organization chose, except what a legal hold or
+            an open report protects. Run it on a schedule (see docs/compliance/retention.md). Needs --local or
+            --project-ref <ref>.
   doctor    Check a server and print what is missing. Changes nothing.
   reset     Rebuild the database from the migrations. Erases all data. Needs --local or --project-ref <ref>;
             a hosted project is never seeded and asks for its ref to be typed.
@@ -43,6 +47,8 @@ Options:
   --push-hosts <list>   push: comma separated hosts of your own push server (default: any public push server)
   --rotate              push: replace the secret even when push is already set up
   --no-seed             reset: do not run the seed on the local stack
+  --dry-run             retention: say how many messages are due, change nothing
+  --batch <number>      retention: messages per round, 1 to 1000 (default 200)
   --confirm <ref>       reset: the project ref again, for a hosted project, when nothing can be asked
   --org-name, --org-slug, --admin-email, --admin-name
                         setup: answers for the first organization, so nothing is asked`;
@@ -77,6 +83,8 @@ async function main() {
     const chained = { ...options, chained: true, "no-seed": true };
     await runReset({ target, options: chained, deps: realTools(target, repositoryRoot), isExplicit, ...output });
     process.exitCode = await setUp(target, options, output);
+  } else if (command === "retention") {
+    await runRetention({ target, options, deps: realTools(target, repositoryRoot), isExplicit, ...output });
   } else if (command === "doctor") process.exitCode = await runDoctor({ target, repositoryRoot, ...output });
   else throw new CliError(`Unknown command: ${command}\n\n${HELP}`);
 }

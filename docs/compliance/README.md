@@ -15,6 +15,7 @@ This pack helps a school or institution that runs Mesgard prepare its own compli
 
 - [Data inventory](data-inventory.md): what Mesgard stores, where, who can read it, and how long it stays.
 - [Breach runbook](breach-runbook.md): the first 72 hours after a suspected personal data breach.
+- [Message retention](retention.md): the limit an organization sets, what is protected and how to run the job.
 - [Hosting guidance](hosting-guidance.md): self-hosting, cross-border transfer, the push server and government data rules (EO 119).
 
 ## What Mesgard does not do
@@ -43,4 +44,4 @@ This pack helps a school or institution that runs Mesgard prepare its own compli
 
 ## Not yet built
 
-Features the institution may need for its duties are planned but not built: reporting a message or person, a legal hold, retention settings, a data export for access requests, a privacy notice link and hiding online status. Until they exist, the institution handles those duties outside the app.
+Built: reporting a message, designated reviewers, a legal hold, a privacy notice link and a retention limit. Planned and not built yet: reporting a person from a screen, a data export for access requests, wiping an account from a phone, limits on staff to student messages and hiding online status. Until they exist, the institution handles those duties outside the app.
