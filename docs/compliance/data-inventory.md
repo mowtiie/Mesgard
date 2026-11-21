@@ -29,11 +29,11 @@ What Mesgard stores, where it lives and who can read it. The institution can use
 |---|---|---|
 | Messages, conversations, people, groups | Room database | SQLCipher. The key is wrapped by a non-exportable Android Keystore key |
 | Sign-in session | `noBackupFilesDir/session.bin` | Wrapped by the same Keystore key |
-| Attachment files | `noBackupFilesDir/attachments` | Not encrypted. At most 200 MiB cached |
-| Copies opened in another app | `cacheDir/shared_attachments` | Not encrypted. Deleted on sign out |
+| Attachment files | `noBackupFilesDir/attachments` | Encrypted per file with AES-256-GCM once sent or received, the key wrapped by the Keystore key. A file waiting to be sent is plain until then. At most 200 MiB cached |
+| Copies opened in another app, and exports | `cacheDir/shared_attachments` | Not encrypted, because another app has to read them. Deleted on sign out |
 | Push endpoint, device settings | Shared preferences | Excluded from backups |
 
-Android backup and device transfer are off. Signing out erases the database and both attachment directories.
+Android backup and device transfer are off. Signing out erases the database and the attachment directories. So does a session the server ends, for example when the login is disabled or the person is removed, the next time the app learns of it.
 
 ## Third parties
 

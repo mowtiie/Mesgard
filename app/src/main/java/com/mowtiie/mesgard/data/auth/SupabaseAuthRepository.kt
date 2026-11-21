@@ -20,6 +20,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -36,7 +37,7 @@ internal class SupabaseAuthRepository @Inject constructor(
     private val mfaStepResolver: MfaStepResolver,
 ) : AuthRepository {
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val authState: Flow<AuthState> = auth.sessionStatus.mapLatest(::toAuthState)
+    override val authState: Flow<AuthState> = auth.sessionStatus.onEach(::eraseWhenRevoked).mapLatest(::toAuthState)
 
     override val currentUserId: String?
         get() = auth.currentUserOrNull()?.id
@@ -79,6 +80,15 @@ internal class SupabaseAuthRepository @Inject constructor(
     } catch (exception: IOException) {
         Log.i(TAG, "The password change could not reach the server", exception)
         PasswordChangeResult.Failure(PasswordChangeError.NETWORK_UNAVAILABLE)
+    }
+
+    /**
+     * The end of a session leaves nothing of the account on the phone. The library reports a session the server
+     * ended, for example because the login was disabled or the person was removed, the same way as a sign out the
+     * person chose, which already erases. Erasing twice changes nothing.
+     */
+    private suspend fun eraseWhenRevoked(status: SessionStatus) {
+        if (status is SessionStatus.NotAuthenticated) localDataEraser.eraseAll()
     }
 
     private suspend fun toAuthState(status: SessionStatus): AuthState = when (status) {

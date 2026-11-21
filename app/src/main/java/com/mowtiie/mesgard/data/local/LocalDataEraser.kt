@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.data.local
 
 import android.content.Context
 import com.mowtiie.mesgard.data.attachment.ATTACHMENT_DIRECTORY
+import com.mowtiie.mesgard.data.attachment.PLAIN_ATTACHMENT_DIRECTORY
 import com.mowtiie.mesgard.data.attachment.SHARED_ATTACHMENT_DIRECTORY
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -21,6 +22,7 @@ internal class RoomLocalDataEraser @Inject constructor(
         database.clearAllTables()
         File(context.noBackupFilesDir, ATTACHMENT_DIRECTORY).deleteRecursively()
         File(context.cacheDir, SHARED_ATTACHMENT_DIRECTORY).deleteRecursively()
+        File(context.cacheDir, PLAIN_ATTACHMENT_DIRECTORY).deleteRecursively()
         Unit
     }
 }

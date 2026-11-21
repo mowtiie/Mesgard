@@ -490,7 +490,7 @@
     <string name="privacy_summary_not_encrypted">Messages are not end-to-end encrypted. Your organization can keep and search them, for example when a report is made or when the law asks for it.</string>
     <string name="privacy_summary_edits">When a message is edited or deleted, the administrators of your organization can still see the earlier text.</string>
     <string name="privacy_summary_reports">When you report a message, the people your organization chose to review reports see that message and the ones before it.</string>
-    <string name="privacy_summary_device">This phone keeps a copy of your messages, and signing out removes it.</string>
+    <string name="privacy_summary_device">This phone keeps an encrypted copy of your messages and files, and signing out removes it. A file waiting to be sent is encrypted once it is sent.</string>
     <string name="privacy_summary_questions">Questions about your data? Ask your organization\'s Data Protection Officer.</string>
     <string name="privacy_notice_missing">Your organization has not added a privacy notice yet. Ask your Data Protection Officer.</string>
     <string name="privacy_notice_read">Read the privacy notice</string>

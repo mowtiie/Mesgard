@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.data
 
 import android.content.Context
 import com.mowtiie.mesgard.data.attachment.AttachmentCache
+import com.mowtiie.mesgard.data.attachment.AttachmentVault
 import com.mowtiie.mesgard.data.attachment.attachmentDirectory
 import com.mowtiie.mesgard.data.local.AttachmentDao
 import com.mowtiie.mesgard.data.local.AttachmentEntity
@@ -24,6 +25,7 @@ internal class OfflineFirstAttachmentRepository @Inject constructor(
     private val attachmentDao: AttachmentDao,
     private val remoteSource: AttachmentRemoteSource,
     private val cache: AttachmentCache,
+    private val vault: AttachmentVault,
     @ApplicationContext private val context: Context,
 ) : AttachmentRepository {
     override suspend fun download(attachmentId: String): DownloadResult {
@@ -59,6 +61,8 @@ internal class OfflineFirstAttachmentRepository @Inject constructor(
         } finally {
             partial.delete()
         }
+        // A received file is encrypted on the phone. When that fails it stays, and the next start tries again.
+        runCatching { vault.seal(target) }
         return target.absolutePath
     }
 }

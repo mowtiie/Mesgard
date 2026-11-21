@@ -7,6 +7,7 @@ import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.workDataOf
+import com.mowtiie.mesgard.data.attachment.AttachmentVault
 import com.mowtiie.mesgard.data.local.AttachmentEntity
 import com.mowtiie.mesgard.data.local.upsert
 import com.mowtiie.mesgard.data.remote.AttachmentRemoteSource
@@ -258,6 +259,11 @@ class SendMessageWorkerTest {
                             remoteSource,
                             attachmentSource,
                             importer,
+                            mockk<AttachmentVault>(relaxed = true) {
+                                coEvery { withPlainFile(any(), any<suspend (File) -> Unit>()) } coAnswers {
+                                    secondArg<suspend (File) -> Unit>().invoke(firstArg())
+                                }
+                            },
                         ),
                     )
                 },

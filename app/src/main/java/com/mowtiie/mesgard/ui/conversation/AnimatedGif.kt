@@ -17,8 +17,8 @@ import coil3.gif.AnimatedImageDecoder
 import coil3.gif.GifDecoder
 import coil3.request.ImageRequest
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.data.attachment.StoredFile
 import com.mowtiie.mesgard.domain.model.Attachment
-import java.io.File
 
 private const val BADGE_ALPHA = 0.6f
 private val BadgeCorner = 4.dp
@@ -31,7 +31,7 @@ private val BadgePaddingVertical = 2.dp
  */
 internal fun animatedImageRequest(context: Context, attachment: Attachment, path: String): ImageRequest =
     ImageRequest.Builder(context)
-        .data(File(path))
+        .data(StoredFile(path))
         .apply { if (attachment.isGif) decoderFactory(gifDecoderFactory()) }
         .build()
 

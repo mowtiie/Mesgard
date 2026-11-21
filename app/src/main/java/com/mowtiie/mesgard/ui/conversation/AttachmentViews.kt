@@ -35,8 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import coil3.compose.AsyncImage
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.data.attachment.StoredFile
 import com.mowtiie.mesgard.data.attachment.copyForSharing
 import com.mowtiie.mesgard.domain.model.Attachment
+import com.mowtiie.mesgard.vaultOf
 import java.io.File
 
 private val ImageWidth = 220.dp
@@ -157,7 +159,7 @@ private fun ImageAttachment(
             isFailed -> FailedImage()
             localPath == null -> CircularProgressIndicator(modifier = Modifier.size(ProgressSize))
             else -> AsyncImage(
-                model = File(localPath),
+                model = StoredFile(localPath),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
@@ -213,7 +215,7 @@ private fun FileAttachment(attachment: Attachment, isDownloading: Boolean, onCli
 /** Opens the file in another app. Returns false when the file is missing or no app can show it. */
 internal fun openAttachment(context: Context, attachment: Attachment): Boolean {
     val source = attachment.localPath?.let(::File)?.takeIf { it.isFile } ?: return false
-    val shared = context.copyForSharing(attachment.id, attachment.fileName, source)
+    val shared = context.copyForSharing(attachment.id, attachment.fileName, source, context.vaultOf())
     val uri = FileProvider.getUriForFile(context, "${context.packageName}.attachments", shared)
     val intent = Intent(Intent.ACTION_VIEW)
         .setDataAndType(uri, attachment.mimeType)

@@ -1,5 +1,6 @@
 package com.mowtiie.mesgard.data.work
 
+import com.mowtiie.mesgard.data.attachment.AttachmentVault
 import com.mowtiie.mesgard.data.local.AttachmentDao
 import com.mowtiie.mesgard.data.local.AttachmentEntity
 import com.mowtiie.mesgard.data.local.ConversationDao
@@ -21,6 +22,7 @@ internal class MessageDeliverer @Inject constructor(
     private val messageSource: MessageRemoteSource,
     private val attachmentSource: AttachmentRemoteSource,
     private val importer: AttachmentImporter,
+    private val vault: AttachmentVault,
 ) {
     suspend fun deliver(message: MessageEntity): Long {
         val attachments = attachmentDao.findByMessage(message.id).map { shrinkIfPhoto(it) }
@@ -28,9 +30,18 @@ internal class MessageDeliverer @Inject constructor(
         attachments.forEach { attachment ->
             val file = attachment.localPath?.let(::File)?.takeIf { it.isFile }
                 ?: throw FileNotFoundException("The file of attachment ${attachment.id} is missing")
-            attachmentSource.upload(attachment.storagePath, file, attachment.mimeType)
+            vault.withPlainFile(file) { plain ->
+                attachmentSource.upload(attachment.storagePath, plain, attachment.mimeType)
+            }
         }
-        return parseEpochMillis(attachmentSource.sendWithAttachments(message, attachments))
+        val sentAt = parseEpochMillis(attachmentSource.sendWithAttachments(message, attachments))
+        attachments.forEach(::sealQuietly)
+        return sentAt
+    }
+
+    /** A sent file is encrypted on the phone. When that fails the file stays and the next start tries again. */
+    private fun sealQuietly(attachment: AttachmentEntity) {
+        attachment.localPath?.let { runCatching { vault.seal(File(it)) } }
     }
 
     /** A photo is shrunk here, off the screen, so the message appears as soon as it is sent. */

@@ -11,8 +11,13 @@ internal fun Context.attachmentDirectory(): File = File(noBackupFilesDir, ATTACH
 internal const val SHARED_ATTACHMENT_DIRECTORY = "shared_attachments"
 
 /** Copies a stored attachment into the cache so another app can read it through the FileProvider. */
-internal fun Context.copyForSharing(attachmentId: String, fileName: String, source: File): File {
+internal fun Context.copyForSharing(
+    attachmentId: String,
+    fileName: String,
+    source: File,
+    vault: AttachmentVault,
+): File {
     val directory = File(cacheDir, SHARED_ATTACHMENT_DIRECTORY).also { it.mkdirs() }
     val safeName = fileName.replace(Regex("[^A-Za-z0-9._-]"), "_")
-    return File(directory, "$attachmentId-$safeName").also { source.copyTo(it, overwrite = true) }
+    return File(directory, "$attachmentId-$safeName").also { vault.copyPlain(source, it) }
 }
