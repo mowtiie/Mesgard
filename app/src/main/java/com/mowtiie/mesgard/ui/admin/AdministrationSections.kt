@@ -73,6 +73,12 @@ internal fun ManageSection(uiState: AdministrationUiState, navigation: AdminNavi
         onClick = navigation.onOpenGroups,
     )
     ManageRow(
+        icon = { Icon(painterResource(R.drawable.ic_schedule), contentDescription = null) },
+        title = R.string.retention_title,
+        summary = stringResource(R.string.settings_retention_summary),
+        onClick = navigation.onOpenRetention,
+    )
+    ManageRow(
         icon = { Icon(painterResource(R.drawable.ic_shield), contentDescription = null) },
         title = R.string.legal_holds_title,
         summary = stringResource(R.string.settings_legal_holds_summary),

@@ -9,6 +9,7 @@ internal data class AdminNavigation(
     val onOpenReportReviewers: () -> Unit,
     val onOpenPrivacyNoticeSettings: () -> Unit,
     val onOpenLegalHolds: () -> Unit,
+    val onOpenRetention: () -> Unit,
     val onAddMember: () -> Unit,
     val onImportMembers: () -> Unit,
 )

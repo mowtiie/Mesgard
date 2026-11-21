@@ -32,6 +32,7 @@ import com.mowtiie.mesgard.ui.privacy.PrivacyNoticeSettingsScreenRoute
 import com.mowtiie.mesgard.ui.reports.ReportDetailScreenRoute
 import com.mowtiie.mesgard.ui.reports.ReportReviewersScreenRoute
 import com.mowtiie.mesgard.ui.reports.ReportsScreenRoute
+import com.mowtiie.mesgard.ui.retention.RetentionScreenRoute
 import com.mowtiie.mesgard.ui.settings.AppearanceSettingsScreenRoute
 import com.mowtiie.mesgard.ui.settings.NotificationSettingsScreenRoute
 import com.mowtiie.mesgard.ui.settings.SecuritySettingsScreenRoute
@@ -121,6 +122,7 @@ internal fun MesgardNavHost(
                     onOpenReportReviewers = { navController.navigate(ReportReviewersRoute) },
                     onOpenPrivacyNoticeSettings = { navController.navigate(PrivacyNoticeSettingsRoute) },
                     onOpenLegalHolds = { navController.navigate(LegalHoldsRoute) },
+                    onOpenRetention = { navController.navigate(RetentionRoute) },
                     onAddMember = { navController.navigate(AddMemberRoute) },
                     onImportMembers = { navController.navigate(ImportMembersRoute) },
                 ),
@@ -152,6 +154,9 @@ internal fun MesgardNavHost(
         }
         composable<FormerMembersRoute> {
             FormerMembersScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<RetentionRoute> {
+            RetentionScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<LegalHoldsRoute> {
             LegalHoldsScreenRoute(onBack = { navController.popBackStack() })

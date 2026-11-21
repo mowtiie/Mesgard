@@ -24,6 +24,7 @@ private val SummaryParagraphs = listOf(
     R.string.privacy_summary_stored,
     R.string.privacy_summary_not_encrypted,
     R.string.privacy_summary_edits,
+    R.string.privacy_summary_retention,
     R.string.privacy_summary_reports,
     R.string.privacy_summary_device,
     R.string.privacy_summary_questions,
