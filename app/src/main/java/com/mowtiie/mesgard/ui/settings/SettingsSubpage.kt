@@ -1,12 +1,8 @@
 package com.mowtiie.mesgard.ui.settings
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Icon
@@ -19,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.ui.common.ScrollingPage
 import com.mowtiie.mesgard.ui.common.TitledScreen
 
 /** A full screen page of Settings: a title, a back arrow, a scrolling column and the error snackbar. */
@@ -50,10 +47,7 @@ internal fun SettingsSubpage(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(
-            modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()),
-            content = content,
-        )
+        ScrollingPage(padding, content)
     }
 }
 

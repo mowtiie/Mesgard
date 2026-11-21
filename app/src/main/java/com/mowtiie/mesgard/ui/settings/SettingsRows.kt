@@ -3,12 +3,10 @@ package com.mowtiie.mesgard.ui.settings
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -16,27 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
-
-private val SectionHeaderPadding = 16.dp
-
-internal data class RadioLabel(@StringRes val title: Int, @StringRes val summary: Int? = null)
-
-@Composable
-internal fun SectionHeader(@StringRes title: Int) {
-    Text(
-        text = stringResource(title),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(
-            start = SectionHeaderPadding,
-            end = SectionHeaderPadding,
-            top = SectionHeaderPadding,
-        ).semantics { heading() },
-    )
-}
+import com.mowtiie.mesgard.ui.common.NavigationChevron
 
 @Composable
 internal fun SwitchRow(
@@ -90,5 +68,6 @@ internal fun SettingsCategoryRow(
         leadingContent = icon,
         headlineContent = { Text(stringResource(title)) },
         supportingContent = { Text(summary) },
+        trailingContent = { NavigationChevron() },
     )
 }

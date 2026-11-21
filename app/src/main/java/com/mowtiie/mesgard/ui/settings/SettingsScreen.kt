@@ -1,11 +1,7 @@
 package com.mowtiie.mesgard.ui.settings
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
@@ -32,6 +28,7 @@ import com.mowtiie.mesgard.BuildConfig
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.DeviceSettings
 import com.mowtiie.mesgard.ui.account.SignOutDialog
+import com.mowtiie.mesgard.ui.common.ScrollingPage
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.reports.ReportsEntry
 import com.mowtiie.mesgard.ui.theme.IsDynamicColorSupported
@@ -74,7 +71,7 @@ internal fun SettingsScreen(
             }
         },
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+        ScrollingPage(padding) {
             AccountSummary(navigation.onOpenAccount)
             AdministrationEntry(navigation.onOpenAdministration)
             ReportsEntry(navigation.onOpenReports)

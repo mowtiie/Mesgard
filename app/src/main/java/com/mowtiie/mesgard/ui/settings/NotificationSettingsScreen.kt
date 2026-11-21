@@ -16,6 +16,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.NotificationPreview
+import com.mowtiie.mesgard.ui.common.SectionHeader
 import org.unifiedpush.android.connector.UnifiedPush
 
 @Composable

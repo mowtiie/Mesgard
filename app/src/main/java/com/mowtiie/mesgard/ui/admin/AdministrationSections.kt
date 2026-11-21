@@ -23,12 +23,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.admin.audit.AuditEntryItem
 import com.mowtiie.mesgard.ui.admin.audit.rememberAuditLabels
+import com.mowtiie.mesgard.ui.common.NavigationChevron
+import com.mowtiie.mesgard.ui.common.SectionHeader
 
 private val ContentPadding = 16.dp
 private val ButtonSpacing = 8.dp
@@ -52,7 +52,7 @@ internal fun QuickActions(navigation: AdminNavigation) {
 
 @Composable
 internal fun ManageSection(uiState: AdministrationUiState, navigation: AdminNavigation) {
-    SectionHeading(R.string.admin_section_manage)
+    SectionHeader(R.string.admin_section_manage)
     ManageRow(
         icon = { Icon(Icons.Outlined.Person, contentDescription = null) },
         title = R.string.members_title,
@@ -123,7 +123,7 @@ private fun membersSummary(uiState: AdministrationUiState): String {
 /** The latest changes, so a glance shows what happened without opening the whole log. */
 @Composable
 internal fun RecentActivitySection(uiState: AdministrationUiState, onOpenAuditLog: () -> Unit) {
-    SectionHeading(R.string.admin_section_recent_activity)
+    SectionHeader(R.string.admin_section_recent_activity)
     if (uiState.showNoActivity) {
         Text(
             text = stringResource(R.string.audit_empty),
@@ -149,16 +149,6 @@ private fun ManageRow(icon: @Composable () -> Unit, @StringRes title: Int, summa
         leadingContent = icon,
         headlineContent = { Text(stringResource(title)) },
         supportingContent = { Text(summary) },
-    )
-}
-
-@Composable
-private fun SectionHeading(@StringRes title: Int) {
-    Text(
-        text = stringResource(title),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = ContentPadding, end = ContentPadding, top = ContentPadding)
-            .semantics { heading() },
+        trailingContent = { NavigationChevron() },
     )
 }

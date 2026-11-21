@@ -14,6 +14,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.NavigationChevron
 
 private val SummaryAvatarSize = 56.dp
 
@@ -35,6 +36,7 @@ internal fun AccountSummary(
             leadingContent = { InitialAvatar(it.displayName, size = SummaryAvatarSize) },
             headlineContent = { Text(it.displayName) },
             supportingContent = it.email?.let { email -> { Text(email) } },
+            trailingContent = { NavigationChevron() },
         )
         HorizontalDivider()
     }

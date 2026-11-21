@@ -34,6 +34,7 @@ import com.mowtiie.mesgard.domain.model.Account
 import com.mowtiie.mesgard.domain.model.AccountMembership
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.NavigationChevron
 import com.mowtiie.mesgard.ui.common.labelResource
 
 private val AccountAvatarSize = 96.dp
@@ -101,6 +102,7 @@ internal fun AccountDetails(
                     colors = transparentListItemColors(),
                     leadingContent = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                     headlineContent = { Text(stringResource(R.string.account_change_password)) },
+                    trailingContent = { NavigationChevron() },
                 )
             }
         }
@@ -125,6 +127,7 @@ private fun MfaRow(state: MfaRowState, onClick: () -> Unit) {
         leadingContent = { Icon(painterResource(R.drawable.ic_shield), contentDescription = null) },
         headlineContent = { Text(stringResource(R.string.account_mfa)) },
         supportingContent = { Text(stringResource(supporting)) },
+        trailingContent = if (state == MfaRowState.REQUIRED) null else ({ NavigationChevron() }),
     )
 }
 

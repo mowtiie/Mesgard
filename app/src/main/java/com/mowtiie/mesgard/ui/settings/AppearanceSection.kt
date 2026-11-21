@@ -8,6 +8,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.ContrastLevel
 import com.mowtiie.mesgard.domain.model.ThemeMode
+import com.mowtiie.mesgard.ui.common.SectionHeader
 import com.mowtiie.mesgard.ui.theme.IsDynamicColorSupported
 
 /** Dynamic color has no contrast levels, so the contrast choice is disabled while it is on. */

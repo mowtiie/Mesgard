@@ -7,10 +7,7 @@ import android.content.Intent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Icon
@@ -29,8 +26,6 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -38,6 +33,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.mowtiie.mesgard.BuildConfig
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.ServerStatus
+import com.mowtiie.mesgard.ui.common.CopyIcon
+import com.mowtiie.mesgard.ui.common.ExternalLinkIcon
+import com.mowtiie.mesgard.ui.common.NavigationChevron
+import com.mowtiie.mesgard.ui.common.ScrollingPage
+import com.mowtiie.mesgard.ui.common.SectionHeader
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.server.LocalServerStatus
 import kotlinx.coroutines.launch
@@ -84,7 +84,7 @@ internal fun AboutScreenRoute(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+        ScrollingPage(padding) {
             AboutHeader()
             AppSection(viewModel.serverHost, LocalServerStatus.current, fingerprint, ::copyFingerprint)
             ProjectSection(onOpenLink = ::openLink, onOpenLicenses = onOpenLicenses)
@@ -116,7 +116,7 @@ private fun AppSection(
     fingerprint: String?,
     onCopyFingerprint: (String) -> Unit,
 ) {
-    AboutHeading(R.string.about_section_app)
+    SectionHeader(R.string.about_section_app)
     ListItem(
         headlineContent = { Text(stringResource(R.string.about_version)) },
         supportingContent = {
@@ -152,22 +152,23 @@ private fun AppSection(
                 fontFamily = FontFamily.Monospace,
             )
         },
+        trailingContent = fingerprint?.let { { CopyIcon() } },
     )
 }
 
 @Composable
 private fun ProjectSection(onOpenLink: (String) -> Unit, onOpenLicenses: () -> Unit) {
-    AboutHeading(R.string.about_section_project)
+    SectionHeader(R.string.about_section_project)
     LinkRow(R.string.about_license, R.string.about_license_value) { onOpenLink(LICENSE_URL) }
     LinkRow(R.string.about_source, R.string.about_source_value) { onOpenLink(REPOSITORY_URL) }
     LinkRow(R.string.about_issue, R.string.about_issue_summary) { onOpenLink(ISSUES_URL) }
     LinkRow(R.string.about_security, R.string.about_security_summary) { onOpenLink(SECURITY_POLICY_URL) }
-    LinkRow(R.string.about_licenses, R.string.about_licenses_summary, onOpenLicenses)
+    LinkRow(R.string.about_licenses, R.string.about_licenses_summary, isExternal = false, onClick = onOpenLicenses)
 }
 
 @Composable
 private fun DataSection() {
-    AboutHeading(R.string.about_data_title)
+    SectionHeader(R.string.about_data_title)
     Text(
         text = stringResource(R.string.about_data_note),
         style = MaterialTheme.typography.bodyMedium,
@@ -177,22 +178,12 @@ private fun DataSection() {
 }
 
 @Composable
-private fun LinkRow(@StringRes title: Int, @StringRes summary: Int, onClick: () -> Unit) {
+private fun LinkRow(@StringRes title: Int, @StringRes summary: Int, isExternal: Boolean = true, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
         headlineContent = { Text(stringResource(title)) },
         supportingContent = { Text(stringResource(summary)) },
-    )
-}
-
-@Composable
-private fun AboutHeading(@StringRes title: Int) {
-    Text(
-        text = stringResource(title),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = ContentPadding, end = ContentPadding, top = ContentPadding)
-            .semantics { heading() },
+        trailingContent = { if (isExternal) ExternalLinkIcon() else NavigationChevron() },
     )
 }
 

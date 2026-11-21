@@ -25,7 +25,7 @@ import com.mowtiie.mesgard.domain.model.ReportCategory
 import com.mowtiie.mesgard.domain.model.ReportDetail
 import com.mowtiie.mesgard.domain.model.ReportEvent
 import com.mowtiie.mesgard.domain.model.ReportStatus
-import com.mowtiie.mesgard.ui.settings.SectionHeader
+import com.mowtiie.mesgard.ui.common.SectionHeader
 
 private val ContentPadding = 16.dp
 private val ButtonSpacing = 8.dp
