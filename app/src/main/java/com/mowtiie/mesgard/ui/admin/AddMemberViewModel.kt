@@ -106,8 +106,9 @@ internal class AddMemberViewModel @Inject constructor(
 private fun AdminError.toAddMemberError() = when (this) {
     AdminError.NETWORK_UNAVAILABLE -> AddMemberError.NETWORK_UNAVAILABLE
     AdminError.NOT_ALLOWED -> AddMemberError.NOT_ALLOWED
-    AdminError.NOT_A_MEMBER, AdminError.LAST_ADMIN, AdminError.NOT_ERASABLE, AdminError.UNKNOWN ->
-        AddMemberError.UNKNOWN
+    AdminError.NOT_A_MEMBER, AdminError.LAST_ADMIN, AdminError.NOT_ERASABLE, AdminError.LEGAL_HOLD,
+    AdminError.UNKNOWN,
+    -> AddMemberError.UNKNOWN
 }
 
 private fun SkipReason.toAddMemberError() = when (this) {

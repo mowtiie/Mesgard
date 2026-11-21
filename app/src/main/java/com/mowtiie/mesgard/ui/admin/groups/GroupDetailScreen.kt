@@ -27,7 +27,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -36,16 +38,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.GroupRole
 import com.mowtiie.mesgard.domain.model.GroupSettings
+import com.mowtiie.mesgard.domain.model.HoldTarget
 import com.mowtiie.mesgard.ui.admin.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.TitledScreen
+import com.mowtiie.mesgard.ui.legalhold.PlaceHoldDialog
 
 private val FabClearance = 88.dp
 
 @Composable
 internal fun GroupDetailScreenRoute(
+    groupId: String,
     onBack: () -> Unit,
     onAddMembers: () -> Unit,
     modifier: Modifier = Modifier,
@@ -53,8 +58,17 @@ internal fun GroupDetailScreenRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.isDeleted) { if (uiState.isDeleted) onBack() }
+    var isHoldDialogShown by remember { mutableStateOf(false) }
+    if (isHoldDialogShown) {
+        PlaceHoldDialog(
+            target = HoldTarget.Group(groupId, uiState.name),
+            onDismiss = { isHoldDialogShown = false },
+            onPlaced = { isHoldDialogShown = false },
+        )
+    }
     GroupDetailScreen(
         uiState = uiState,
+        onLegalHold = { isHoldDialogShown = true },
         onBack = onBack,
         onAddMembers = onAddMembers,
         onRefresh = viewModel::onRefresh,
@@ -74,6 +88,7 @@ internal fun GroupDetailScreenRoute(
 @Composable
 internal fun GroupDetailScreen(
     uiState: GroupDetailUiState,
+    onLegalHold: () -> Unit,
     onBack: () -> Unit,
     onAddMembers: () -> Unit,
     onRefresh: () -> Unit,
@@ -110,6 +125,15 @@ internal fun GroupDetailScreen(
             }
             IconButton(onClick = { onDialogRequested(GroupDetailDialog.ConfirmDelete) }) {
                 Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.group_delete))
+            }
+            OverflowMenu { dismiss ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.legal_hold_menu)) },
+                    onClick = {
+                        dismiss()
+                        onLegalHold()
+                    },
+                )
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

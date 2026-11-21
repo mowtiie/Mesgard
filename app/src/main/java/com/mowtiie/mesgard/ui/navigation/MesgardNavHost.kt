@@ -26,6 +26,7 @@ import com.mowtiie.mesgard.ui.auth.MfaSetupScreenRoute
 import com.mowtiie.mesgard.ui.chats.ArchivedScreenRoute
 import com.mowtiie.mesgard.ui.contacts.ContactsScreenRoute
 import com.mowtiie.mesgard.ui.conversation.ConversationScreenRoute
+import com.mowtiie.mesgard.ui.legalhold.LegalHoldsScreenRoute
 import com.mowtiie.mesgard.ui.privacy.PrivacyNoticeScreenRoute
 import com.mowtiie.mesgard.ui.privacy.PrivacyNoticeSettingsScreenRoute
 import com.mowtiie.mesgard.ui.reports.ReportDetailScreenRoute
@@ -119,6 +120,7 @@ internal fun MesgardNavHost(
                     onOpenAuditLog = { navController.navigate(AuditLogRoute) },
                     onOpenReportReviewers = { navController.navigate(ReportReviewersRoute) },
                     onOpenPrivacyNoticeSettings = { navController.navigate(PrivacyNoticeSettingsRoute) },
+                    onOpenLegalHolds = { navController.navigate(LegalHoldsRoute) },
                     onAddMember = { navController.navigate(AddMemberRoute) },
                     onImportMembers = { navController.navigate(ImportMembersRoute) },
                 ),
@@ -140,6 +142,7 @@ internal fun MesgardNavHost(
         composable<GroupRoute> { entry ->
             val groupId = entry.toRoute<GroupRoute>().groupId
             GroupDetailScreenRoute(
+                groupId = groupId,
                 onBack = { navController.popBackStack() },
                 onAddMembers = { navController.navigate(AddGroupMembersRoute(groupId)) },
             )
@@ -149,6 +152,9 @@ internal fun MesgardNavHost(
         }
         composable<FormerMembersRoute> {
             FormerMembersScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<LegalHoldsRoute> {
+            LegalHoldsScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<PrivacyNoticeRoute> {
             PrivacyNoticeScreenRoute(onBack = { navController.popBackStack() })

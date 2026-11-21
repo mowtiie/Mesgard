@@ -38,6 +38,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.domain.model.HoldTarget
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
@@ -47,6 +48,7 @@ import com.mowtiie.mesgard.ui.common.SearchAction
 import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.labelResource
+import com.mowtiie.mesgard.ui.legalhold.PlaceHoldDialog
 
 @Composable
 internal fun MembersScreenRoute(
@@ -100,6 +102,7 @@ internal fun MembersScreen(
         }
     }
     var isSearching by rememberSaveable { mutableStateOf(false) }
+    var holdTarget by remember { mutableStateOf<HoldTarget?>(null) }
 
     TitledScreen(
         title = stringResource(R.string.members_title),
@@ -148,10 +151,14 @@ internal fun MembersScreen(
                 onRefresh = onRefresh,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                MemberList(uiState, onMemberAction)
+                MemberList(uiState, onMemberAction, onLegalHold = {
+                    holdTarget =
+                        HoldTarget.Person(it.userId, it.displayName)
+                })
             }
         }
     }
+    holdTarget?.let { PlaceHoldDialog(it, onDismiss = { holdTarget = null }, onPlaced = { holdTarget = null }) }
     MembersDialogs(
         dialog = uiState.dialog,
         isWorking = uiState.isWorking,
@@ -164,7 +171,11 @@ internal fun MembersScreen(
 }
 
 @Composable
-private fun MemberList(uiState: MembersUiState, onMemberAction: (Contact, MemberAction) -> Unit) {
+private fun MemberList(
+    uiState: MembersUiState,
+    onMemberAction: (Contact, MemberAction) -> Unit,
+    onLegalHold: (Contact) -> Unit,
+) {
     if (uiState.showNoResults) {
         NoResultsState()
     } else if (uiState.showEmptyMessage) {
@@ -176,14 +187,18 @@ private fun MemberList(uiState: MembersUiState, onMemberAction: (Contact, Member
                 leadingContent = { InitialAvatar(member.displayName) },
                 headlineContent = { Text(member.displayName) },
                 supportingContent = { Text(stringResource(member.role.labelResource())) },
-                trailingContent = { MemberMenu(member, onMemberAction) },
+                trailingContent = { MemberMenu(member, onMemberAction, onLegalHold) },
             )
         }
     }
 }
 
 @Composable
-private fun MemberMenu(member: Contact, onMemberAction: (Contact, MemberAction) -> Unit) {
+private fun MemberMenu(
+    member: Contact,
+    onMemberAction: (Contact, MemberAction) -> Unit,
+    onLegalHold: (Contact) -> Unit,
+) {
     OverflowMenu(description = stringResource(R.string.members_actions, member.displayName)) { dismiss ->
         MemberMenuItem(R.string.members_change_role) {
             dismiss()
@@ -196,6 +211,10 @@ private fun MemberMenu(member: Contact, onMemberAction: (Contact, MemberAction) 
         MemberMenuItem(R.string.members_reset_mfa) {
             dismiss()
             onMemberAction(member, MemberAction.RESET_MFA)
+        }
+        MemberMenuItem(R.string.legal_hold_menu) {
+            dismiss()
+            onLegalHold(member)
         }
         HorizontalDivider()
         MemberMenuItem(R.string.members_remove) {

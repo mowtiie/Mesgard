@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.data
 
 import com.mowtiie.mesgard.data.remote.GroupAdminRemoteSource
+import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminGroup
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupDetail
@@ -47,7 +48,7 @@ internal class RemoteGroupAdminRepository @Inject constructor(private val remote
         attemptAdmin { check(remote.renameGroup(groupId, name.trim())) { "No group was changed" } }
 
     override suspend fun deleteGroup(groupId: String): AdminResult<Unit> =
-        attemptAdmin { check(remote.deleteGroup(groupId)) { "No group was deleted" } }
+        attemptAdmin(conflict = AdminError.LEGAL_HOLD) { check(remote.deleteGroup(groupId)) { "No group was deleted" } }
 
     override suspend fun addMembers(orgId: String, groupId: String, userIds: List<String>): AdminResult<Unit> =
         attemptAdmin { remote.addMembers(orgId, groupId, userIds) }

@@ -152,6 +152,6 @@ internal fun AdminError.toMembersError() = when (this) {
     AdminError.NOT_ALLOWED -> MembersError.NOT_ALLOWED
     AdminError.NOT_A_MEMBER -> MembersError.NOT_A_MEMBER
     AdminError.LAST_ADMIN -> MembersError.LAST_ADMIN
-    AdminError.NOT_ERASABLE -> MembersError.NOT_ERASABLE
+    AdminError.NOT_ERASABLE, AdminError.LEGAL_HOLD -> MembersError.NOT_ERASABLE
     AdminError.UNKNOWN -> MembersError.UNKNOWN
 }
