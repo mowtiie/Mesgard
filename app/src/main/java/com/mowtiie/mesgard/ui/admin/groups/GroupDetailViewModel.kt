@@ -4,11 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.mowtiie.mesgard.domain.admin.ObserveAdminOrganization
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupDetail
 import com.mowtiie.mesgard.domain.model.GroupRole
 import com.mowtiie.mesgard.domain.model.GroupSettings
+import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
 import com.mowtiie.mesgard.ui.navigation.GroupRoute
@@ -32,6 +34,10 @@ internal sealed interface GroupDetailDialog {
     data object ConfirmDelete : GroupDetailDialog
 
     data class ConfirmRemove(val member: GroupMemberRow) : GroupDetailDialog
+
+    data object ConfirmLeave : GroupDetailDialog
+
+    data object OnlyOwner : GroupDetailDialog
 }
 
 internal data class GroupDetailUiState(
@@ -41,15 +47,27 @@ internal data class GroupDetailUiState(
     val isLoading: Boolean = true,
     val isWorking: Boolean = false,
     val isDeleted: Boolean = false,
+    val hasLeft: Boolean = false,
+    val isAdmin: Boolean = false,
+    val ownRole: GroupRole? = null,
     val dialog: GroupDetailDialog? = null,
     val error: AdminError? = null,
-)
+) {
+    /** Organization admins and owners of the group change its name and its roster. */
+    val canManage: Boolean
+        get() = isAdmin || ownRole == GroupRole.OWNER
+
+    val isOnlyOwner: Boolean
+        get() = ownRole == GroupRole.OWNER && members.count { it.role == GroupRole.OWNER } == 1
+}
 
 @HiltViewModel
 internal class GroupDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     contactRepository: ContactRepository,
     private val groupAdminRepository: GroupAdminRepository,
+    private val authRepository: AuthRepository,
+    observeAdminOrganization: ObserveAdminOrganization,
 ) : ViewModel() {
     private val groupId = savedStateHandle.toRoute<GroupRoute>().groupId
     private val localState = MutableStateFlow(LocalState())
@@ -57,7 +75,8 @@ internal class GroupDetailViewModel @Inject constructor(
     val uiState: StateFlow<GroupDetailUiState> = combine(
         localState,
         contactRepository.observeContacts(),
-    ) { local, contacts ->
+        observeAdminOrganization.organization,
+    ) { local, contacts, adminOrganization ->
         val names = contacts.associate { it.userId to it.displayName }
         GroupDetailUiState(
             name = local.group?.name.orEmpty(),
@@ -68,6 +87,9 @@ internal class GroupDetailViewModel @Inject constructor(
             isLoading = local.isLoading,
             isWorking = local.isWorking,
             isDeleted = local.isDeleted,
+            hasLeft = local.hasLeft,
+            isAdmin = adminOrganization != null,
+            ownRole = local.group?.members?.firstOrNull { it.userId == authRepository.currentUserId }?.role,
             dialog = local.dialog,
             error = local.error,
         )
@@ -87,9 +109,8 @@ internal class GroupDetailViewModel @Inject constructor(
         }
     }
 
-    fun onDialogRequested(dialog: GroupDetailDialog) = localState.update { it.copy(dialog = dialog) }
-
-    fun onDialogDismissed() = localState.update { it.copy(dialog = null) }
+    /** Opens a dialog, or closes the open one when [dialog] is null. */
+    fun onDialogChanged(dialog: GroupDetailDialog?) = localState.update { it.copy(dialog = dialog) }
 
     fun onErrorShown() = localState.update { it.copy(error = null) }
 
@@ -100,6 +121,13 @@ internal class GroupDetailViewModel @Inject constructor(
 
     fun onDeleteConfirmed() {
         change(onSuccess = { it.copy(isDeleted = true) }, refresh = false) { groupAdminRepository.deleteGroup(groupId) }
+    }
+
+    fun onLeaveConfirmed() {
+        val userId = authRepository.currentUserId ?: return
+        change(onSuccess = { it.copy(hasLeft = true) }, refresh = false) {
+            groupAdminRepository.removeMember(groupId, userId)
+        }
     }
 
     fun onSettingsChanged(settings: GroupSettings) {
@@ -137,6 +165,7 @@ internal class GroupDetailViewModel @Inject constructor(
         val isLoading: Boolean = true,
         val isWorking: Boolean = false,
         val isDeleted: Boolean = false,
+        val hasLeft: Boolean = false,
         val dialog: GroupDetailDialog? = null,
         val error: AdminError? = null,
     )

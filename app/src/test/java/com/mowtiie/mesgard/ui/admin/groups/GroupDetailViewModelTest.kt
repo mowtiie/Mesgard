@@ -2,6 +2,8 @@ package com.mowtiie.mesgard.ui.admin.groups
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import com.mowtiie.mesgard.domain.admin.ObserveAdminOrganization
+import com.mowtiie.mesgard.domain.model.AccountMembership
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.Contact
@@ -11,6 +13,7 @@ import com.mowtiie.mesgard.domain.model.GroupRole
 import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.model.PostingPolicy
+import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
@@ -43,6 +46,11 @@ class GroupDetailViewModelTest {
     )
     private val contactRepository = mockk<ContactRepository> { every { observeContacts() } returns contacts }
     private val groupAdminRepository = mockk<GroupAdminRepository>()
+    private val authRepository = mockk<AuthRepository> { every { currentUserId } returns "u1" }
+    private val adminOrganization = MutableStateFlow<AccountMembership?>(null)
+    private val observeAdminOrganization = mockk<ObserveAdminOrganization> {
+        every { organization } returns adminOrganization
+    }
     private val detail = GroupDetail(
         "g1",
         "Grade 10 A",
@@ -57,6 +65,8 @@ class GroupDetailViewModelTest {
         SavedStateHandle(mapOf("groupId" to "g1")),
         contactRepository,
         groupAdminRepository,
+        authRepository,
+        observeAdminOrganization,
     )
 
     @Test
@@ -69,6 +79,43 @@ class GroupDetailViewModelTest {
             assertEquals(listOf("Ben Reyes", null, "Ana Cruz"), state.members.map { it.displayName })
             assertEquals(GroupRole.MODERATOR, state.members.first().role)
         }
+    }
+
+    @Test
+    fun `an owner manages the group and an ordinary member only sees it`() = runTest {
+        val asOwner = detail.copy(
+            members = listOf(GroupMember("u1", GroupRole.OWNER), GroupMember("u2", GroupRole.MEMBER)),
+        )
+        coEvery { groupAdminRepository.fetchGroup("g1") } returns AdminResult.Success(asOwner)
+        viewModel().uiState.test {
+            val state = expectMostRecentItem()
+            assertTrue(state.canManage)
+            assertFalse(state.isAdmin)
+            assertTrue(state.isOnlyOwner)
+        }
+
+        val asMember = detail.copy(
+            members = listOf(GroupMember("u1", GroupRole.MEMBER), GroupMember("u2", GroupRole.OWNER)),
+        )
+        coEvery { groupAdminRepository.fetchGroup("g1") } returns AdminResult.Success(asMember)
+        viewModel().uiState.test {
+            val state = expectMostRecentItem()
+            assertFalse(state.canManage)
+            assertEquals(GroupRole.MEMBER, state.ownRole)
+        }
+    }
+
+    @Test
+    fun `a member who leaves is removed from the group and the screen closes`() = runTest {
+        coEvery { groupAdminRepository.fetchGroup("g1") } returns AdminResult.Success(detail)
+        coEvery { groupAdminRepository.removeMember("g1", "u1") } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+        viewModel.uiState.test { expectMostRecentItem() }
+
+        viewModel.onLeaveConfirmed()
+
+        viewModel.uiState.test { assertTrue(expectMostRecentItem().hasLeft) }
+        coVerify { groupAdminRepository.removeMember("g1", "u1") }
     }
 
     @Test
@@ -111,7 +158,7 @@ class GroupDetailViewModelTest {
         coEvery { groupAdminRepository.renameGroup("g1", "Grade 10 B") } returns AdminResult.Success(Unit)
         val viewModel = viewModel()
 
-        viewModel.onDialogRequested(GroupDetailDialog.Rename)
+        viewModel.onDialogChanged(GroupDetailDialog.Rename)
         viewModel.onRenameConfirmed("Grade 10 B")
 
         coVerify { groupAdminRepository.renameGroup("g1", "Grade 10 B") }
@@ -163,7 +210,7 @@ class GroupDetailViewModelTest {
         coEvery { groupAdminRepository.deleteGroup("g1") } returns AdminResult.Failure(AdminError.NOT_ALLOWED)
         val viewModel = viewModel()
 
-        viewModel.onDialogRequested(GroupDetailDialog.ConfirmDelete)
+        viewModel.onDialogChanged(GroupDetailDialog.ConfirmDelete)
         viewModel.onDeleteConfirmed()
 
         viewModel.uiState.test {

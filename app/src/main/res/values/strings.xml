@@ -208,6 +208,12 @@
     <string name="group_members_empty">No members in this group</string>
     <string name="group_members_empty_hint">Add members to start the group conversation.</string>
     <string name="group_unknown_member">Unknown member</string>
+    <string name="group_leave">Leave group</string>
+    <string name="group_leave_title">Leave this group?</string>
+    <string name="group_leave_message">You will stop getting messages from %1$s. An owner or an administrator can add you again.</string>
+    <string name="group_leave_confirm">Leave</string>
+    <string name="group_only_owner_title">You are the only owner</string>
+    <string name="group_only_owner_message">Make another member an owner before you leave.</string>
     <string name="group_role_owner">Owner</string>
     <string name="group_make_owner">Make owner</string>
     <string name="group_role_moderator">Moderator</string>

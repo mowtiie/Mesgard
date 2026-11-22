@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -23,6 +24,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,11 +55,13 @@ internal fun GroupDetailScreenRoute(
     groupId: String,
     onBack: () -> Unit,
     onAddMembers: () -> Unit,
+    onLeft: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.isDeleted) { if (uiState.isDeleted) onBack() }
+    LaunchedEffect(uiState.hasLeft) { if (uiState.hasLeft) onLeft() }
     var isHoldDialogShown by remember { mutableStateOf(false) }
     if (isHoldDialogShown) {
         PlaceHoldSheet(
@@ -72,10 +76,16 @@ internal fun GroupDetailScreenRoute(
         onBack = onBack,
         onAddMembers = onAddMembers,
         onRefresh = viewModel::onRefresh,
-        onDialogRequested = viewModel::onDialogRequested,
-        onDialogDismissed = viewModel::onDialogDismissed,
+        onDialogRequested = viewModel::onDialogChanged,
+        onDialogDismissed = { viewModel.onDialogChanged(null) },
         onRenameConfirmed = viewModel::onRenameConfirmed,
         onDeleteConfirmed = viewModel::onDeleteConfirmed,
+        onLeaveRequested = {
+            viewModel.onDialogChanged(
+                if (uiState.isOnlyOwner) GroupDetailDialog.OnlyOwner else GroupDetailDialog.ConfirmLeave,
+            )
+        },
+        onLeaveConfirmed = viewModel::onLeaveConfirmed,
         onRemoveConfirmed = viewModel::onRemoveConfirmed,
         onRoleSelected = viewModel::onRoleSelected,
         onSettingsChanged = viewModel::onSettingsChanged,
@@ -96,6 +106,8 @@ internal fun GroupDetailScreen(
     onDialogDismissed: () -> Unit,
     onRenameConfirmed: (String) -> Unit,
     onDeleteConfirmed: () -> Unit,
+    onLeaveRequested: () -> Unit,
+    onLeaveConfirmed: () -> Unit,
     onRemoveConfirmed: (GroupMemberRow) -> Unit,
     onRoleSelected: (GroupMemberRow, GroupRole) -> Unit,
     onSettingsChanged: (GroupSettings) -> Unit,
@@ -120,26 +132,45 @@ internal fun GroupDetailScreen(
             }
         },
         actions = {
-            IconButton(onClick = { onDialogRequested(GroupDetailDialog.Rename) }) {
-                Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.group_rename_title))
+            if (uiState.canManage) {
+                IconButton(onClick = { onDialogRequested(GroupDetailDialog.Rename) }) {
+                    Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.group_rename_title))
+                }
             }
-            IconButton(onClick = { onDialogRequested(GroupDetailDialog.ConfirmDelete) }) {
-                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.group_delete))
+            if (uiState.isAdmin) {
+                IconButton(onClick = { onDialogRequested(GroupDetailDialog.ConfirmDelete) }) {
+                    Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.group_delete))
+                }
             }
-            OverflowMenu { dismiss ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.legal_hold_menu)) },
-                    onClick = {
-                        dismiss()
-                        onLegalHold()
-                    },
-                )
+            if (uiState.isAdmin || uiState.ownRole != null) {
+                OverflowMenu { dismiss ->
+                    if (uiState.isAdmin) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.legal_hold_menu)) },
+                            onClick = {
+                                dismiss()
+                                onLegalHold()
+                            },
+                        )
+                    }
+                    if (uiState.ownRole != null) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.group_leave)) },
+                            onClick = {
+                                dismiss()
+                                onLeaveRequested()
+                            },
+                        )
+                    }
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddMembers) {
-                Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.group_add_members))
+            if (uiState.canManage) {
+                FloatingActionButton(onClick = onAddMembers) {
+                    Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.group_add_members))
+                }
             }
         },
     ) { padding ->
@@ -154,7 +185,11 @@ internal fun GroupDetailScreen(
             }
         }
     }
-    GroupDetailDialogs(uiState, onRenameConfirmed, onDeleteConfirmed, onRemoveConfirmed, onDialogDismissed)
+    GroupDetailDialogs(
+        uiState,
+        GroupDetailActions(onRenameConfirmed, onDeleteConfirmed, onLeaveConfirmed, onRemoveConfirmed),
+        onDialogDismissed,
+    )
 }
 
 @Composable
@@ -172,12 +207,14 @@ private fun MemberList(
         )
     }
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = FabClearance)) {
-        item(key = "settings") {
-            GroupSettingsRows(
-                uiState.settings,
-                enabled = !uiState.isWorking && !uiState.isLoading,
-                onChanged = onSettingsChanged,
-            )
+        if (uiState.isAdmin) {
+            item(key = "settings") {
+                GroupSettingsRows(
+                    uiState.settings,
+                    enabled = !uiState.isWorking && !uiState.isLoading,
+                    onChanged = onSettingsChanged,
+                )
+            }
         }
         items(uiState.members, key = { it.userId }) { member ->
             val name = member.displayName ?: stringResource(R.string.group_unknown_member)
@@ -185,26 +222,32 @@ private fun MemberList(
                 leadingContent = { InitialAvatar(name) },
                 headlineContent = { Text(name) },
                 supportingContent = { Text(stringResource(member.role.labelResource())) },
-                trailingContent = {
-                    OverflowMenu(description = stringResource(R.string.members_actions, name)) { dismiss ->
-                        GroupRole.entries.filter { it != member.role }.forEach { role ->
-                            DropdownMenuItem(
-                                text = { Text(stringResource(role.makeResource())) },
-                                onClick = {
-                                    dismiss()
-                                    onRoleSelected(member, role)
-                                },
-                            )
+                trailingContent = if (!uiState.canManage) {
+                    null
+                } else {
+                    (
+                        {
+                            OverflowMenu(description = stringResource(R.string.members_actions, name)) { dismiss ->
+                                GroupRole.entries.filter { it != member.role }.forEach { role ->
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(role.makeResource())) },
+                                        onClick = {
+                                            dismiss()
+                                            onRoleSelected(member, role)
+                                        },
+                                    )
+                                }
+                                HorizontalDivider()
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.group_remove_member)) },
+                                    onClick = {
+                                        dismiss()
+                                        onDialogRequested(GroupDetailDialog.ConfirmRemove(member))
+                                    },
+                                )
+                            }
                         }
-                        HorizontalDivider()
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.group_remove_member)) },
-                            onClick = {
-                                dismiss()
-                                onDialogRequested(GroupDetailDialog.ConfirmRemove(member))
-                            },
                         )
-                    }
                 },
             )
         }
@@ -212,20 +255,14 @@ private fun MemberList(
 }
 
 @Composable
-private fun GroupDetailDialogs(
-    uiState: GroupDetailUiState,
-    onRenameConfirmed: (String) -> Unit,
-    onDeleteConfirmed: () -> Unit,
-    onRemoveConfirmed: (GroupMemberRow) -> Unit,
-    onDismiss: () -> Unit,
-) {
+private fun GroupDetailDialogs(uiState: GroupDetailUiState, actions: GroupDetailActions, onDismiss: () -> Unit) {
     when (val dialog = uiState.dialog) {
         GroupDetailDialog.Rename -> GroupNameSheet(
             title = R.string.group_rename_title,
             confirmLabel = R.string.group_rename_confirm,
             initialName = uiState.name,
             isWorking = uiState.isWorking,
-            onConfirm = onRenameConfirmed,
+            onConfirm = actions.onRenameConfirmed,
             onDismiss = onDismiss,
         )
         GroupDetailDialog.ConfirmDelete -> GroupConfirmDialog(
@@ -233,7 +270,7 @@ private fun GroupDetailDialogs(
             message = stringResource(R.string.group_delete_message, uiState.name),
             confirmLabel = R.string.group_delete_confirm,
             isWorking = uiState.isWorking,
-            onConfirm = onDeleteConfirmed,
+            onConfirm = actions.onDeleteConfirmed,
             onDismiss = onDismiss,
         )
         is GroupDetailDialog.ConfirmRemove -> GroupConfirmDialog(
@@ -245,12 +282,34 @@ private fun GroupDetailDialogs(
             ),
             confirmLabel = R.string.group_remove_confirm,
             isWorking = uiState.isWorking,
-            onConfirm = { onRemoveConfirmed(dialog.member) },
+            onConfirm = { actions.onRemoveConfirmed(dialog.member) },
             onDismiss = onDismiss,
+        )
+        GroupDetailDialog.ConfirmLeave -> GroupConfirmDialog(
+            title = R.string.group_leave_title,
+            message = stringResource(R.string.group_leave_message, uiState.name),
+            confirmLabel = R.string.group_leave_confirm,
+            isWorking = uiState.isWorking,
+            onConfirm = actions.onLeaveConfirmed,
+            onDismiss = onDismiss,
+        )
+        GroupDetailDialog.OnlyOwner -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.group_only_owner_title)) },
+            text = { Text(stringResource(R.string.group_only_owner_message)) },
+            confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.report_done)) } },
         )
         null -> Unit
     }
 }
+
+/** What the dialogs of the group screen do once confirmed. */
+private class GroupDetailActions(
+    val onRenameConfirmed: (String) -> Unit,
+    val onDeleteConfirmed: () -> Unit,
+    val onLeaveConfirmed: () -> Unit,
+    val onRemoveConfirmed: (GroupMemberRow) -> Unit,
+)
 
 private fun GroupRole.labelResource() = when (this) {
     GroupRole.OWNER -> R.string.group_role_owner

@@ -149,6 +149,7 @@ internal fun MesgardNavHost(
                 groupId = groupId,
                 onBack = { navController.popBackStack() },
                 onAddMembers = { navController.navigate(AddGroupMembersRoute(groupId)) },
+                onLeft = { navController.popBackStack(MainRoute, inclusive = false) },
             )
         }
         composable<AddGroupMembersRoute> {
