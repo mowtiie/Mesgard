@@ -284,6 +284,7 @@
     <string name="import_groups_row_unknown_kind">The kind must be section, class, department, club or other.</string>
     <string name="import_groups_row_invalid_email">The email is not valid.</string>
     <string name="import_groups_row_unknown_role">The role must be owner, moderator or member.</string>
+    <string name="conversation_admin_access_notice">An administrator opened the messages of this group on %1$s.</string>
     <string name="group_read_messages">Read messages</string>
     <string name="group_open_messages_title">Read the messages of this group</string>
     <string name="group_open_messages_text">This group was created by a person, so administrators cannot read it. Give the reason. Access lasts seven days and is read only. The reason goes in the audit log, and the members of the group can see that an administrator opened it and when, but not who or why.</string>

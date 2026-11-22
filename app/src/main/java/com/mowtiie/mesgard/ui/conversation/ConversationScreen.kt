@@ -58,7 +58,12 @@ import kotlinx.coroutines.launch
 private const val LOAD_OLDER_THRESHOLD = 5
 
 /** Opening the group of a group conversation, and whether looking it up failed. */
-internal class GroupInfoAction(val isFailed: Boolean, val onOpen: () -> Unit, val onFailureShown: () -> Unit)
+internal class GroupInfoAction(
+    val isFailed: Boolean,
+    val lastOpenedAtEpochMillis: Long?,
+    val onOpen: () -> Unit,
+    val onFailureShown: () -> Unit,
+)
 
 @Composable
 internal fun ConversationScreenRoute(
@@ -81,6 +86,7 @@ internal fun ConversationScreenRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
     val group by groupViewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(uiState.showSenderNames) { if (uiState.showSenderNames) groupViewModel.onGroupConversationShown() }
     LaunchedEffect(group.groupId) {
         group.groupId?.let {
             onOpenGroup(it)
@@ -188,6 +194,7 @@ internal fun ConversationScreenRoute(
         onMuteChanged = actionsViewModel::onMuteChanged,
         groupInfo = GroupInfoAction(
             group.isFailed,
+            group.lastOpenedAtEpochMillis,
             groupViewModel::onGroupInfoRequested,
             groupViewModel::onFailureShown,
         ),
@@ -302,6 +309,7 @@ internal fun ConversationScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).consumeWindowInsets(padding).imePadding().fillMaxSize()) {
+            AdminAccessNotice(groupInfo.lastOpenedAtEpochMillis)
             if (isSearching) {
                 SearchResults(
                     state = search.state,
