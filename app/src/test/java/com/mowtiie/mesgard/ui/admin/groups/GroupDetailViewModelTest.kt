@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.ui.admin.groups
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.mowtiie.mesgard.domain.admin.ObserveAdminOrganization
+import com.mowtiie.mesgard.domain.model.Account
 import com.mowtiie.mesgard.domain.model.AccountMembership
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminResult
@@ -13,6 +14,7 @@ import com.mowtiie.mesgard.domain.model.GroupRole
 import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.model.PostingPolicy
+import com.mowtiie.mesgard.domain.repository.AccountRepository
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
@@ -48,6 +50,9 @@ class GroupDetailViewModelTest {
     private val groupAdminRepository = mockk<GroupAdminRepository>()
     private val authRepository = mockk<AuthRepository> { every { currentUserId } returns "u1" }
     private val adminOrganization = MutableStateFlow<AccountMembership?>(null)
+    private val accountRepository = mockk<AccountRepository> {
+        every { observeAccount() } returns MutableStateFlow(Account("Own Name", null, emptyList()))
+    }
     private val observeAdminOrganization = mockk<ObserveAdminOrganization> {
         every { organization } returns adminOrganization
     }
@@ -67,6 +72,7 @@ class GroupDetailViewModelTest {
         groupAdminRepository,
         authRepository,
         observeAdminOrganization,
+        accountRepository,
     )
 
     @Test
@@ -116,6 +122,17 @@ class GroupDetailViewModelTest {
 
         viewModel.uiState.test { assertTrue(expectMostRecentItem().hasLeft) }
         coVerify { groupAdminRepository.removeMember("g1", "u1") }
+    }
+
+    @Test
+    fun `names the signed in person from the account because the roster leaves them out`() = runTest {
+        contacts.value = emptyList()
+        coEvery { groupAdminRepository.fetchGroup("g1") } returns
+            AdminResult.Success(detail.copy(members = listOf(GroupMember("u1", GroupRole.OWNER))))
+
+        viewModel().uiState.test {
+            assertEquals("Own Name", expectMostRecentItem().members.single().displayName)
+        }
     }
 
     @Test

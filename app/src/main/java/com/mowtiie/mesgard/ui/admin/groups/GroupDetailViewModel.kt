@@ -10,6 +10,7 @@ import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupDetail
 import com.mowtiie.mesgard.domain.model.GroupRole
 import com.mowtiie.mesgard.domain.model.GroupSettings
+import com.mowtiie.mesgard.domain.repository.AccountRepository
 import com.mowtiie.mesgard.domain.repository.AuthRepository
 import com.mowtiie.mesgard.domain.repository.ContactRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
@@ -69,6 +70,7 @@ internal class GroupDetailViewModel @Inject constructor(
     private val groupAdminRepository: GroupAdminRepository,
     private val authRepository: AuthRepository,
     observeAdminOrganization: ObserveAdminOrganization,
+    accountRepository: AccountRepository,
 ) : ViewModel() {
     private val groupId = savedStateHandle.toRoute<GroupRoute>().groupId
     private val localState = MutableStateFlow(LocalState())
@@ -77,8 +79,11 @@ internal class GroupDetailViewModel @Inject constructor(
         localState,
         contactRepository.observeContacts(),
         observeAdminOrganization.organization,
-    ) { local, contacts, adminOrganization ->
-        val names = contacts.associate { it.userId to it.displayName }
+        accountRepository.observeAccount(),
+    ) { local, contacts, adminOrganization, account ->
+        // The roster leaves out the signed in person, so their own name comes from the account.
+        val own = authRepository.currentUserId?.let { id -> account?.let { mapOf(id to it.displayName) } }.orEmpty()
+        val names = own + contacts.associate { it.userId to it.displayName }
         GroupDetailUiState(
             name = local.group?.name.orEmpty(),
             settings = local.group?.settings ?: GroupSettings(),
