@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.domain.model.GroupKind
 import com.mowtiie.mesgard.ui.admin.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
@@ -151,11 +152,15 @@ private fun GroupList(uiState: GroupsUiState, onOpenGroup: (String) -> Unit) {
                     val members =
                         pluralStringResource(R.plurals.groups_member_count, group.memberCount, group.memberCount)
                     Text(
-                        stringResource(
-                            R.string.groups_row_summary,
-                            stringResource(group.kind.labelResource()),
-                            members,
-                        ),
+                        if (group.kind == GroupKind.OTHER) {
+                            members
+                        } else {
+                            stringResource(
+                                R.string.groups_row_summary,
+                                stringResource(group.kind.labelResource()),
+                                members,
+                            )
+                        },
                     )
                 },
             )

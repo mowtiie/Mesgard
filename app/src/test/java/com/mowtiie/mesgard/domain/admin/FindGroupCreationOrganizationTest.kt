@@ -12,6 +12,7 @@ import com.mowtiie.mesgard.domain.repository.GroupCreationRepository
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -47,6 +48,19 @@ class FindGroupCreationOrganizationTest {
         coEvery { groupCreation.rules("c") } returns rules(canCreate = true)
 
         assertEquals(open, find(closed, open)())
+    }
+
+    @Test
+    fun `waits for the account when it is not stored yet`() = runTest {
+        val admin = AccountMembership("a", "Admin School", OrgRole.ORG_ADMIN)
+        val accounts = mockk<AccountRepository> {
+            every { observeAccount() } returns flow {
+                emit(null)
+                emit(Account("Ana", null, listOf(admin)))
+            }
+        }
+
+        assertEquals(admin, FindGroupCreationOrganization(accounts, groupCreation)())
     }
 
     @Test

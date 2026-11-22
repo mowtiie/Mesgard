@@ -175,6 +175,10 @@
     <string name="audit_message_unpinned">%1$s unpinned a message</string>
     <string name="audit_mfa_reset">%1$s reset the two-step verification of %2$s</string>
     <string name="audit_login_disabled">%1$s disabled the login of %2$s</string>
+    <string name="audit_group_announced">%1$s sent a message to a group and the groups inside it</string>
+    <string name="audit_group_imported">%1$s imported groups from a file</string>
+    <string name="audit_group_messages_opened">%1$s opened the messages of a group a person created</string>
+    <string name="audit_group_creation_changed">%1$s changed who can create groups</string>
     <string name="audit_group_created">%1$s created the group %2$s</string>
     <string name="audit_group_renamed">%1$s renamed the group %2$s to %3$s</string>
     <string name="audit_group_deleted">%1$s deleted the group %2$s</string>
@@ -307,7 +311,8 @@
     <string name="group_kind_class">Class</string>
     <string name="group_kind_department">Department</string>
     <string name="group_kind_club">Club</string>
-    <string name="group_kind_other">Group</string>
+    <string name="group_kind_other">Other</string>
+    <string name="group_place_only_inside">Inside %1$s</string>
     <string name="groups_row_summary">%1$s, %2$s</string>
     <plurals name="groups_member_count">
         <item quantity="one">%d member</item>

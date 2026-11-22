@@ -49,10 +49,11 @@ internal fun OpenMessagesSheet(isOpening: Boolean, onConfirm: (String) -> Unit, 
 /** The line under the title of a group: its kind, and the group it is inside when it is inside one. */
 @Composable
 internal fun placeSummary(tree: GroupTreeUiState): String? {
-    val kind = tree.kind?.let { stringResource(it.labelResource()) }
+    val kind = tree.kind?.takeIf { it != GroupKind.OTHER }?.let { stringResource(it.labelResource()) }
     val parentName = tree.parentName
     return when {
-        kind == null -> null
+        kind == null && parentName == null -> null
+        kind == null -> stringResource(R.string.group_place_only_inside, parentName.orEmpty())
         parentName == null -> kind
         else -> stringResource(R.string.group_place_inside, kind, parentName)
     }

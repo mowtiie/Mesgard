@@ -34,6 +34,18 @@ class AuditMessageTest {
     }
 
     @Test
+    fun `describes what the group features record`() {
+        assertEquals(R.string.audit_group_announced, describe("group.announced", "g1").resource)
+        assertEquals(R.string.audit_group_imported, describe("group.imported", "o1").resource)
+        assertEquals(R.string.audit_group_messages_opened, describe("group.messages_opened", "g1").resource)
+        assertEquals(
+            R.string.audit_group_creation_changed,
+            describe("organization.group_creation_changed", "o1").resource,
+        )
+        assertEquals(listOf("Admin Cruz"), describe("group.messages_opened", "g1").arguments)
+    }
+
+    @Test
     fun `describes pinning and unpinning a message`() {
         assertEquals(R.string.audit_message_pinned, describe("message.pinned", "m1").resource)
         assertEquals(listOf("Admin Cruz"), describe("message.unpinned", "m1").arguments)
