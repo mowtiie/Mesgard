@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** The account is stored a moment after sign in, first without its organizations, so the check waits for them. */
+/** The account is only stored once it is fetched, so the check fetches it and waits for its organizations. */
 private const val ACCOUNT_WAIT_MS = 10_000L
 
 /**
@@ -22,6 +22,7 @@ internal class FindGroupCreationOrganization @Inject constructor(
     private val groupCreationRepository: GroupCreationRepository,
 ) {
     suspend operator fun invoke(): AccountMembership? {
+        accountRepository.refresh()
         val memberships = withTimeoutOrNull(ACCOUNT_WAIT_MS) {
             accountRepository.observeAccount().map { it?.memberships.orEmpty() }.first { it.isNotEmpty() }
         }.orEmpty()

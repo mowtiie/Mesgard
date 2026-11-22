@@ -13,6 +13,7 @@ import com.mowtiie.mesgard.domain.model.GroupPlacement
 import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.model.PostingPolicy
+import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AccountRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
 import com.mowtiie.mesgard.domain.repository.GroupCreationRepository
@@ -37,6 +38,7 @@ class NewGroupViewModelTest {
         every { observeAccount() } answers {
             MutableStateFlow(Account("Ana", null, listOf(AccountMembership(ORG, "Rizal National", role.value))))
         }
+        coEvery { refresh() } returns RefreshResult.Success
     }
     private val groupCreationRepository = mockk<GroupCreationRepository> {
         coEvery { rules(ORG) } returns AdminResult.Success(

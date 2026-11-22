@@ -7,6 +7,7 @@ import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupCreationPolicy
 import com.mowtiie.mesgard.domain.model.GroupCreationRules
 import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AccountRepository
 import com.mowtiie.mesgard.domain.repository.GroupCreationRepository
 import io.mockk.coEvery
@@ -25,6 +26,7 @@ class FindGroupCreationOrganizationTest {
     private fun find(vararg memberships: AccountMembership): FindGroupCreationOrganization {
         val accounts = mockk<AccountRepository> {
             every { observeAccount() } returns flowOf(Account("Ana", null, memberships.toList()))
+            coEvery { refresh() } returns RefreshResult.Success
         }
         return FindGroupCreationOrganization(accounts, groupCreation)
     }
@@ -59,6 +61,7 @@ class FindGroupCreationOrganizationTest {
                 emit(Account("Ana", null, emptyList()))
                 emit(Account("Ana", null, listOf(admin)))
             }
+            coEvery { refresh() } returns RefreshResult.Success
         }
 
         assertEquals(admin, FindGroupCreationOrganization(accounts, groupCreation)())
