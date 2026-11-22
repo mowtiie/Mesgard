@@ -18,7 +18,12 @@ internal data class GroupRowDto(
     @SerialName("group_members") val members: List<CountDto> = emptyList(),
     @SerialName("posting_policy") val postingPolicy: String = "everyone",
     @SerialName("includes_everyone") val includesEveryone: Boolean = false,
+    val kind: String = "other",
+    @SerialName("parent_id") val parentId: String? = null,
 )
+
+/** Where a new group sits, in the words of the server. */
+internal data class GroupPlacementFields(val kind: String = "other", val parentId: String? = null)
 
 @Serializable
 internal data class CountDto(val count: Int)
@@ -41,6 +46,8 @@ private data class NewGroupDto(
     val name: String,
     @SerialName("posting_policy") val postingPolicy: String,
     @SerialName("includes_everyone") val includesEveryone: Boolean,
+    val kind: String,
+    @SerialName("parent_id") val parentId: String? = null,
 )
 
 @Serializable
@@ -57,7 +64,13 @@ internal interface GroupAdminRemoteSource {
 
     suspend fun fetchGroupMembers(groupId: String): List<GroupMemberRowDto>
 
-    suspend fun createGroup(orgId: String, name: String, postingPolicy: String, includesEveryone: Boolean): String
+    suspend fun createGroup(
+        orgId: String,
+        name: String,
+        postingPolicy: String,
+        includesEveryone: Boolean,
+        placement: GroupPlacementFields = GroupPlacementFields(),
+    ): String
 
     /** The writes below return true when a row changed; Row Level Security hides the rows an admin may not change. */
     suspend fun renameGroup(groupId: String, name: String): Boolean
@@ -76,15 +89,16 @@ internal interface GroupAdminRemoteSource {
 internal class SupabaseGroupAdminRemoteSource @Inject constructor(private val client: SupabaseClient) :
     GroupAdminRemoteSource {
     override suspend fun listGroups(orgId: String): List<GroupRowDto> =
-        client.from(GROUPS_TABLE).select(Columns.raw("id, name, group_members(count)")) {
+        client.from(GROUPS_TABLE).select(Columns.raw("id, name, kind, parent_id, group_members(count)")) {
             filter { eq("org_id", orgId) }
             order("name", Order.ASCENDING)
         }.decodeList()
 
-    override suspend fun fetchGroup(groupId: String): GroupRowDto? =
-        client.from(GROUPS_TABLE).select(Columns.list("id", "name", "posting_policy", "includes_everyone")) {
-            filter { eq("id", groupId) }
-        }.decodeList<GroupRowDto>().firstOrNull()
+    override suspend fun fetchGroup(groupId: String): GroupRowDto? = client.from(
+        GROUPS_TABLE,
+    ).select(Columns.list("id", "name", "posting_policy", "includes_everyone", "kind", "parent_id")) {
+        filter { eq("id", groupId) }
+    }.decodeList<GroupRowDto>().firstOrNull()
 
     override suspend fun fetchGroupMembers(groupId: String): List<GroupMemberRowDto> =
         client.from(GROUP_MEMBERS_TABLE).select(Columns.list("user_id", "role_in_group")) {
@@ -96,8 +110,11 @@ internal class SupabaseGroupAdminRemoteSource @Inject constructor(private val cl
         name: String,
         postingPolicy: String,
         includesEveryone: Boolean,
+        placement: GroupPlacementFields,
     ): String = client.from(GROUPS_TABLE)
-        .insert(NewGroupDto(orgId, name, postingPolicy, includesEveryone)) { select(Columns.list("id")) }
+        .insert(NewGroupDto(orgId, name, postingPolicy, includesEveryone, placement.kind, placement.parentId)) {
+            select(Columns.list("id"))
+        }
         .decodeSingle<IdDto>().id
 
     override suspend fun updateSettings(groupId: String, postingPolicy: String, includesEveryone: Boolean): Boolean =

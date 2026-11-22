@@ -52,7 +52,28 @@ internal enum class GroupRole {
     MEMBER,
 }
 
-internal data class AdminGroup(val id: String, val name: String, val memberCount: Int)
+/** What a group is in the organization, so people find it where they expect it. */
+internal enum class GroupKind {
+    SECTION,
+    CLASS,
+    DEPARTMENT,
+    CLUB,
+    OTHER,
+}
+
+/** Where a new group sits: its kind and the group it is inside, or none for a group at the top. */
+internal data class GroupPlacement(val kind: GroupKind = GroupKind.OTHER, val parentId: String? = null)
+
+/** The tree is at most this many levels deep. The server checks it too, this only keeps the picker honest. */
+internal const val MAX_GROUP_DEPTH = 5
+
+internal data class AdminGroup(
+    val id: String,
+    val name: String,
+    val memberCount: Int,
+    val kind: GroupKind = GroupKind.OTHER,
+    val parentId: String? = null,
+)
 
 internal data class GroupMember(val userId: String, val role: GroupRole)
 
@@ -73,4 +94,5 @@ internal data class GroupDetail(
     val name: String,
     val members: List<GroupMember>,
     val settings: GroupSettings = GroupSettings(),
+    val placement: GroupPlacement = GroupPlacement(),
 )

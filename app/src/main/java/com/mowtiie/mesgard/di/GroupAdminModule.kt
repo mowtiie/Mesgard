@@ -2,12 +2,16 @@ package com.mowtiie.mesgard.di
 
 import com.mowtiie.mesgard.data.RemoteConversationGroupRepository
 import com.mowtiie.mesgard.data.RemoteGroupAdminRepository
+import com.mowtiie.mesgard.data.RemoteGroupTreeRepository
 import com.mowtiie.mesgard.data.remote.ConversationGroupRemoteSource
 import com.mowtiie.mesgard.data.remote.GroupAdminRemoteSource
+import com.mowtiie.mesgard.data.remote.GroupTreeRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseConversationGroupRemoteSource
 import com.mowtiie.mesgard.data.remote.SupabaseGroupAdminRemoteSource
+import com.mowtiie.mesgard.data.remote.SupabaseGroupTreeRemoteSource
 import com.mowtiie.mesgard.domain.repository.ConversationGroupRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
+import com.mowtiie.mesgard.domain.repository.GroupTreeRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -24,6 +28,14 @@ internal interface GroupAdminModule {
     @Binds
     @Singleton
     fun bindGroupAdminRepository(repository: RemoteGroupAdminRepository): GroupAdminRepository
+
+    @Binds
+    @Singleton
+    fun bindGroupTreeRemoteSource(source: SupabaseGroupTreeRemoteSource): GroupTreeRemoteSource
+
+    @Binds
+    @Singleton
+    fun bindGroupTreeRepository(repository: RemoteGroupTreeRepository): GroupTreeRepository
 
     @Binds
     @Singleton

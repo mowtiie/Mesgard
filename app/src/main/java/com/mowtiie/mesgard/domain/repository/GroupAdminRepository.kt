@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.domain.repository
 import com.mowtiie.mesgard.domain.model.AdminGroup
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupDetail
+import com.mowtiie.mesgard.domain.model.GroupPlacement
 import com.mowtiie.mesgard.domain.model.GroupRole
 import com.mowtiie.mesgard.domain.model.GroupSettings
 
@@ -16,6 +17,7 @@ internal interface GroupAdminRepository {
         orgId: String,
         name: String,
         settings: GroupSettings = GroupSettings(),
+        placement: GroupPlacement = GroupPlacement(),
     ): AdminResult<String>
 
     suspend fun changeSettings(groupId: String, settings: GroupSettings): AdminResult<Unit>

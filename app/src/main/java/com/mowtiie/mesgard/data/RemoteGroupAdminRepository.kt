@@ -1,11 +1,13 @@
 package com.mowtiie.mesgard.data
 
 import com.mowtiie.mesgard.data.remote.GroupAdminRemoteSource
+import com.mowtiie.mesgard.data.remote.GroupPlacementFields
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminGroup
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupDetail
 import com.mowtiie.mesgard.domain.model.GroupMember
+import com.mowtiie.mesgard.domain.model.GroupPlacement
 import com.mowtiie.mesgard.domain.model.GroupRole
 import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.domain.model.PostingPolicy
@@ -22,7 +24,9 @@ private const val EVERYONE = "everyone"
 internal class RemoteGroupAdminRepository @Inject constructor(private val remote: GroupAdminRemoteSource) :
     GroupAdminRepository {
     override suspend fun listGroups(orgId: String): AdminResult<List<AdminGroup>> = attemptAdmin {
-        remote.listGroups(orgId).map { AdminGroup(it.id, it.name, it.members.firstOrNull()?.count ?: 0) }
+        remote.listGroups(orgId).map {
+            AdminGroup(it.id, it.name, it.members.firstOrNull()?.count ?: 0, it.kind.toKind(), it.parentId)
+        }
     }
 
     override suspend fun fetchGroup(groupId: String): AdminResult<GroupDetail> = attemptAdmin {
@@ -32,13 +36,24 @@ internal class RemoteGroupAdminRepository @Inject constructor(private val remote
             name = group.name,
             members = remote.fetchGroupMembers(groupId).map { GroupMember(it.userId, it.role.toRole()) },
             settings = GroupSettings(group.postingPolicy.toPostingPolicy(), group.includesEveryone),
+            placement = GroupPlacement(group.kind.toKind(), group.parentId),
         )
     }
 
-    override suspend fun createGroup(orgId: String, name: String, settings: GroupSettings): AdminResult<String> =
-        attemptAdmin {
-            remote.createGroup(orgId, name.trim(), settings.postingPolicy.toWireName(), settings.includesEveryone)
-        }
+    override suspend fun createGroup(
+        orgId: String,
+        name: String,
+        settings: GroupSettings,
+        placement: GroupPlacement,
+    ): AdminResult<String> = attemptAdmin {
+        remote.createGroup(
+            orgId,
+            name.trim(),
+            settings.postingPolicy.toWireName(),
+            settings.includesEveryone,
+            GroupPlacementFields(placement.kind.toWireName(), placement.parentId),
+        )
+    }
 
     override suspend fun changeSettings(groupId: String, settings: GroupSettings): AdminResult<Unit> = attemptAdmin {
         val changed = remote.updateSettings(groupId, settings.postingPolicy.toWireName(), settings.includesEveryone)
