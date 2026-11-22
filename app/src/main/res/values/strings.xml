@@ -235,6 +235,16 @@
         <item quantity="one">Sent to %d conversation</item>
         <item quantity="other">Sent to %d conversations</item>
     </plurals>
+    <string name="group_creation_title">Group creation</string>
+    <string name="group_creation_intro">Choose who can create groups. Organization admins always can.</string>
+    <string name="group_creation_admins_only">Administrators only</string>
+    <string name="group_creation_admins_only_summary">Only organization admins create groups.</string>
+    <string name="group_creation_staff">Administrators and staff</string>
+    <string name="group_creation_staff_summary">Staff can create groups too. Students cannot.</string>
+    <string name="group_creation_everyone">Everyone</string>
+    <string name="group_creation_everyone_summary">Students can create clubs and other groups, and become their owners.</string>
+    <string name="group_creation_limit_note">A person who is not an admin can create up to %1$d groups. They are flat, and administrators see their members but cannot read their messages.</string>
+    <string name="settings_group_creation_summary">Choose who can create groups.</string>
     <string name="group_kind_title">Kind</string>
     <string name="group_change_kind">Change kind</string>
     <string name="group_change_kind_save">Save</string>

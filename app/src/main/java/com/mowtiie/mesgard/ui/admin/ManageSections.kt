@@ -19,6 +19,7 @@ import androidx.compose.ui.semantics.Role
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.admin.RuleSummaries
 import com.mowtiie.mesgard.domain.model.MessagingRules
+import com.mowtiie.mesgard.ui.admin.groups.labelResource
 import com.mowtiie.mesgard.ui.common.NavigationChevron
 import com.mowtiie.mesgard.ui.common.SectionHeader
 import java.time.format.DateTimeFormatter
@@ -49,6 +50,13 @@ internal fun ManageSections(uiState: AdministrationUiState, summaries: RuleSumma
         summary = uiState.groupCount?.let { pluralStringResource(R.plurals.admin_groups_count, it, it) }
             ?: stringResource(R.string.settings_groups_summary),
         onClick = navigation.onOpenGroups,
+    )
+    ManageRow(
+        icon = { Icon(painterResource(R.drawable.ic_group_outline), contentDescription = null) },
+        title = R.string.group_creation_title,
+        summary = summaries.groupCreation?.let { stringResource(it.labelResource()) }
+            ?: stringResource(R.string.settings_group_creation_summary),
+        onClick = navigation.onOpenGroupCreation,
     )
     RulesSection(summaries, navigation)
     OversightSection(navigation)

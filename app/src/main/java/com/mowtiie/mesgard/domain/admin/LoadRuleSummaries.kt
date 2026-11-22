@@ -1,7 +1,9 @@
 package com.mowtiie.mesgard.domain.admin
 
 import com.mowtiie.mesgard.domain.model.AdminResult
+import com.mowtiie.mesgard.domain.model.GroupCreationPolicy
 import com.mowtiie.mesgard.domain.model.MessagingRules
+import com.mowtiie.mesgard.domain.repository.GroupCreationRepository
 import com.mowtiie.mesgard.domain.repository.LegalHoldRepository
 import com.mowtiie.mesgard.domain.repository.MessagingRulesRepository
 import com.mowtiie.mesgard.domain.repository.RetentionRepository
@@ -17,6 +19,7 @@ internal data class RuleSummaries(
     val retention: RetentionSummary? = null,
     val messagingRules: MessagingRules? = null,
     val activeHoldCount: Int? = null,
+    val groupCreation: GroupCreationPolicy? = null,
 )
 
 /** The days messages are kept, or [days] null when they are kept without a limit. */
@@ -26,15 +29,18 @@ internal class LoadRuleSummaries @Inject constructor(
     private val retentionRepository: RetentionRepository,
     private val messagingRulesRepository: MessagingRulesRepository,
     private val legalHoldRepository: LegalHoldRepository,
+    private val groupCreationRepository: GroupCreationRepository,
 ) {
     suspend operator fun invoke(organizationId: String): RuleSummaries = coroutineScope {
         val retention = async { retentionRepository.retentionDays(organizationId) }
         val rules = async { messagingRulesRepository.rules(organizationId) }
         val holds = async { legalHoldRepository.activeHolds(organizationId) }
+        val creation = async { groupCreationRepository.rules(organizationId) }
         RuleSummaries(
             retention = (retention.await() as? AdminResult.Success)?.let { RetentionSummary(it.value) },
             messagingRules = (rules.await() as? AdminResult.Success)?.value,
             activeHoldCount = (holds.await() as? AdminResult.Success)?.value?.size,
+            groupCreation = (creation.await() as? AdminResult.Success)?.value?.policy,
         )
     }
 }

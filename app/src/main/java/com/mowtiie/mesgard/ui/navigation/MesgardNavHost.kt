@@ -20,6 +20,7 @@ import com.mowtiie.mesgard.ui.admin.MembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.audit.AuditLogScreenRoute
 import com.mowtiie.mesgard.ui.admin.former.FormerMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.AddGroupMembersScreenRoute
+import com.mowtiie.mesgard.ui.admin.groups.GroupCreationScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupDetailScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupsScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.NewGroupScreenRoute
@@ -125,6 +126,7 @@ internal fun MesgardNavHost(
                     onOpenPrivacyNoticeSettings = { navController.navigate(PrivacyNoticeSettingsRoute) },
                     onOpenLegalHolds = { navController.navigate(LegalHoldsRoute) },
                     onOpenRetention = { navController.navigate(RetentionRoute) },
+                    onOpenGroupCreation = { navController.navigate(GroupCreationRoute) },
                     onOpenMessagingRules = { navController.navigate(MessagingRulesRoute) },
                     onAddMember = { navController.navigate(AddMemberRoute) },
                     onImportMembers = { navController.navigate(ImportMembersRoute) },
@@ -165,6 +167,9 @@ internal fun MesgardNavHost(
         }
         composable<MessagingRulesRoute> {
             MessagingRulesScreenRoute(onBack = { navController.popBackStack() })
+        }
+        composable<GroupCreationRoute> {
+            GroupCreationScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<RetentionRoute> {
             RetentionScreenRoute(onBack = { navController.popBackStack() })

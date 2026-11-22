@@ -75,6 +75,9 @@ internal data object MessagingRulesRoute
 internal data object RetentionRoute
 
 @Serializable
+internal data object GroupCreationRoute
+
+@Serializable
 internal data object LegalHoldsRoute
 
 @Serializable
