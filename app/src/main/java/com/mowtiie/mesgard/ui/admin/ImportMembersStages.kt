@@ -223,7 +223,7 @@ private fun AdminError.interruptedResource(): Int = when (this) {
     AdminError.NETWORK_UNAVAILABLE -> R.string.import_interrupted_network
     AdminError.NOT_ALLOWED -> R.string.admin_error_not_allowed
     AdminError.NOT_A_MEMBER, AdminError.LAST_ADMIN, AdminError.NOT_ERASABLE, AdminError.LEGAL_HOLD,
-    AdminError.GROUP_NOT_EMPTY,
+    AdminError.GROUP_NOT_EMPTY, AdminError.GROUP_TREE_INVALID,
     AdminError.UNKNOWN,
     -> R.string.import_interrupted_unknown
 }

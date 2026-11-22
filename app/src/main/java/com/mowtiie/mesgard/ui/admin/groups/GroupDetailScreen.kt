@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
+import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.GroupRole
 import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.domain.model.HoldTarget
@@ -58,8 +59,10 @@ internal fun GroupDetailScreenRoute(
     onLeft: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupDetailViewModel = hiltViewModel(),
+    treeViewModel: GroupTreeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val tree by treeViewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.isDeleted) { if (uiState.isDeleted) onBack() }
     LaunchedEffect(uiState.hasLeft) { if (uiState.hasLeft) onLeft() }
     var isHoldDialogShown by remember { mutableStateOf(false) }
@@ -70,8 +73,14 @@ internal fun GroupDetailScreenRoute(
             onPlaced = { isHoldDialogShown = false },
         )
     }
+    GroupTreeDialogs(tree, treeViewModel)
     GroupDetailScreen(
         uiState = uiState,
+        treeError = tree.error,
+        onTreeErrorShown = treeViewModel::onErrorShown,
+        placeSummary = placeSummary(tree),
+        onChangeKind = { treeViewModel.onDialogChanged(GroupTreeDialog.KIND) },
+        onMove = { treeViewModel.onDialogChanged(GroupTreeDialog.PARENT) },
         onLegalHold = { isHoldDialogShown = true },
         onBack = onBack,
         onAddMembers = onAddMembers,
@@ -98,6 +107,11 @@ internal fun GroupDetailScreenRoute(
 @Composable
 internal fun GroupDetailScreen(
     uiState: GroupDetailUiState,
+    treeError: AdminError?,
+    onTreeErrorShown: () -> Unit,
+    placeSummary: String?,
+    onChangeKind: () -> Unit,
+    onMove: () -> Unit,
     onLegalHold: () -> Unit,
     onBack: () -> Unit,
     onAddMembers: () -> Unit,
@@ -115,16 +129,18 @@ internal fun GroupDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val errorMessage = uiState.error?.let { stringResource(it.messageResource()) }
+    val errorMessage = (uiState.error ?: treeError)?.let { stringResource(it.messageResource()) }
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
             snackbarHostState.showSnackbar(errorMessage)
             onErrorShown()
+            onTreeErrorShown()
         }
     }
 
     TitledScreen(
         title = uiState.name,
+        subtitle = placeSummary,
         modifier = modifier,
         navigationIcon = {
             IconButton(onClick = onBack) {
@@ -145,6 +161,20 @@ internal fun GroupDetailScreen(
             if (uiState.isAdmin || uiState.ownRole != null) {
                 OverflowMenu { dismiss ->
                     if (uiState.isAdmin) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.group_change_kind)) },
+                            onClick = {
+                                dismiss()
+                                onChangeKind()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.group_move)) },
+                            onClick = {
+                                dismiss()
+                                onMove()
+                            },
+                        )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.legal_hold_menu)) },
                             onClick = {

@@ -30,6 +30,7 @@ internal enum class AdminError {
     NOT_ERASABLE,
     LEGAL_HOLD,
     GROUP_NOT_EMPTY,
+    GROUP_TREE_INVALID,
     UNKNOWN,
 }
 

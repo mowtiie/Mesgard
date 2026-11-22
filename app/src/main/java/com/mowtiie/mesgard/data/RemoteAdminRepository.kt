@@ -60,6 +60,11 @@ internal class RemoteAdminRepository @Inject constructor(private val remote: Adm
 /** The name of the foreign key that stops a group with groups inside it from being deleted. */
 private const val GROUP_PARENT_CONSTRAINT = "groups_org_id_parent_id_fkey"
 
+private fun String?.mentions(text: String) = this != null && contains(text)
+
+/** The words of the database when a group would sit inside itself or make the tree too deep. */
+private fun String?.isGroupTreeRefusal() = mentions("levels deep") || mentions("inside itself")
+
 internal suspend fun <T> attemptAdmin(
     conflict: AdminError = AdminError.LAST_ADMIN,
     block: suspend () -> T,
@@ -89,14 +94,8 @@ internal fun adminErrorFor(
 ): AdminError = when (statusCode) {
     HTTP_UNAUTHORIZED, HTTP_FORBIDDEN -> AdminError.NOT_ALLOWED
     HTTP_NOT_FOUND -> AdminError.NOT_A_MEMBER
-    HTTP_CONFLICT -> if (message?.contains(GROUP_PARENT_CONSTRAINT) ==
-        true
-    ) {
-        AdminError.GROUP_NOT_EMPTY
-    } else {
-        conflict
-    }
-    HTTP_BAD_REQUEST -> AdminError.UNKNOWN
+    HTTP_CONFLICT -> if (message.mentions(GROUP_PARENT_CONSTRAINT)) AdminError.GROUP_NOT_EMPTY else conflict
+    HTTP_BAD_REQUEST -> if (message.isGroupTreeRefusal()) AdminError.GROUP_TREE_INVALID else AdminError.UNKNOWN
     else -> AdminError.UNKNOWN
 }
 

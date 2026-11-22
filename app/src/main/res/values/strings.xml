@@ -227,6 +227,10 @@
     <string name="group_remove_message">%1$s is removed from %2$s and from its group chat.</string>
     <string name="group_remove_confirm">Remove</string>
     <string name="group_kind_title">Kind</string>
+    <string name="group_change_kind">Change kind</string>
+    <string name="group_change_kind_save">Save</string>
+    <string name="group_move">Move group</string>
+    <string name="group_place_inside">%1$s, inside %2$s</string>
     <string name="group_parent_title">Part of</string>
     <string name="group_parent_top">Top level</string>
     <string name="group_parent_pick">Choose where the group goes</string>
@@ -304,6 +308,7 @@
     <string name="admin_error_not_allowed">You do not have permission to do this.</string>
     <string name="admin_error_not_a_member">This person is no longer a member.</string>
     <string name="admin_error_not_erasable">This person cannot be erased. They may belong to another organization, a legal hold or an open report may protect them, or this server does not allow it.</string>
+    <string name="admin_error_group_tree_invalid">A group cannot go inside itself, and the tree can be at most five levels deep.</string>
     <string name="admin_error_group_not_empty">This group has groups inside it. Move or delete them first.</string>
     <string name="admin_error_legal_hold">A legal hold or an open report protects this group. It cannot be deleted until that ends.</string>
     <string name="admin_error_last_admin">An organization needs at least one administrator.</string>

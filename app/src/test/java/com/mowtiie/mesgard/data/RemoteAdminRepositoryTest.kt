@@ -189,4 +189,14 @@ class RemoteAdminRepositoryTest {
         const val ORG = "org"
         const val USER = "user"
     }
+
+    @Test
+    fun `a group the server will not place is told apart from other bad requests`() {
+        assertEquals(AdminError.GROUP_TREE_INVALID, adminErrorFor(400, message = "Groups can be at most 5 levels deep"))
+        assertEquals(
+            AdminError.GROUP_TREE_INVALID,
+            adminErrorFor(400, message = "A group cannot be placed inside itself"),
+        )
+        assertEquals(AdminError.UNKNOWN, adminErrorFor(400, message = "anything else"))
+    }
 }

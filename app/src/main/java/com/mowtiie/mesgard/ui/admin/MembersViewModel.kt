@@ -153,5 +153,5 @@ internal fun AdminError.toMembersError() = when (this) {
     AdminError.NOT_A_MEMBER -> MembersError.NOT_A_MEMBER
     AdminError.LAST_ADMIN -> MembersError.LAST_ADMIN
     AdminError.NOT_ERASABLE, AdminError.LEGAL_HOLD -> MembersError.NOT_ERASABLE
-    AdminError.GROUP_NOT_EMPTY, AdminError.UNKNOWN -> MembersError.UNKNOWN
+    AdminError.GROUP_NOT_EMPTY, AdminError.GROUP_TREE_INVALID, AdminError.UNKNOWN -> MembersError.UNKNOWN
 }

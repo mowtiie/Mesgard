@@ -107,7 +107,7 @@ private fun AdminError.toAddMemberError() = when (this) {
     AdminError.NETWORK_UNAVAILABLE -> AddMemberError.NETWORK_UNAVAILABLE
     AdminError.NOT_ALLOWED -> AddMemberError.NOT_ALLOWED
     AdminError.NOT_A_MEMBER, AdminError.LAST_ADMIN, AdminError.NOT_ERASABLE, AdminError.LEGAL_HOLD,
-    AdminError.GROUP_NOT_EMPTY,
+    AdminError.GROUP_NOT_EMPTY, AdminError.GROUP_TREE_INVALID,
     AdminError.UNKNOWN,
     -> AddMemberError.UNKNOWN
 }
