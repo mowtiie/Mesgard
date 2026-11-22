@@ -226,6 +226,10 @@
     <string name="group_remove_title">Remove from group?</string>
     <string name="group_remove_message">%1$s is removed from %2$s and from its group chat.</string>
     <string name="group_remove_confirm">Remove</string>
+    <string name="group_kind_title">Kind</string>
+    <string name="group_parent_title">Part of</string>
+    <string name="group_parent_top">Top level</string>
+    <string name="group_parent_pick">Choose where the group goes</string>
     <string name="group_kind_section">Section</string>
     <string name="group_kind_class">Class</string>
     <string name="group_kind_department">Department</string>

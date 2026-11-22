@@ -1,0 +1,97 @@
+package com.mowtiie.mesgard.ui.admin.groups
+
+import com.mowtiie.mesgard.domain.admin.ObserveAdminOrganization
+import com.mowtiie.mesgard.domain.model.Account
+import com.mowtiie.mesgard.domain.model.AccountMembership
+import com.mowtiie.mesgard.domain.model.AdminError
+import com.mowtiie.mesgard.domain.model.AdminGroup
+import com.mowtiie.mesgard.domain.model.AdminResult
+import com.mowtiie.mesgard.domain.model.GroupKind
+import com.mowtiie.mesgard.domain.model.GroupPlacement
+import com.mowtiie.mesgard.domain.model.GroupSettings
+import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.domain.model.PostingPolicy
+import com.mowtiie.mesgard.domain.repository.AccountRepository
+import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
+import com.mowtiie.mesgard.testing.MainDispatcherRule
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+
+class NewGroupViewModelTest {
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val accountRepository = mockk<AccountRepository> {
+        every { observeAccount() } returns MutableStateFlow(
+            Account("Admin", null, listOf(AccountMembership(ORG, "Rizal National", OrgRole.ORG_ADMIN))),
+        )
+    }
+    private val groupAdminRepository = mockk<GroupAdminRepository> {
+        coEvery { listGroups(ORG) } returns AdminResult.Success(listOf(AdminGroup("g11", "Grade 11", 0)))
+    }
+
+    private fun viewModel() = NewGroupViewModel(ObserveAdminOrganization(accountRepository), groupAdminRepository)
+
+    @Test
+    fun `offers the groups of the organization as places for the new one`() {
+        val viewModel = viewModel()
+
+        viewModel.onParentChosen("g11")
+
+        assertEquals("Grade 11", viewModel.uiState.value.parentName)
+    }
+
+    @Test
+    fun `creates a group with its kind, its place and who can post`() {
+        val settings = GroupSettings(PostingPolicy.MODERATORS, includesEveryone = true)
+        val placement = GroupPlacement(GroupKind.SECTION, "g11")
+        coEvery { groupAdminRepository.createGroup(ORG, "STEM", settings, placement) } returns
+            AdminResult.Success("g12")
+        val viewModel = viewModel()
+
+        viewModel.onNameChanged("STEM")
+        viewModel.onKindChanged(GroupKind.SECTION)
+        viewModel.onParentChosen("g11")
+        viewModel.onSettingsChanged(settings)
+        viewModel.onCreateClicked()
+
+        coVerify(exactly = 1) { groupAdminRepository.createGroup(ORG, "STEM", settings, placement) }
+        assertTrue(viewModel.uiState.value.isCreated)
+    }
+
+    @Test
+    fun `does not create a group without a name`() {
+        val viewModel = viewModel()
+
+        viewModel.onNameChanged("   ")
+        viewModel.onCreateClicked()
+
+        coVerify(exactly = 0) { groupAdminRepository.createGroup(any(), any(), any(), any()) }
+        assertFalse(viewModel.uiState.value.canCreate)
+    }
+
+    @Test
+    fun `keeps the page open and shows the error when the server refuses`() {
+        coEvery { groupAdminRepository.createGroup(ORG, "Chess", any(), any()) } returns
+            AdminResult.Failure(AdminError.NOT_ALLOWED)
+        val viewModel = viewModel()
+
+        viewModel.onNameChanged("Chess")
+        viewModel.onCreateClicked()
+
+        assertEquals(AdminError.NOT_ALLOWED, viewModel.uiState.value.error)
+        assertFalse(viewModel.uiState.value.isCreated)
+    }
+
+    private companion object {
+        const val ORG = "org"
+    }
+}

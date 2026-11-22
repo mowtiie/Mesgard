@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
-import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.ui.admin.messageResource
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
@@ -49,6 +48,7 @@ private val LevelIndent = 16.dp
 internal fun GroupsScreenRoute(
     onBack: () -> Unit,
     onOpenGroup: (String) -> Unit,
+    onCreateGroup: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupsViewModel = hiltViewModel(),
 ) {
@@ -59,7 +59,7 @@ internal fun GroupsScreenRoute(
         onOpenGroup = onOpenGroup,
         onRefresh = viewModel::onRefresh,
         onQueryChanged = viewModel::onQueryChanged,
-        onCreateConfirmed = viewModel::onCreateConfirmed,
+        onCreateGroup = onCreateGroup,
         onErrorShown = viewModel::onErrorShown,
         modifier = modifier,
     )
@@ -73,7 +73,7 @@ internal fun GroupsScreen(
     onOpenGroup: (String) -> Unit,
     onRefresh: () -> Unit,
     onQueryChanged: (String) -> Unit,
-    onCreateConfirmed: (String, GroupSettings) -> Unit,
+    onCreateGroup: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -86,7 +86,6 @@ internal fun GroupsScreen(
         }
     }
     var isSearching by rememberSaveable { mutableStateOf(false) }
-    var isCreateDialogShown by rememberSaveable { mutableStateOf(false) }
 
     TitledScreen(
         title = stringResource(R.string.groups_title),
@@ -117,7 +116,7 @@ internal fun GroupsScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { isCreateDialogShown = true }) {
+            FloatingActionButton(onClick = onCreateGroup) {
                 Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.groups_add))
             }
         },
@@ -131,16 +130,6 @@ internal fun GroupsScreen(
                 GroupList(uiState, onOpenGroup)
             }
         }
-    }
-    if (isCreateDialogShown) {
-        NewGroupSheet(
-            isWorking = uiState.isWorking,
-            onConfirm = { name, settings ->
-                onCreateConfirmed(name, settings)
-                isCreateDialogShown = false
-            },
-            onDismiss = { isCreateDialogShown = false },
-        )
     }
 }
 

@@ -22,6 +22,7 @@ import com.mowtiie.mesgard.ui.admin.former.FormerMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.AddGroupMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupDetailScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupsScreenRoute
+import com.mowtiie.mesgard.ui.admin.groups.NewGroupScreenRoute
 import com.mowtiie.mesgard.ui.auth.MfaSetupScreenRoute
 import com.mowtiie.mesgard.ui.chats.ArchivedScreenRoute
 import com.mowtiie.mesgard.ui.contacts.ContactsScreenRoute
@@ -141,7 +142,11 @@ internal fun MesgardNavHost(
             GroupsScreenRoute(
                 onBack = { navController.popBackStack() },
                 onOpenGroup = { navController.navigate(GroupRoute(it)) },
+                onCreateGroup = { navController.navigate(NewGroupRoute) },
             )
+        }
+        composable<NewGroupRoute> {
+            NewGroupScreenRoute(onBack = { navController.popBackStack() })
         }
         composable<GroupRoute> { entry ->
             val groupId = entry.toRoute<GroupRoute>().groupId

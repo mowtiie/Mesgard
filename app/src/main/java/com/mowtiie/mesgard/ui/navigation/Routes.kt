@@ -60,6 +60,9 @@ internal data object GroupsRoute
 internal data class GroupRoute(val groupId: String)
 
 @Serializable
+internal data object NewGroupRoute
+
+@Serializable
 internal data class AddGroupMembersRoute(val groupId: String)
 
 @Serializable
