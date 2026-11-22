@@ -41,6 +41,7 @@ internal enum class GroupFileProblem {
     EMPTY,
     NO_GROUP_COLUMN,
     TOO_MANY_ROWS,
+    UNREADABLE,
 }
 
 internal sealed interface GroupParse {

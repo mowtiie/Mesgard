@@ -247,6 +247,43 @@
     <string name="settings_group_creation_summary">Choose who can create groups.</string>
     <string name="group_create_member_note">You become the owner and can add people afterwards. Administrators can see who is in the group but cannot read its messages.</string>
     <string name="chats_new_group">New group</string>
+    <string name="import_groups_title">Import groups</string>
+    <string name="settings_import_groups_summary">Create sections and classes and their members from a file.</string>
+    <string name="import_groups_help">The file needs a header row with a group column. A parent, kind, email and role column are optional. A row with an email puts that person in the group, so a group with many people takes many rows. Name a parent the same way each time. Sending the same file again changes nothing.</string>
+    <string name="import_groups_ready">Ready to import</string>
+    <plurals name="import_groups_group_count">
+        <item quantity="one">%d group</item>
+        <item quantity="other">%d groups</item>
+    </plurals>
+    <plurals name="import_groups_people_count">
+        <item quantity="one">%d person</item>
+        <item quantity="other">%d people</item>
+    </plurals>
+    <string name="import_groups_problems">Rows that will be skipped</string>
+    <string name="import_groups_more">And %d more rows</string>
+    <string name="import_groups_line">Line %1$d, %2$s</string>
+    <string name="import_groups_row">Line %1$d</string>
+    <string name="import_groups_button">Import</string>
+    <string name="import_groups_done">Imported</string>
+    <plurals name="import_groups_created">
+        <item quantity="one">%d group created</item>
+        <item quantity="other">%d groups created</item>
+    </plurals>
+    <plurals name="import_groups_added">
+        <item quantity="one">%d person added</item>
+        <item quantity="other">%d people added</item>
+    </plurals>
+    <string name="import_groups_review">To review</string>
+    <string name="import_groups_not_found">Nobody in your organization has this email. The group was still created.</string>
+    <string name="import_groups_problem_empty">The file has no rows.</string>
+    <string name="import_groups_problem_no_group_column">The file needs a column called group.</string>
+    <string name="import_groups_problem_too_many">The file has more than 2000 rows. Split it into smaller files.</string>
+    <string name="import_groups_problem_unreadable">The file could not be read, or it is larger than 1 MB.</string>
+    <string name="import_groups_row_no_name">The group has no name.</string>
+    <string name="import_groups_row_name_too_long">The group name is too long.</string>
+    <string name="import_groups_row_unknown_kind">The kind must be section, class, department, club or other.</string>
+    <string name="import_groups_row_invalid_email">The email is not valid.</string>
+    <string name="import_groups_row_unknown_role">The role must be owner, moderator or member.</string>
     <string name="group_kind_title">Kind</string>
     <string name="group_change_kind">Change kind</string>
     <string name="group_change_kind_save">Save</string>

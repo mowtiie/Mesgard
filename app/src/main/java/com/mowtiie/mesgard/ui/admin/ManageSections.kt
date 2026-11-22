@@ -52,6 +52,12 @@ internal fun ManageSections(uiState: AdministrationUiState, summaries: RuleSumma
         onClick = navigation.onOpenGroups,
     )
     ManageRow(
+        icon = { Icon(painterResource(R.drawable.ic_upload), contentDescription = null) },
+        title = R.string.import_groups_title,
+        summary = stringResource(R.string.settings_import_groups_summary),
+        onClick = navigation.onImportGroups,
+    )
+    ManageRow(
         icon = { Icon(painterResource(R.drawable.ic_group_outline), contentDescription = null) },
         title = R.string.group_creation_title,
         summary = summaries.groupCreation?.let { stringResource(it.labelResource()) }
