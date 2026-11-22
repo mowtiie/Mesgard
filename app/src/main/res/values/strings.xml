@@ -628,6 +628,7 @@
     <string name="privacy_block_stored">Where it is kept</string>
     <string name="privacy_block_readers">Who can read messages</string>
     <string name="privacy_block_edits">Edits and deletions</string>
+    <string name="privacy_block_groups">Groups people create</string>
     <string name="privacy_block_retention">How long it is kept</string>
     <string name="privacy_block_online">Online status</string>
     <string name="privacy_block_reports">Reports</string>
@@ -635,6 +636,7 @@
     <string name="privacy_block_questions">Questions</string>
     <string name="privacy_summary_stored">Your messages and files are kept on your organization\'s server. Mesgard has no advertising, does not track you and does not sell your data.</string>
     <string name="privacy_summary_not_encrypted">Messages are not end-to-end encrypted. Your organization can keep and search them, for example when a report is made or when the law asks for it.</string>
+    <string name="privacy_summary_groups">Administrators can see who is in a group that a person created, but cannot read its messages. In a serious case an administrator can open them for seven days after writing a reason. That is recorded, and the members of the group are told that it happened.</string>
     <string name="privacy_summary_edits">When a message is edited or deleted, the administrators of your organization can still see the earlier text.</string>
     <string name="privacy_summary_reports">When you report a message, the people your organization chose to review reports see that message and the ones before it.</string>
     <string name="privacy_summary_device">This phone keeps an encrypted copy of your messages and files, and signing out removes it. A file waiting to be sent is encrypted once it is sent.</string>

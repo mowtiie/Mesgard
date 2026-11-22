@@ -10,7 +10,7 @@ What Mesgard stores, where it lives and who can read it. The institution can use
 | Two-step verification factor (TOTP secret) | Auth | Auth service | Optional for students, can be required for administrators and staff |
 | Display name, avatar, status | `profiles` | People who share a conversation or an organization | |
 | Organization membership and role | `org_members` | Members of the organization | Roles: `org_admin`, `staff`, `member` |
-| Groups and group membership | `groups`, `group_members` | Members, and administrators of the organization | |
+| Groups and group membership | `groups`, `group_members` | Members, and administrators of the organization | Who may create groups is an organization setting (administrators only, staff or everyone). The messages of a group a person created are not readable by administrators. An administrator can open them for seven days after writing a reason of at least ten characters (`group_access_grants`). Each opening is in the audit log with the reason, and the members of the group see that it happened and when, not who or why. The archives of deleted and edited messages and the data export leave these messages out |
 | Conversations and participants, with read marker, mute, pin, archive, hidden before | `conversations`, `conversation_participants` | Participants (preferences: the person only) | |
 | Message text, sender, time, reply and mentions | `messages` | Participants of the conversation | Plain text, searchable on the server |
 | Edited and deleted message text | `message_edits`, `deleted_message_bodies` | Organization administrators | Kept for audit |
@@ -52,7 +52,7 @@ Android backup and device transfer are off. Signing out erases the database and 
 
 | Right | Today |
 |---|---|
-| Access and portability | An organization admin exports one person's data as a JSON file (Members, Export data). It holds the account, profile, groups, conversations and the messages the person sent, with the originals of deleted messages, earlier versions of edited ones and the details of files. It does not hold messages of other people, reports, legal holds or the files themselves. Each export is recorded in the audit log |
+| Access and portability | An organization admin exports one person's data as a JSON file (Members, Export data). It holds the account, profile, groups, conversations and the messages the person sent, with the originals of deleted messages, earlier versions of edited ones and the details of files. It does not hold messages of other people, reports, legal holds, the messages the person sent in groups a person created, or the files themselves. A request that covers those messages needs another way, for example the person reading them in the app or break-glass access with a recorded reason. Each export is recorded in the audit log |
 | Correction | Administrators can change roles. The database lets a person update their own profile name, status and avatar path, but the app has no screen for it yet, so a correction goes through the administrator |
 | Erasure | The erase flow described above |
 | Objection and complaint | Outside the app, through the institution's Data Protection Officer |
