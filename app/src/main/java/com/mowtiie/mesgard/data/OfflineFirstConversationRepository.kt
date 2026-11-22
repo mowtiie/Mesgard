@@ -123,6 +123,7 @@ internal class OfflineFirstConversationRepository @Inject constructor(
         isPinned = item.pinnedAtEpochMillis != null,
         isArchived = item.archivedAtEpochMillis != null,
         isMarkedUnread = item.markedUnread,
+        groupPath = item.groupPath,
         isWithFavorite = isWithFavorite,
     )
 }

@@ -19,4 +19,5 @@ internal data class ConversationEntity(
     @ColumnInfo(name = "archived_at") val archivedAtEpochMillis: Long? = null,
     @ColumnInfo(name = "marked_unread", defaultValue = "0") val markedUnread: Boolean = false,
     @ColumnInfo(name = "hidden_before") val hiddenBeforeEpochMillis: Long? = null,
+    @ColumnInfo(name = "group_path") val groupPath: String? = null,
 )

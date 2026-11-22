@@ -18,6 +18,7 @@ internal data class ConversationListItem(
     val pinnedAtEpochMillis: Long?,
     val archivedAtEpochMillis: Long?,
     val markedUnread: Boolean,
+    val groupPath: String?,
     val lastMessageBody: String?,
     val activityAtEpochMillis: Long,
 )
@@ -26,7 +27,7 @@ private const val CONVERSATION_ITEM_SELECT = """
     SELECT c.id AS id, c.type AS type, c.title AS title, c.unread_count AS unreadCount,
         c.can_post AS canPost, c.is_muted AS isMuted,
         c.pinned_at AS pinnedAtEpochMillis, c.archived_at AS archivedAtEpochMillis,
-        c.marked_unread AS markedUnread,
+        c.marked_unread AS markedUnread, c.group_path AS groupPath,
         m.body AS lastMessageBody, COALESCE(m.created_at, c.created_at) AS activityAtEpochMillis
     FROM conversations AS c
     LEFT JOIN messages AS m ON m.id = (

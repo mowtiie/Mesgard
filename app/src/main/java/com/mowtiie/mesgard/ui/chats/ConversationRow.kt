@@ -64,6 +64,9 @@ internal fun ConversationRow(
             ListItemDefaults.colors()
         },
         leadingContent = { if (isSelected) SelectedAvatar() else InitialAvatar(title) },
+        overlineContent = conversation.groupPath?.let { path ->
+            { Text(text = path, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        },
         headlineContent = {
             Text(
                 text = title,

@@ -12,6 +12,8 @@ internal data class ConversationSummary(
     val isPinned: Boolean = false,
     val isArchived: Boolean = false,
     val isMarkedUnread: Boolean = false,
+    /** Where the group of a group conversation sits, such as the grade it is inside. Null at the top. */
+    val groupPath: String? = null,
     /** A direct conversation with a person who is a favorite. */
     val isWithFavorite: Boolean = false,
 )
