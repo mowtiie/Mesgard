@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -58,10 +59,28 @@ internal fun GroupDetailScreenRoute(
     onBack: () -> Unit,
     onAddMembers: () -> Unit,
     onLeft: () -> Unit,
+    onReadMessages: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupDetailViewModel = hiltViewModel(),
     treeViewModel: GroupTreeViewModel = hiltViewModel(),
+    accessViewModel: GroupAccessViewModel = hiltViewModel(),
 ) {
+    val access by accessViewModel.uiState.collectAsStateWithLifecycle()
+    var isOpenMessagesShown by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(access.isOpened) {
+        if (access.isOpened) {
+            isOpenMessagesShown = false
+            accessViewModel.onOpenedHandled()
+            onReadMessages()
+        }
+    }
+    if (isOpenMessagesShown) {
+        OpenMessagesSheet(
+            isOpening = access.isOpening,
+            onConfirm = accessViewModel::onOpenConfirmed,
+            onDismiss = { isOpenMessagesShown = false },
+        )
+    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val tree by treeViewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.isDeleted) { if (uiState.isDeleted) onBack() }
@@ -77,8 +96,12 @@ internal fun GroupDetailScreenRoute(
     GroupTreeDialogs(tree, treeViewModel)
     GroupDetailScreen(
         uiState = uiState,
-        treeError = tree.error,
-        onTreeErrorShown = treeViewModel::onErrorShown,
+        treeError = tree.error ?: access.error,
+        onTreeErrorShown = {
+            treeViewModel.onErrorShown()
+            accessViewModel.onErrorShown()
+        },
+        onReadMessages = { isOpenMessagesShown = true },
         placeSummary = placeSummary(tree),
         onChangeKind = { treeViewModel.onDialogChanged(GroupTreeDialog.KIND) },
         onMove = { treeViewModel.onDialogChanged(GroupTreeDialog.PARENT) },
@@ -122,6 +145,7 @@ internal fun GroupDetailScreen(
     onAnnounce: () -> Unit,
     announcedTo: Int?,
     onAnnouncementShown: () -> Unit,
+    onReadMessages: () -> Unit,
     onLegalHold: () -> Unit,
     onBack: () -> Unit,
     onAddMembers: () -> Unit,
@@ -179,7 +203,15 @@ internal fun GroupDetailScreen(
                 isAdmin = uiState.isAdmin,
                 isMember = uiState.ownRole != null,
                 canAnnounce = canAnnounce,
-                actions = GroupMenuActions(onAnnounce, onChangeKind, onMove, onLegalHold, onLeaveRequested),
+                canReadMessages = uiState.isAdmin && uiState.isUserCreated,
+                actions = GroupMenuActions(
+                    onAnnounce,
+                    onChangeKind,
+                    onMove,
+                    onLegalHold,
+                    onLeaveRequested,
+                    onReadMessages,
+                ),
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

@@ -20,6 +20,7 @@ internal data class GroupRowDto(
     @SerialName("includes_everyone") val includesEveryone: Boolean = false,
     val kind: String = "other",
     @SerialName("parent_id") val parentId: String? = null,
+    @SerialName("user_created") val userCreated: Boolean = false,
 )
 
 /** Where a new group sits, in the words of the server. */
@@ -96,7 +97,7 @@ internal class SupabaseGroupAdminRemoteSource @Inject constructor(private val cl
 
     override suspend fun fetchGroup(groupId: String): GroupRowDto? = client.from(
         GROUPS_TABLE,
-    ).select(Columns.list("id", "name", "posting_policy", "includes_everyone", "kind", "parent_id")) {
+    ).select(Columns.list("id", "name", "posting_policy", "includes_everyone", "kind", "parent_id", "user_created")) {
         filter { eq("id", groupId) }
     }.decodeList<GroupRowDto>().firstOrNull()
 

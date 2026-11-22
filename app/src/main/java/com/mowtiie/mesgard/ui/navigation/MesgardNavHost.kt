@@ -22,6 +22,7 @@ import com.mowtiie.mesgard.ui.admin.former.FormerMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.AddGroupMembersScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupCreationScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupDetailScreenRoute
+import com.mowtiie.mesgard.ui.admin.groups.GroupMessagesScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.GroupsScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.ImportGroupsScreenRoute
 import com.mowtiie.mesgard.ui.admin.groups.NewGroupScreenRoute
@@ -150,6 +151,9 @@ internal fun MesgardNavHost(
                 onCreateGroup = { navController.navigate(NewGroupRoute) },
             )
         }
+        composable<GroupMessagesRoute> {
+            GroupMessagesScreenRoute(onBack = { navController.popBackStack() })
+        }
         composable<NewGroupRoute> {
             NewGroupScreenRoute(onBack = { navController.popBackStack() })
         }
@@ -160,6 +164,7 @@ internal fun MesgardNavHost(
                 onBack = { navController.popBackStack() },
                 onAddMembers = { navController.navigate(AddGroupMembersRoute(groupId)) },
                 onLeft = { navController.popBackStack(MainRoute, inclusive = false) },
+                onReadMessages = { navController.navigate(GroupMessagesRoute(groupId)) },
             )
         }
         composable<AddGroupMembersRoute> {

@@ -37,6 +37,7 @@ internal class RemoteGroupAdminRepository @Inject constructor(private val remote
             members = remote.fetchGroupMembers(groupId).map { GroupMember(it.userId, it.role.toRole()) },
             settings = GroupSettings(group.postingPolicy.toPostingPolicy(), group.includesEveryone),
             placement = GroupPlacement(group.kind.toKind(), group.parentId),
+            isUserCreated = group.userCreated,
         )
     }
 

@@ -14,11 +14,18 @@ internal class GroupMenuActions(
     val onMove: () -> Unit,
     val onLegalHold: () -> Unit,
     val onLeave: () -> Unit,
+    val onReadMessages: () -> Unit,
 )
 
 /** The overflow menu of the group screen: what the person may do depends on being an administrator or a member. */
 @Composable
-internal fun GroupMenu(isAdmin: Boolean, isMember: Boolean, canAnnounce: Boolean, actions: GroupMenuActions) {
+internal fun GroupMenu(
+    isAdmin: Boolean,
+    isMember: Boolean,
+    canAnnounce: Boolean,
+    canReadMessages: Boolean,
+    actions: GroupMenuActions,
+) {
     if (!isAdmin && !isMember) return
     OverflowMenu { dismiss ->
         @Composable
@@ -35,6 +42,7 @@ internal fun GroupMenu(isAdmin: Boolean, isMember: Boolean, canAnnounce: Boolean
             item(R.string.group_move, actions.onMove)
             item(R.string.legal_hold_menu, actions.onLegalHold)
         }
+        if (canReadMessages) item(R.string.group_read_messages, actions.onReadMessages)
         if (isMember) item(R.string.group_leave, actions.onLeave)
     }
 }

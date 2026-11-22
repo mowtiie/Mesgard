@@ -1,5 +1,7 @@
 package com.mowtiie.mesgard.ui.admin.groups
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +17,34 @@ import com.mowtiie.mesgard.ui.settings.RadioGroup
 import com.mowtiie.mesgard.ui.settings.RadioLabel
 
 private const val MAX_MESSAGE_LENGTH = 4000
+
+/** Asks why, because opening the messages of a private group is recorded and the members can see that it happened. */
+@Composable
+internal fun OpenMessagesSheet(isOpening: Boolean, onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
+    var reason by rememberSaveable { mutableStateOf("") }
+    FormSheet(
+        title = stringResource(R.string.group_open_messages_title),
+        confirmLabel = stringResource(R.string.group_open_messages_confirm),
+        onConfirm = { onConfirm(reason) },
+        onDismiss = onDismiss,
+        confirmEnabled = !isOpening && reason.trim().length >= ACCESS_REASON_MIN_LENGTH,
+        dismissEnabled = !isOpening,
+    ) {
+        Text(
+            text = stringResource(R.string.group_open_messages_text),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        NoteField(
+            value = reason,
+            onValueChange = { reason = it },
+            label = R.string.legal_hold_reason_label,
+            helper = stringResource(R.string.legal_hold_reason_helper, ACCESS_REASON_MIN_LENGTH),
+            maxLength = ACCESS_REASON_MAX_LENGTH,
+            enabled = !isOpening,
+        )
+    }
+}
 
 /** The line under the title of a group: its kind, and the group it is inside when it is inside one. */
 @Composable

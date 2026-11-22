@@ -97,4 +97,6 @@ internal data class GroupDetail(
     val members: List<GroupMember>,
     val settings: GroupSettings = GroupSettings(),
     val placement: GroupPlacement = GroupPlacement(),
+    /** Created by a person, not an administrator: its messages need break-glass access to be read. */
+    val isUserCreated: Boolean = false,
 )
