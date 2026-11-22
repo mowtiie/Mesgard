@@ -28,6 +28,10 @@ internal data class GroupsUiState(
     val visibleGroups: List<AdminGroup>
         get() = groups.filter { matchesQuery(it.name, query) }
 
+    /** The whole tree, indented by depth. While searching, the matches are listed flat. */
+    val rows: List<GroupRow>
+        get() = if (query.isBlank()) flattenGroupTree(groups) else visibleGroups.map { GroupRow(it, depth = 0) }
+
     val showEmptyMessage: Boolean
         get() = groups.isEmpty() && !isLoading
 

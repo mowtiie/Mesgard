@@ -43,6 +43,7 @@ import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 
 private val FabClearance = 88.dp
+private val LevelIndent = 16.dp
 
 @Composable
 internal fun GroupsScreenRoute(
@@ -151,13 +152,22 @@ private fun GroupList(uiState: GroupsUiState, onOpenGroup: (String) -> Unit) {
         EmptyState(R.drawable.illustration_group_no_group, R.string.groups_empty, R.string.groups_empty_hint)
     }
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = FabClearance)) {
-        items(uiState.visibleGroups, key = { it.id }) { group ->
+        items(uiState.rows, key = { it.group.id }) { row ->
+            val group = row.group
             ListItem(
-                modifier = Modifier.clickable { onOpenGroup(group.id) },
+                modifier = Modifier.padding(start = LevelIndent * row.depth).clickable { onOpenGroup(group.id) },
                 leadingContent = { InitialAvatar(group.name) },
                 headlineContent = { Text(group.name) },
                 supportingContent = {
-                    Text(pluralStringResource(R.plurals.groups_member_count, group.memberCount, group.memberCount))
+                    val members =
+                        pluralStringResource(R.plurals.groups_member_count, group.memberCount, group.memberCount)
+                    Text(
+                        stringResource(
+                            R.string.groups_row_summary,
+                            stringResource(group.kind.labelResource()),
+                            members,
+                        ),
+                    )
                 },
             )
         }

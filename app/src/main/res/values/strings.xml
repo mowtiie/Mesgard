@@ -226,6 +226,12 @@
     <string name="group_remove_title">Remove from group?</string>
     <string name="group_remove_message">%1$s is removed from %2$s and from its group chat.</string>
     <string name="group_remove_confirm">Remove</string>
+    <string name="group_kind_section">Section</string>
+    <string name="group_kind_class">Class</string>
+    <string name="group_kind_department">Department</string>
+    <string name="group_kind_club">Club</string>
+    <string name="group_kind_other">Group</string>
+    <string name="groups_row_summary">%1$s, %2$s</string>
     <plurals name="groups_member_count">
         <item quantity="one">%d member</item>
         <item quantity="other">%d members</item>
