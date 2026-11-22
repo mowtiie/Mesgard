@@ -226,6 +226,15 @@
     <string name="group_remove_title">Remove from group?</string>
     <string name="group_remove_message">%1$s is removed from %2$s and from its group chat.</string>
     <string name="group_remove_confirm">Remove</string>
+    <string name="group_announce">Send to the groups inside</string>
+    <string name="group_announce_title">Send to this group and the groups inside</string>
+    <string name="group_announce_label">Message</string>
+    <string name="group_announce_helper">Each group gets it as a message in its own conversation. A person in several of these groups sees it in each.</string>
+    <string name="group_announce_send">Send</string>
+    <plurals name="group_announced">
+        <item quantity="one">Sent to %d conversation</item>
+        <item quantity="other">Sent to %d conversations</item>
+    </plurals>
     <string name="group_kind_title">Kind</string>
     <string name="group_change_kind">Change kind</string>
     <string name="group_change_kind_save">Save</string>

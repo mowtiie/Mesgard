@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -81,6 +82,11 @@ internal fun GroupDetailScreenRoute(
         placeSummary = placeSummary(tree),
         onChangeKind = { treeViewModel.onDialogChanged(GroupTreeDialog.KIND) },
         onMove = { treeViewModel.onDialogChanged(GroupTreeDialog.PARENT) },
+        canAnnounce = tree.hasGroupsInside &&
+            (uiState.isAdmin || uiState.ownRole == GroupRole.OWNER || uiState.ownRole == GroupRole.MODERATOR),
+        onAnnounce = { treeViewModel.onDialogChanged(GroupTreeDialog.ANNOUNCE) },
+        announcedTo = tree.announcedTo,
+        onAnnouncementShown = treeViewModel::onAnnouncementShown,
         onLegalHold = { isHoldDialogShown = true },
         onBack = onBack,
         onAddMembers = onAddMembers,
@@ -112,6 +118,10 @@ internal fun GroupDetailScreen(
     placeSummary: String?,
     onChangeKind: () -> Unit,
     onMove: () -> Unit,
+    canAnnounce: Boolean,
+    onAnnounce: () -> Unit,
+    announcedTo: Int?,
+    onAnnouncementShown: () -> Unit,
     onLegalHold: () -> Unit,
     onBack: () -> Unit,
     onAddMembers: () -> Unit,
@@ -130,6 +140,13 @@ internal fun GroupDetailScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val errorMessage = (uiState.error ?: treeError)?.let { stringResource(it.messageResource()) }
+    val announcedMessage = announcedTo?.let { pluralStringResource(R.plurals.group_announced, it, it) }
+    LaunchedEffect(announcedMessage) {
+        if (announcedMessage != null) {
+            snackbarHostState.showSnackbar(announcedMessage)
+            onAnnouncementShown()
+        }
+    }
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
             snackbarHostState.showSnackbar(errorMessage)
@@ -158,42 +175,12 @@ internal fun GroupDetailScreen(
                     Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.group_delete))
                 }
             }
-            if (uiState.isAdmin || uiState.ownRole != null) {
-                OverflowMenu { dismiss ->
-                    if (uiState.isAdmin) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.group_change_kind)) },
-                            onClick = {
-                                dismiss()
-                                onChangeKind()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.group_move)) },
-                            onClick = {
-                                dismiss()
-                                onMove()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.legal_hold_menu)) },
-                            onClick = {
-                                dismiss()
-                                onLegalHold()
-                            },
-                        )
-                    }
-                    if (uiState.ownRole != null) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.group_leave)) },
-                            onClick = {
-                                dismiss()
-                                onLeaveRequested()
-                            },
-                        )
-                    }
-                }
-            }
+            GroupMenu(
+                isAdmin = uiState.isAdmin,
+                isMember = uiState.ownRole != null,
+                canAnnounce = canAnnounce,
+                actions = GroupMenuActions(onAnnounce, onChangeKind, onMove, onLegalHold, onLeaveRequested),
+            )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {

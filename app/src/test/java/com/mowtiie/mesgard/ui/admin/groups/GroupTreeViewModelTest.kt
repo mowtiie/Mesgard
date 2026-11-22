@@ -11,6 +11,7 @@ import com.mowtiie.mesgard.domain.model.GroupKind
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.repository.AccountRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
+import com.mowtiie.mesgard.domain.repository.GroupAnnouncementRepository
 import com.mowtiie.mesgard.domain.repository.GroupTreeRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
@@ -44,12 +45,14 @@ class GroupTreeViewModelTest {
         coEvery { listGroups(ORG) } returns AdminResult.Success(groups)
     }
     private val groupTreeRepository = mockk<GroupTreeRepository>()
+    private val groupAnnouncementRepository = mockk<GroupAnnouncementRepository>()
 
     private fun viewModel() = GroupTreeViewModel(
         SavedStateHandle(mapOf("groupId" to "stem")),
         ObserveAdminOrganization(accountRepository),
         groupAdminRepository,
         groupTreeRepository,
+        groupAnnouncementRepository,
     )
 
     @Test
@@ -89,6 +92,40 @@ class GroupTreeViewModelTest {
         assertEquals(AdminError.NOT_ALLOWED, viewModel.uiState.value.error)
         viewModel.onErrorShown()
         assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `knows whether there are groups inside`() {
+        assertEquals(true, viewModel().uiState.value.hasGroupsInside)
+    }
+
+    @Test
+    fun `sends the announcement once, closes the sheet and reports how many conversations it reached`() {
+        coEvery { groupAnnouncementRepository.send("stem", any(), "Exams start Monday") } returns AdminResult.Success(2)
+        val viewModel = viewModel()
+        viewModel.onDialogChanged(GroupTreeDialog.ANNOUNCE)
+
+        viewModel.onAnnounceConfirmed("Exams start Monday")
+
+        coVerify(exactly = 1) { groupAnnouncementRepository.send("stem", any(), "Exams start Monday") }
+        assertEquals(2, viewModel.uiState.value.announcedTo)
+        assertNull(viewModel.uiState.value.dialog)
+        viewModel.onAnnouncementShown()
+        assertNull(viewModel.uiState.value.announcedTo)
+    }
+
+    @Test
+    fun `does not send an empty announcement and keeps the error of a refused one`() {
+        coEvery { groupAnnouncementRepository.send("stem", any(), "Hello") } returns
+            AdminResult.Failure(AdminError.NOT_ALLOWED)
+        val viewModel = viewModel()
+
+        viewModel.onAnnounceConfirmed("   ")
+        coVerify(exactly = 0) { groupAnnouncementRepository.send(any(), any(), any()) }
+
+        viewModel.onAnnounceConfirmed("Hello")
+        assertEquals(AdminError.NOT_ALLOWED, viewModel.uiState.value.error)
+        assertNull(viewModel.uiState.value.announcedTo)
     }
 
     private companion object {

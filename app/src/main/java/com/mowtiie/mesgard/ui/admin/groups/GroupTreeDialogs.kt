@@ -4,13 +4,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.GroupKind
 import com.mowtiie.mesgard.ui.common.FormSheet
+import com.mowtiie.mesgard.ui.common.NoteField
 import com.mowtiie.mesgard.ui.settings.RadioGroup
 import com.mowtiie.mesgard.ui.settings.RadioLabel
+
+private const val MAX_MESSAGE_LENGTH = 4000
 
 /** The line under the title of a group: its kind, and the group it is inside when it is inside one. */
 @Composable
@@ -29,6 +33,7 @@ internal fun placeSummary(tree: GroupTreeUiState): String? {
 internal fun GroupTreeDialogs(tree: GroupTreeUiState, viewModel: GroupTreeViewModel) {
     when (tree.dialog) {
         GroupTreeDialog.KIND -> KindSheet(tree, viewModel)
+        GroupTreeDialog.ANNOUNCE -> AnnounceSheet(tree, viewModel)
         GroupTreeDialog.PARENT -> ParentPickerSheet(
             groups = tree.groups,
             selectedId = tree.parentId,
@@ -37,6 +42,30 @@ internal fun GroupTreeDialogs(tree: GroupTreeUiState, viewModel: GroupTreeViewMo
             onDismiss = { viewModel.onDialogChanged(null) },
         )
         null -> Unit
+    }
+}
+
+/** Sends one text message to the group and every group inside it. Each group gets it in its own conversation. */
+@Composable
+private fun AnnounceSheet(tree: GroupTreeUiState, viewModel: GroupTreeViewModel) {
+    var body by rememberSaveable { mutableStateOf("") }
+    FormSheet(
+        title = stringResource(R.string.group_announce_title),
+        confirmLabel = stringResource(R.string.group_announce_send),
+        onConfirm = { viewModel.onAnnounceConfirmed(body) },
+        onDismiss = { viewModel.onDialogChanged(null) },
+        confirmEnabled = !tree.isWorking && body.isNotBlank(),
+        dismissEnabled = !tree.isWorking,
+    ) {
+        NoteField(
+            value = body,
+            onValueChange = { body = it },
+            label = R.string.group_announce_label,
+            helper = stringResource(R.string.group_announce_helper),
+            maxLength = MAX_MESSAGE_LENGTH,
+            minLines = 3,
+            enabled = !tree.isWorking,
+        )
     }
 }
 

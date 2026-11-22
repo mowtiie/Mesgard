@@ -10,9 +10,11 @@ import com.mowtiie.mesgard.domain.model.AdminGroup
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupKind
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
+import com.mowtiie.mesgard.domain.repository.GroupAnnouncementRepository
 import com.mowtiie.mesgard.domain.repository.GroupTreeRepository
 import com.mowtiie.mesgard.ui.navigation.GroupRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +26,7 @@ import kotlinx.coroutines.launch
 internal enum class GroupTreeDialog {
     KIND,
     PARENT,
+    ANNOUNCE,
 }
 
 internal data class GroupTreeUiState(
@@ -31,6 +34,8 @@ internal data class GroupTreeUiState(
     val groups: List<AdminGroup> = emptyList(),
     val dialog: GroupTreeDialog? = null,
     val isWorking: Boolean = false,
+    /** How many conversations the last announcement reached, until it was shown. */
+    val announcedTo: Int? = null,
     val error: AdminError? = null,
 ) {
     private val group: AdminGroup?
@@ -44,6 +49,9 @@ internal data class GroupTreeUiState(
 
     val parentName: String?
         get() = groups.firstOrNull { it.id == parentId }?.name
+
+    val hasGroupsInside: Boolean
+        get() = groups.any { it.parentId == groupId }
 
     /** A group cannot go inside itself or inside a group it contains. */
     val excludedParentIds: Set<String>
@@ -60,6 +68,7 @@ internal class GroupTreeViewModel @Inject constructor(
     private val observeAdminOrganization: ObserveAdminOrganization,
     private val groupAdminRepository: GroupAdminRepository,
     private val groupTreeRepository: GroupTreeRepository,
+    private val groupAnnouncementRepository: GroupAnnouncementRepository,
 ) : ViewModel() {
     private val groupId = savedStateHandle.toRoute<GroupRoute>().groupId
     private val mutableUiState = MutableStateFlow(GroupTreeUiState(groupId))
@@ -76,6 +85,24 @@ internal class GroupTreeViewModel @Inject constructor(
     fun onKindChosen(kind: GroupKind) = change { groupTreeRepository.changeKind(groupId, kind) }
 
     fun onParentChosen(parentId: String?) = change { groupTreeRepository.moveGroup(groupId, parentId) }
+
+    fun onAnnouncementShown() = mutableUiState.update { it.copy(announcedTo = null) }
+
+    fun onAnnounceConfirmed(body: String) {
+        if (body.isBlank() || mutableUiState.value.isWorking) return
+        mutableUiState.update { it.copy(isWorking = true) }
+        viewModelScope.launch {
+            val result = groupAnnouncementRepository.send(groupId, UUID.randomUUID().toString(), body)
+            mutableUiState.update {
+                it.copy(
+                    isWorking = false,
+                    dialog = null,
+                    announcedTo = (result as? AdminResult.Success)?.value,
+                    error = (result as? AdminResult.Failure)?.error,
+                )
+            }
+        }
+    }
 
     private fun change(action: suspend () -> AdminResult<Unit>) {
         if (mutableUiState.value.isWorking) return
