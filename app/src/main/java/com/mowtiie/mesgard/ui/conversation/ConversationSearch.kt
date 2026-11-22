@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.ui.conversation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
@@ -29,7 +30,17 @@ internal data class ConversationSearch(
  * notifications of this conversation for the current user, and unread counts still count.
  */
 @Composable
-internal fun ConversationBarActions(isMuted: Boolean, onSearch: () -> Unit, onMuteChanged: (Boolean) -> Unit) {
+internal fun ConversationBarActions(
+    isMuted: Boolean,
+    onSearch: () -> Unit,
+    onMuteChanged: (Boolean) -> Unit,
+    onGroupInfo: (() -> Unit)? = null,
+) {
+    if (onGroupInfo != null) {
+        IconButton(onClick = onGroupInfo) {
+            Icon(Icons.Outlined.Info, contentDescription = stringResource(R.string.conversation_group_info))
+        }
+    }
     IconButton(onClick = onSearch) {
         Icon(Icons.Outlined.Search, contentDescription = stringResource(R.string.conversation_search))
     }

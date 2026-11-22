@@ -57,11 +57,16 @@ import kotlinx.coroutines.launch
 
 private const val LOAD_OLDER_THRESHOLD = 5
 
+/** Opening the group of a group conversation, and whether looking it up failed. */
+internal class GroupInfoAction(val isFailed: Boolean, val onOpen: () -> Unit, val onFailureShown: () -> Unit)
+
 @Composable
 internal fun ConversationScreenRoute(
     onBack: () -> Unit,
+    onOpenGroup: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConversationViewModel = hiltViewModel(),
+    groupViewModel: ConversationGroupViewModel = hiltViewModel(),
     downloadsViewModel: AttachmentDownloadsViewModel = hiltViewModel(),
     failedMessagesViewModel: FailedMessagesViewModel = hiltViewModel(),
     actionsViewModel: ConversationActionsViewModel = hiltViewModel(),
@@ -75,6 +80,13 @@ internal fun ConversationScreenRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val downloads by downloadsViewModel.uiState.collectAsStateWithLifecycle()
+    val group by groupViewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(group.groupId) {
+        group.groupId?.let {
+            onOpenGroup(it)
+            groupViewModel.onGroupOpened()
+        }
+    }
     LifecycleResumeEffect(viewModel) {
         viewModel.onVisibilityChanged(true)
         actionsViewModel.onOpened()
@@ -174,6 +186,11 @@ internal fun ConversationScreenRoute(
         onDownloadErrorShown = downloadsViewModel::onErrorShown,
         onLoadOlder = viewModel::onLoadOlder,
         onMuteChanged = actionsViewModel::onMuteChanged,
+        groupInfo = GroupInfoAction(
+            group.isFailed,
+            groupViewModel::onGroupInfoRequested,
+            groupViewModel::onFailureShown,
+        ),
         onErrorShown = {
             viewModel.onErrorShown()
             actionsViewModel.onErrorShown()
@@ -207,10 +224,18 @@ internal fun ConversationScreen(
     onDownloadErrorShown: () -> Unit,
     onLoadOlder: () -> Unit,
     onMuteChanged: (Boolean) -> Unit,
+    groupInfo: GroupInfoAction,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val groupInfoFailedMessage = stringResource(R.string.conversation_group_info_error)
+    LaunchedEffect(groupInfo.isFailed) {
+        if (groupInfo.isFailed) {
+            snackbarHostState.showSnackbar(groupInfoFailedMessage)
+            groupInfo.onFailureShown()
+        }
+    }
     var isSearching by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val notFoundMessage = stringResource(R.string.conversation_search_not_found)
@@ -266,7 +291,12 @@ internal fun ConversationScreen(
             }
         },
         actions = {
-            ConversationBarActions(uiState.isMuted, onSearch = { isSearching = true }, onMuteChanged = onMuteChanged)
+            ConversationBarActions(
+                isMuted = uiState.isMuted,
+                onSearch = { isSearching = true },
+                onMuteChanged = onMuteChanged,
+                onGroupInfo = groupInfo.onOpen.takeIf { uiState.showSenderNames },
+            )
         },
         searchBar = barInPlaceOfTitle(selectedMessages, selection, copyMessage, searchBar),
         snackbarHost = { SnackbarHost(snackbarHostState) },

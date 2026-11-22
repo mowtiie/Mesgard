@@ -211,7 +211,10 @@ internal fun MesgardNavHost(
             )
         }
         composable<ConversationRoute> {
-            ConversationScreenRoute(onBack = { navController.popBackStack() })
+            ConversationScreenRoute(
+                onBack = { navController.popBackStack() },
+                onOpenGroup = { navController.navigate(GroupRoute(it)) },
+            )
         }
     }
 }
