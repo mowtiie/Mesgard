@@ -15,6 +15,7 @@ import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.model.PostingPolicy
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AccountRepository
+import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
 import com.mowtiie.mesgard.domain.repository.GroupCreationRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
@@ -45,6 +46,9 @@ class NewGroupViewModelTest {
             GroupCreationRules(GroupCreationPolicy.EVERYONE, canCreate = true, created = 0, limit = 5),
         )
     }
+    private val conversationRepository = mockk<ConversationRepository> {
+        coEvery { refresh() } returns RefreshResult.Success
+    }
     private val groupAdminRepository = mockk<GroupAdminRepository> {
         coEvery { listGroups(ORG) } returns AdminResult.Success(listOf(AdminGroup("g11", "Grade 11", 0)))
     }
@@ -52,6 +56,7 @@ class NewGroupViewModelTest {
     private fun viewModel() = NewGroupViewModel(
         FindGroupCreationOrganization(accountRepository, groupCreationRepository),
         groupAdminRepository,
+        conversationRepository,
     )
 
     @Test
@@ -78,6 +83,7 @@ class NewGroupViewModelTest {
         viewModel.onCreateClicked()
 
         coVerify(exactly = 1) { groupAdminRepository.createGroup(ORG, "STEM", settings, placement) }
+        coVerify(exactly = 1) { conversationRepository.refresh() }
         assertTrue(viewModel.uiState.value.isCreated)
     }
 

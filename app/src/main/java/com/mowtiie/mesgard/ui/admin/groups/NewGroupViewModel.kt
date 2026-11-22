@@ -10,6 +10,7 @@ import com.mowtiie.mesgard.domain.model.GroupKind
 import com.mowtiie.mesgard.domain.model.GroupPlacement
 import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.domain.repository.ConversationRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -44,6 +45,7 @@ internal data class NewGroupUiState(
 internal class NewGroupViewModel @Inject constructor(
     private val findGroupCreationOrganization: FindGroupCreationOrganization,
     private val groupAdminRepository: GroupAdminRepository,
+    private val conversationRepository: ConversationRepository,
 ) : ViewModel() {
     private val mutableUiState = MutableStateFlow(NewGroupUiState())
     val uiState: StateFlow<NewGroupUiState> = mutableUiState.asStateFlow()
@@ -75,6 +77,8 @@ internal class NewGroupViewModel @Inject constructor(
                     GroupPlacement(state.kind, state.parentId),
                 )
             } ?: AdminResult.Failure(AdminError.NOT_ALLOWED)
+            // The group has its conversation at once, so Chats has to know before the person is back there.
+            if (result is AdminResult.Success) conversationRepository.refresh()
             mutableUiState.update {
                 it.copy(
                     isWorking = false,
