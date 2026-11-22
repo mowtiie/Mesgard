@@ -6,11 +6,11 @@ import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.repository.AccountRepository
 import com.mowtiie.mesgard.domain.repository.GroupCreationRepository
 import javax.inject.Inject
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** The account is stored a moment after sign in, so the check waits for it instead of reading an empty one. */
+/** The account is stored a moment after sign in, first without its organizations, so the check waits for them. */
 private const val ACCOUNT_WAIT_MS = 10_000L
 
 /**
@@ -22,8 +22,9 @@ internal class FindGroupCreationOrganization @Inject constructor(
     private val groupCreationRepository: GroupCreationRepository,
 ) {
     suspend operator fun invoke(): AccountMembership? {
-        val account = withTimeoutOrNull(ACCOUNT_WAIT_MS) { accountRepository.observeAccount().filterNotNull().first() }
-        val memberships = account?.memberships.orEmpty()
+        val memberships = withTimeoutOrNull(ACCOUNT_WAIT_MS) {
+            accountRepository.observeAccount().map { it?.memberships.orEmpty() }.first { it.isNotEmpty() }
+        }.orEmpty()
         return memberships.firstOrNull { it.role == OrgRole.ORG_ADMIN }
             ?: memberships.firstOrNull { canCreateIn(it.organizationId) }
     }

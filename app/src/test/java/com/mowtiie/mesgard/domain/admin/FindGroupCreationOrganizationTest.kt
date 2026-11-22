@@ -56,6 +56,7 @@ class FindGroupCreationOrganizationTest {
         val accounts = mockk<AccountRepository> {
             every { observeAccount() } returns flow {
                 emit(null)
+                emit(Account("Ana", null, emptyList()))
                 emit(Account("Ana", null, listOf(admin)))
             }
         }
