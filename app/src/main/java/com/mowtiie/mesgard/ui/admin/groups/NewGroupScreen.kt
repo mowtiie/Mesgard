@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -41,6 +42,10 @@ import com.mowtiie.mesgard.ui.settings.RadioGroup
 import com.mowtiie.mesgard.ui.settings.RadioLabel
 
 private const val MAX_GROUP_NAME_LENGTH = 200
+
+/** Someone who is not an administrator makes clubs and other flat groups, not classes or sections. */
+private fun kindsFor(state: NewGroupUiState): List<GroupKind> =
+    if (state.isAdmin) GroupKind.entries else listOf(GroupKind.CLUB, GroupKind.OTHER)
 private val FieldPadding = 16.dp
 
 /** A page, not a sheet: a group has a name, a kind, a place in the tree and who can post. */
@@ -104,18 +109,27 @@ private fun NewGroupForm(uiState: NewGroupUiState, viewModel: NewGroupViewModel,
     )
     SectionHeader(R.string.group_kind_title)
     RadioGroup(
-        options = GroupKind.entries.map { it to RadioLabel(it.labelResource()) },
+        options = kindsFor(uiState).map { it to RadioLabel(it.labelResource()) },
         selected = uiState.kind,
         onSelected = viewModel::onKindChanged,
         enabled = !uiState.isWorking,
     )
-    SectionHeader(R.string.group_parent_title)
-    ListItem(
-        modifier = Modifier.clickable(role = Role.Button, enabled = !uiState.isWorking, onClick = onChooseParent),
-        headlineContent = { Text(uiState.parentName ?: stringResource(R.string.group_parent_top)) },
-        trailingContent = { NavigationChevron() },
-    )
-    GroupSettingsRows(uiState.settings, enabled = !uiState.isWorking, onChanged = viewModel::onSettingsChanged)
+    if (uiState.isAdmin) {
+        SectionHeader(R.string.group_parent_title)
+        ListItem(
+            modifier = Modifier.clickable(role = Role.Button, enabled = !uiState.isWorking, onClick = onChooseParent),
+            headlineContent = { Text(uiState.parentName ?: stringResource(R.string.group_parent_top)) },
+            trailingContent = { NavigationChevron() },
+        )
+        GroupSettingsRows(uiState.settings, enabled = !uiState.isWorking, onChanged = viewModel::onSettingsChanged)
+    } else {
+        Text(
+            text = stringResource(R.string.group_create_member_note),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(FieldPadding),
+        )
+    }
     Column(modifier = Modifier.padding(FieldPadding)) {
         Button(onClick = viewModel::onCreateClicked, enabled = uiState.canCreate, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.groups_create_confirm))

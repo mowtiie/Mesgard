@@ -1,11 +1,13 @@
 package com.mowtiie.mesgard.ui.admin.groups
 
-import com.mowtiie.mesgard.domain.admin.ObserveAdminOrganization
+import com.mowtiie.mesgard.domain.admin.FindGroupCreationOrganization
 import com.mowtiie.mesgard.domain.model.Account
 import com.mowtiie.mesgard.domain.model.AccountMembership
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminGroup
 import com.mowtiie.mesgard.domain.model.AdminResult
+import com.mowtiie.mesgard.domain.model.GroupCreationPolicy
+import com.mowtiie.mesgard.domain.model.GroupCreationRules
 import com.mowtiie.mesgard.domain.model.GroupKind
 import com.mowtiie.mesgard.domain.model.GroupPlacement
 import com.mowtiie.mesgard.domain.model.GroupSettings
@@ -13,6 +15,7 @@ import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.domain.model.PostingPolicy
 import com.mowtiie.mesgard.domain.repository.AccountRepository
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
+import com.mowtiie.mesgard.domain.repository.GroupCreationRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -29,16 +32,25 @@ class NewGroupViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
+    private val role = MutableStateFlow(OrgRole.ORG_ADMIN)
     private val accountRepository = mockk<AccountRepository> {
-        every { observeAccount() } returns MutableStateFlow(
-            Account("Admin", null, listOf(AccountMembership(ORG, "Rizal National", OrgRole.ORG_ADMIN))),
+        every { observeAccount() } answers {
+            MutableStateFlow(Account("Ana", null, listOf(AccountMembership(ORG, "Rizal National", role.value))))
+        }
+    }
+    private val groupCreationRepository = mockk<GroupCreationRepository> {
+        coEvery { rules(ORG) } returns AdminResult.Success(
+            GroupCreationRules(GroupCreationPolicy.EVERYONE, canCreate = true, created = 0, limit = 5),
         )
     }
     private val groupAdminRepository = mockk<GroupAdminRepository> {
         coEvery { listGroups(ORG) } returns AdminResult.Success(listOf(AdminGroup("g11", "Grade 11", 0)))
     }
 
-    private fun viewModel() = NewGroupViewModel(ObserveAdminOrganization(accountRepository), groupAdminRepository)
+    private fun viewModel() = NewGroupViewModel(
+        FindGroupCreationOrganization(accountRepository, groupCreationRepository),
+        groupAdminRepository,
+    )
 
     @Test
     fun `offers the groups of the organization as places for the new one`() {
@@ -89,6 +101,22 @@ class NewGroupViewModelTest {
 
         assertEquals(AdminError.NOT_ALLOWED, viewModel.uiState.value.error)
         assertFalse(viewModel.uiState.value.isCreated)
+    }
+
+    @Test
+    fun `a member makes a flat group without the places and settings of an administrator`() {
+        role.value = OrgRole.MEMBER
+        coEvery { groupAdminRepository.createGroup(ORG, "Chess", any(), GroupPlacement(GroupKind.CLUB)) } returns
+            AdminResult.Success("g5")
+        val viewModel = viewModel()
+        viewModel.onNameChanged("Chess")
+        viewModel.onKindChanged(GroupKind.CLUB)
+
+        viewModel.onCreateClicked()
+
+        assertFalse(viewModel.uiState.value.isAdmin)
+        coVerify(exactly = 0) { groupAdminRepository.listGroups(any()) }
+        assertTrue(viewModel.uiState.value.isCreated)
     }
 
     private companion object {

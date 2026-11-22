@@ -245,6 +245,8 @@
     <string name="group_creation_everyone_summary">Students can create clubs and other groups, and become their owners.</string>
     <string name="group_creation_limit_note">A person who is not an admin can create up to %1$d groups. They are flat, and administrators see their members but cannot read their messages.</string>
     <string name="settings_group_creation_summary">Choose who can create groups.</string>
+    <string name="group_create_member_note">You become the owner and can add people afterwards. Administrators can see who is in the group but cannot read its messages.</string>
+    <string name="chats_new_group">New group</string>
     <string name="group_kind_title">Kind</string>
     <string name="group_change_kind">Change kind</string>
     <string name="group_change_kind_save">Save</string>
@@ -328,6 +330,7 @@
     <string name="admin_error_not_a_member">This person is no longer a member.</string>
     <string name="admin_error_not_erasable">This person cannot be erased. They may belong to another organization, a legal hold or an open report may protect them, or this server does not allow it.</string>
     <string name="admin_error_group_tree_invalid">A group cannot go inside itself, and the tree can be at most five levels deep.</string>
+    <string name="admin_error_group_limit">You have created as many groups as you can. Delete one first, or ask an administrator.</string>
     <string name="admin_error_group_not_empty">This group has groups inside it. Move or delete them first.</string>
     <string name="admin_error_legal_hold">A legal hold or an open report protects this group. It cannot be deleted until that ends.</string>
     <string name="admin_error_last_admin">An organization needs at least one administrator.</string>

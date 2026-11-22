@@ -63,6 +63,7 @@ internal fun MesgardNavHost(
                 onConversationClick = { conversationId -> navController.navigate(ConversationRoute(conversationId)) },
                 onOpenArchived = { navController.navigate(ArchivedRoute) },
                 onNewChat = { navController.navigate(NewChatRoute) },
+                onNewGroup = { navController.navigate(NewGroupRoute) },
                 onOpenSettings = { navController.navigate(SettingsRoute) },
             )
         }

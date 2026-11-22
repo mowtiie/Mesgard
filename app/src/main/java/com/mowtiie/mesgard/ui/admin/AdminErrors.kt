@@ -14,5 +14,6 @@ internal fun AdminError.messageResource(): Int = when (this) {
     AdminError.LEGAL_HOLD -> R.string.admin_error_legal_hold
     AdminError.GROUP_NOT_EMPTY -> R.string.admin_error_group_not_empty
     AdminError.GROUP_TREE_INVALID -> R.string.admin_error_group_tree_invalid
+    AdminError.GROUP_LIMIT -> R.string.admin_error_group_limit
     AdminError.UNKNOWN -> R.string.admin_error_unknown
 }

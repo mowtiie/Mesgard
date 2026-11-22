@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,11 +42,14 @@ internal fun ConversationListRoute(
     onConversationClick: (String) -> Unit,
     onOpenArchived: () -> Unit,
     onNewChat: () -> Unit,
+    onNewGroup: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ConversationListViewModel = hiltViewModel(),
     selectionViewModel: ConversationSelectionViewModel = hiltViewModel(),
+    newGroupEntryViewModel: NewGroupEntryViewModel = hiltViewModel(),
 ) {
+    val canCreateGroups by newGroupEntryViewModel.canCreateGroups.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selection by selectionViewModel.uiState.collectAsStateWithLifecycle()
     ConversationListScreen(
@@ -59,6 +63,7 @@ internal fun ConversationListRoute(
         onConversationClick = onConversationClick,
         onOpenArchived = onOpenArchived,
         onNewChat = onNewChat,
+        onNewGroup = onNewGroup.takeIf { canCreateGroups },
         onOpenSettings = onOpenSettings,
         modifier = modifier,
     )
@@ -77,6 +82,7 @@ internal fun ConversationListScreen(
     onConversationClick: (String) -> Unit,
     onOpenArchived: () -> Unit,
     onNewChat: () -> Unit,
+    onNewGroup: (() -> Unit)?,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -103,6 +109,14 @@ internal fun ConversationListScreen(
         modifier = modifier,
         actions = {
             if (uiState.showSearch) SearchAction { isSearching = true }
+            if (onNewGroup != null) {
+                IconButton(onClick = onNewGroup) {
+                    Icon(
+                        painterResource(R.drawable.ic_group_outline),
+                        contentDescription = stringResource(R.string.chats_new_group),
+                    )
+                }
+            }
             IconButton(onClick = onOpenSettings) {
                 Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings_title))
             }

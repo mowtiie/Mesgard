@@ -10,6 +10,7 @@ internal fun MainScreen(
     onConversationClick: (String) -> Unit,
     onOpenArchived: () -> Unit,
     onNewChat: () -> Unit,
+    onNewGroup: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -18,6 +19,7 @@ internal fun MainScreen(
         onConversationClick = onConversationClick,
         onOpenArchived = onOpenArchived,
         onNewChat = onNewChat,
+        onNewGroup = onNewGroup,
         onOpenSettings = onOpenSettings,
         modifier = modifier,
     )

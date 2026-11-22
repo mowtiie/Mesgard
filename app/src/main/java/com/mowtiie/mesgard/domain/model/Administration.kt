@@ -31,6 +31,7 @@ internal enum class AdminError {
     LEGAL_HOLD,
     GROUP_NOT_EMPTY,
     GROUP_TREE_INVALID,
+    GROUP_LIMIT,
     UNKNOWN,
 }
 
