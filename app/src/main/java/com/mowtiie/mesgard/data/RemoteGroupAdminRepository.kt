@@ -12,6 +12,7 @@ import com.mowtiie.mesgard.domain.model.PostingPolicy
 import com.mowtiie.mesgard.domain.repository.GroupAdminRepository
 import javax.inject.Inject
 
+private const val OWNER = "owner"
 private const val MODERATOR = "moderator"
 private const val MEMBER = "member"
 private const val MODERATORS = "moderators"
@@ -60,10 +61,18 @@ internal class RemoteGroupAdminRepository @Inject constructor(private val remote
         attemptAdmin { check(remote.changeMemberRole(groupId, userId, role.toWireName())) { "No member was changed" } }
 }
 
-private fun String.toRole() = if (this == MODERATOR) GroupRole.MODERATOR else GroupRole.MEMBER
+private fun String.toRole() = when (this) {
+    OWNER -> GroupRole.OWNER
+    MODERATOR -> GroupRole.MODERATOR
+    else -> GroupRole.MEMBER
+}
 
 private fun String.toPostingPolicy() = if (this == MODERATORS) PostingPolicy.MODERATORS else PostingPolicy.EVERYONE
 
 private fun PostingPolicy.toWireName() = if (this == PostingPolicy.MODERATORS) MODERATORS else EVERYONE
 
-private fun GroupRole.toWireName() = if (this == GroupRole.MODERATOR) MODERATOR else MEMBER
+private fun GroupRole.toWireName() = when (this) {
+    GroupRole.OWNER -> OWNER
+    GroupRole.MODERATOR -> MODERATOR
+    GroupRole.MEMBER -> MEMBER
+}

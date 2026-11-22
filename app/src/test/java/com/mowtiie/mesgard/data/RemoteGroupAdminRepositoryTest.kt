@@ -114,6 +114,19 @@ class RemoteGroupAdminRepositoryTest {
     }
 
     @Test
+    fun `reads an owner and sends the owner role name`() = runTest {
+        coEvery { remote.fetchGroup("g1") } returns GroupRowDto("g1", "Robotics")
+        coEvery { remote.fetchGroupMembers("g1") } returns listOf(GroupMemberRowDto("u1", "owner"))
+        coEvery { remote.changeMemberRole("g1", "u2", "owner") } returns true
+
+        assertEquals(
+            AdminResult.Success(GroupDetail("g1", "Robotics", listOf(GroupMember("u1", GroupRole.OWNER)))),
+            repository.fetchGroup("g1"),
+        )
+        assertEquals(AdminResult.Success(Unit), repository.changeMemberRole("g1", "u2", GroupRole.OWNER))
+    }
+
+    @Test
     fun `adds members and sends the role names the server knows`() = runTest {
         coEvery { remote.addMembers(ORG, "g1", listOf("u1", "u2")) } returns Unit
         coEvery { remote.changeMemberRole("g1", "u1", "member") } returns true

@@ -64,7 +64,7 @@ internal class GroupDetailViewModel @Inject constructor(
             settings = local.group?.settings ?: GroupSettings(),
             members = local.group?.members.orEmpty()
                 .map { GroupMemberRow(it.userId, names[it.userId], it.role) }
-                .sortedWith(compareBy({ it.role != GroupRole.MODERATOR }, { it.displayName.orEmpty().lowercase() })),
+                .sortedWith(compareBy({ it.role }, { it.displayName.orEmpty().lowercase() })),
             isLoading = local.isLoading,
             isWorking = local.isWorking,
             isDeleted = local.isDeleted,
@@ -110,8 +110,8 @@ internal class GroupDetailViewModel @Inject constructor(
         change { groupAdminRepository.removeMember(groupId, member.userId) }
     }
 
-    fun onRoleToggled(member: GroupMemberRow) {
-        val role = if (member.role == GroupRole.MODERATOR) GroupRole.MEMBER else GroupRole.MODERATOR
+    fun onRoleSelected(member: GroupMemberRow, role: GroupRole) {
+        if (role == member.role) return
         change { groupAdminRepository.changeMemberRole(groupId, member.userId, role) }
     }
 

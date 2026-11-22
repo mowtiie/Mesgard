@@ -47,8 +47,9 @@ internal sealed interface AdminResult<out T> {
 }
 
 internal enum class GroupRole {
-    MEMBER,
+    OWNER,
     MODERATOR,
+    MEMBER,
 }
 
 internal data class AdminGroup(val id: String, val name: String, val memberCount: Int)

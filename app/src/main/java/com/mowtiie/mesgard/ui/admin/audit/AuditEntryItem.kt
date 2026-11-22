@@ -21,6 +21,7 @@ internal fun rememberAuditLabels(): AuditLabels = AuditLabels(
         "org_admin" to stringResource(R.string.role_org_admin),
         "staff" to stringResource(R.string.role_staff),
         "student" to stringResource(R.string.role_member),
+        "owner" to stringResource(R.string.group_role_owner),
         "moderator" to stringResource(R.string.group_role_moderator),
         "member" to stringResource(R.string.role_member),
     ),

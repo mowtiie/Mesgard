@@ -72,6 +72,22 @@ class GroupDetailViewModelTest {
     }
 
     @Test
+    fun `owners come before moderators and an owner can be made`() = runTest {
+        val withOwner = detail.copy(members = detail.members + GroupMember("u7", GroupRole.OWNER))
+        coEvery { groupAdminRepository.fetchGroup("g1") } returns AdminResult.Success(withOwner)
+        coEvery { groupAdminRepository.changeMemberRole("g1", "u1", GroupRole.OWNER) } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+
+        var rows = emptyList<GroupMemberRow>()
+        viewModel.uiState.test { rows = expectMostRecentItem().members }
+        assertEquals(GroupRole.OWNER, rows.first().role)
+
+        viewModel.onRoleSelected(rows.first { it.userId == "u1" }, GroupRole.OWNER)
+
+        coVerify { groupAdminRepository.changeMemberRole("g1", "u1", GroupRole.OWNER) }
+    }
+
+    @Test
     fun `shows who can post, and changing it saves the settings and loads the group again`() = runTest {
         val moderatorsOnly = GroupSettings(PostingPolicy.MODERATORS, includesEveryone = true)
         coEvery { groupAdminRepository.fetchGroup("g1") } returns
@@ -122,8 +138,8 @@ class GroupDetailViewModelTest {
         val viewModel = viewModel()
         val rows = viewModel.uiState.first { it.members.isNotEmpty() }.members
 
-        viewModel.onRoleToggled(rows.first { it.userId == "u1" })
-        viewModel.onRoleToggled(rows.first { it.userId == "u2" })
+        viewModel.onRoleSelected(rows.first { it.userId == "u1" }, GroupRole.MODERATOR)
+        viewModel.onRoleSelected(rows.first { it.userId == "u2" }, GroupRole.MEMBER)
 
         coVerify { groupAdminRepository.changeMemberRole("g1", "u1", GroupRole.MODERATOR) }
         coVerify { groupAdminRepository.changeMemberRole("g1", "u2", GroupRole.MEMBER) }

@@ -208,6 +208,8 @@
     <string name="group_members_empty">No members in this group</string>
     <string name="group_members_empty_hint">Add members to start the group conversation.</string>
     <string name="group_unknown_member">Unknown member</string>
+    <string name="group_role_owner">Owner</string>
+    <string name="group_make_owner">Make owner</string>
     <string name="group_role_moderator">Moderator</string>
     <string name="group_role_member">Member</string>
     <string name="group_make_moderator">Make moderator</string>

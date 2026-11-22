@@ -77,7 +77,7 @@ internal fun GroupDetailScreenRoute(
         onRenameConfirmed = viewModel::onRenameConfirmed,
         onDeleteConfirmed = viewModel::onDeleteConfirmed,
         onRemoveConfirmed = viewModel::onRemoveConfirmed,
-        onRoleToggled = viewModel::onRoleToggled,
+        onRoleSelected = viewModel::onRoleSelected,
         onSettingsChanged = viewModel::onSettingsChanged,
         onErrorShown = viewModel::onErrorShown,
         modifier = modifier,
@@ -97,7 +97,7 @@ internal fun GroupDetailScreen(
     onRenameConfirmed: (String) -> Unit,
     onDeleteConfirmed: () -> Unit,
     onRemoveConfirmed: (GroupMemberRow) -> Unit,
-    onRoleToggled: (GroupMemberRow) -> Unit,
+    onRoleSelected: (GroupMemberRow, GroupRole) -> Unit,
     onSettingsChanged: (GroupSettings) -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
@@ -150,7 +150,7 @@ internal fun GroupDetailScreen(
                 onRefresh = onRefresh,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                MemberList(uiState, onDialogRequested, onRoleToggled, onSettingsChanged)
+                MemberList(uiState, onDialogRequested, onRoleSelected, onSettingsChanged)
             }
         }
     }
@@ -161,7 +161,7 @@ internal fun GroupDetailScreen(
 private fun MemberList(
     uiState: GroupDetailUiState,
     onDialogRequested: (GroupDetailDialog) -> Unit,
-    onRoleToggled: (GroupMemberRow) -> Unit,
+    onRoleSelected: (GroupMemberRow, GroupRole) -> Unit,
     onSettingsChanged: (GroupSettings) -> Unit,
 ) {
     if (uiState.members.isEmpty() && !uiState.isLoading) {
@@ -187,13 +187,15 @@ private fun MemberList(
                 supportingContent = { Text(stringResource(member.role.labelResource())) },
                 trailingContent = {
                     OverflowMenu(description = stringResource(R.string.members_actions, name)) { dismiss ->
-                        DropdownMenuItem(
-                            text = { Text(stringResource(member.role.toggleResource())) },
-                            onClick = {
-                                dismiss()
-                                onRoleToggled(member)
-                            },
-                        )
+                        GroupRole.entries.filter { it != member.role }.forEach { role ->
+                            DropdownMenuItem(
+                                text = { Text(stringResource(role.makeResource())) },
+                                onClick = {
+                                    dismiss()
+                                    onRoleSelected(member, role)
+                                },
+                            )
+                        }
                         HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.group_remove_member)) },
@@ -250,8 +252,14 @@ private fun GroupDetailDialogs(
     }
 }
 
-private fun GroupRole.labelResource() =
-    if (this == GroupRole.MODERATOR) R.string.group_role_moderator else R.string.group_role_member
+private fun GroupRole.labelResource() = when (this) {
+    GroupRole.OWNER -> R.string.group_role_owner
+    GroupRole.MODERATOR -> R.string.group_role_moderator
+    GroupRole.MEMBER -> R.string.group_role_member
+}
 
-private fun GroupRole.toggleResource() =
-    if (this == GroupRole.MODERATOR) R.string.group_make_member else R.string.group_make_moderator
+private fun GroupRole.makeResource() = when (this) {
+    GroupRole.OWNER -> R.string.group_make_owner
+    GroupRole.MODERATOR -> R.string.group_make_moderator
+    GroupRole.MEMBER -> R.string.group_make_member
+}
