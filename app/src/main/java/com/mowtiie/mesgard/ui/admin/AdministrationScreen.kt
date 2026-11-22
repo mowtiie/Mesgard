@@ -43,9 +43,12 @@ internal fun AdministrationScreenRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val summaries by summaryViewModel.summaries.collectAsStateWithLifecycle()
-    // A rule may have been changed on the page that was just closed, so read them again each time this one is shown.
+    var isFirstResume by remember { mutableStateOf(true) }
+    // Something may have been changed on the page that was just closed, so read it again each time this one is shown.
     LifecycleResumeEffect(Unit) {
         summaryViewModel.refresh()
+        if (!isFirstResume) viewModel.onRefresh()
+        isFirstResume = false
         onPauseOrDispose {}
     }
     var wasAdmin by remember { mutableStateOf(false) }

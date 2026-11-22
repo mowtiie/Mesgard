@@ -69,6 +69,15 @@ internal fun GroupMessagesScreenRoute(
                     modifier = Modifier.padding(ContentPadding),
                 )
             }
+            if (!uiState.isLoading && uiState.messages.isEmpty() && uiState.error == null) {
+                item(key = "empty") {
+                    Text(
+                        text = stringResource(R.string.group_messages_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(ContentPadding),
+                    )
+                }
+            }
             if (uiState.isLoading) item(key = "loading") { LinearProgressIndicator(modifier = Modifier.fillMaxWidth()) }
             items(uiState.messages, key = { it.id }) { MessageRow(it) }
             if (uiState.hasMore && !uiState.isLoading) {

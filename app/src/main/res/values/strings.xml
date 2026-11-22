@@ -295,6 +295,7 @@
     <string name="group_open_messages_confirm">Open</string>
     <string name="group_messages_title">Group messages</string>
     <string name="group_messages_note">Read only. Newest first. Deleted messages show no text and files are not shown.</string>
+    <string name="group_messages_empty">This group has no messages yet.</string>
     <string name="group_messages_older">Load older messages</string>
     <string name="group_messages_sender_time">%1$s, %2$s</string>
     <string name="group_messages_deleted">This message was deleted.</string>

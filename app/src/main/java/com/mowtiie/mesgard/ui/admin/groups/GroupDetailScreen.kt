@@ -262,6 +262,8 @@ private fun MemberList(
                     uiState.settings,
                     enabled = !uiState.isWorking && !uiState.isLoading,
                     onChanged = onSettingsChanged,
+                    // A group a person created has the members its owner chose, not the whole organization.
+                    canIncludeEveryone = !uiState.isUserCreated,
                 )
             }
         }

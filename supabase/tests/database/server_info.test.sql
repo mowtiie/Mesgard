@@ -4,7 +4,7 @@ select plan(4);
 select tests.authenticate_as_anonymous();
 select is(
   (public.server_info() ->> 'api_level')::int,
-  21,
+  22,
   'anyone can read the API level, even before signing in'
 );
 
@@ -14,7 +14,7 @@ update private.mfa_settings set enforced = true;
 select tests.authenticate_as(tests.seed_id('20', 'a', 2), 'aal1');
 select is(
   (public.server_info() ->> 'api_level')::int,
-  21,
+  22,
   'a session that has not entered the two-step verification code can read it'
 );
 

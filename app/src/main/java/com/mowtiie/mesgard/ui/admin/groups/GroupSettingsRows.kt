@@ -22,6 +22,7 @@ internal fun GroupSettingsRows(
     onChanged: (GroupSettings) -> Unit,
     modifier: Modifier = Modifier,
     containerColor: androidx.compose.ui.graphics.Color = ListItemDefaults.containerColor,
+    canIncludeEveryone: Boolean = true,
 ) {
     Column(modifier = modifier) {
         SettingRow(
@@ -31,13 +32,15 @@ internal fun GroupSettingsRows(
             enabled = enabled,
             containerColor = containerColor,
         ) { onChanged(settings.copy(postingPolicy = if (it) PostingPolicy.MODERATORS else PostingPolicy.EVERYONE)) }
-        SettingRow(
-            headline = R.string.group_setting_everyone,
-            supporting = R.string.group_setting_everyone_hint,
-            checked = settings.includesEveryone,
-            enabled = enabled,
-            containerColor = containerColor,
-        ) { onChanged(settings.copy(includesEveryone = it)) }
+        if (canIncludeEveryone) {
+            SettingRow(
+                headline = R.string.group_setting_everyone,
+                supporting = R.string.group_setting_everyone_hint,
+                checked = settings.includesEveryone,
+                enabled = enabled,
+                containerColor = containerColor,
+            ) { onChanged(settings.copy(includesEveryone = it)) }
+        }
     }
 }
 

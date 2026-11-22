@@ -1,5 +1,5 @@
 begin;
-select plan(14);
+select plan(15);
 
 -- A new organization starts with everyone allowed to create groups. a01 is its admin, a02 is staff and a04 a member.
 insert into public.organizations (id, name, slug)
@@ -112,6 +112,15 @@ select is(
     '00000000-0000-4000-8000-00000000d001', tests.seed_id('20', 'a', 4))),
   0,
   'and the export of a person does not hold their messages from such a group'
+);
+
+-- An administrator cannot make a group a person created include everyone.
+select tests.authenticate_as(tests.seed_id('20', 'a', 1));
+select throws_ok(
+  $$update public.groups set includes_everyone = true where id = '30000000-0000-4000-8000-0000000d0001'$$,
+  '23514',
+  null,
+  'an administrator cannot make a group a person created include everyone'
 );
 
 select * from finish();
