@@ -93,7 +93,7 @@
     <string name="admin_section_people">People</string>
     <string name="admin_section_structure">Structure</string>
     <string name="admin_section_rules">Rules</string>
-    <string name="admin_section_oversight">Oversight</string>
+    <string name="admin_section_oversight">Compliance</string>
     <string name="admin_retention_none">Messages are kept without a limit</string>
     <plurals name="admin_retention_years">
         <item quantity="one">Messages are kept for %d year</item>
