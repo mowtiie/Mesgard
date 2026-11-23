@@ -30,7 +30,9 @@ fun signingSetting(propertyName: String, environmentName: String): String? =
 android {
     namespace = "com.mowtiie.mesgard"
     compileSdk {
-        version = release(37)
+        version = release(37) {
+            minorApiLevel = 1
+        }
     }
 
     defaultConfig {
