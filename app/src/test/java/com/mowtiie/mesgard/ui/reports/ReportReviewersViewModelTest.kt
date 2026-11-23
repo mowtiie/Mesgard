@@ -8,6 +8,7 @@ import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.model.ReportReviewer
 import com.mowtiie.mesgard.domain.repository.AccountRepository
 import com.mowtiie.mesgard.domain.repository.ContactRepository
@@ -35,16 +36,20 @@ class ReportReviewersViewModelTest {
 
     private fun contact(id: String, role: OrgRole) = Contact("org", id, "Person $id", role)
 
-    private fun viewModel(chosen: List<String> = emptyList()): ReportReviewersViewModel {
+    private val defaultRoster = listOf(
+        contact("a1", OrgRole.ORG_ADMIN),
+        contact("s1", OrgRole.STAFF),
+        contact("m1", OrgRole.MEMBER),
+    )
+
+    private fun viewModel(
+        chosen: List<String> = emptyList(),
+        roster: List<Contact> = defaultRoster,
+    ): ReportReviewersViewModel {
         every { accountRepository.observeAccount() } returns
             flowOf(Account("Ana", null, listOf(AccountMembership("org", "School", OrgRole.ORG_ADMIN))))
-        every { contactRepository.observeContacts() } returns flowOf(
-            listOf(
-                contact("a1", OrgRole.ORG_ADMIN),
-                contact("s1", OrgRole.STAFF),
-                contact("m1", OrgRole.MEMBER),
-            ),
-        )
+        every { contactRepository.observeContacts() } returns flowOf(roster)
+        coEvery { contactRepository.refreshIfStale() } returns RefreshResult.Success
         coEvery { repository.reviewers("org") } returns
             AdminResult.Success(chosen.map { ReportReviewer(it, "Person $it") })
         return ReportReviewersViewModel(ObserveAdminOrganization(accountRepository), repository, contactRepository)
@@ -69,6 +74,30 @@ class ReportReviewersViewModelTest {
             assertEquals(setOf("s1"), state.selectedIds)
             assertFalse(state.adminsReview)
         }
+    }
+
+    @Test
+    fun `the roster is fetched when the page opens`() = runTest {
+        viewModel()
+
+        coVerify { contactRepository.refreshIfStale() }
+    }
+
+    @Test
+    fun `an organization with nobody to choose shows the empty message`() = runTest {
+        val viewModel = viewModel(roster = listOf(contact("m1", OrgRole.MEMBER)))
+
+        viewModel.uiState.test {
+            val state = expectMostRecentItem()
+            assertTrue(state.showEmptyMessage)
+        }
+    }
+
+    @Test
+    fun `candidates hide the empty message`() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.uiState.test { assertFalse(expectMostRecentItem().showEmptyMessage) }
     }
 
     @Test

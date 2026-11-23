@@ -33,6 +33,7 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.ui.admin.messageResource
+import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.TitledScreen
 
@@ -77,11 +78,20 @@ internal fun ReportReviewersScreenRoute(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(ContentPadding),
             )
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(uiState.candidates, key = { it.userId }) { person ->
-                    CandidateRow(person, person.userId in uiState.selectedIds, onToggle = {
-                        viewModel.onToggled(person.userId)
-                    })
+            if (uiState.showEmptyMessage) {
+                EmptyState(
+                    illustration = R.drawable.illustration_members,
+                    title = R.string.report_reviewers_empty,
+                    hint = R.string.report_reviewers_empty_hint,
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(uiState.candidates, key = { it.userId }) { person ->
+                        CandidateRow(person, person.userId in uiState.selectedIds, onToggle = {
+                            viewModel.onToggled(person.userId)
+                        })
+                    }
                 }
             }
             Button(

@@ -559,6 +559,8 @@
     <string name="report_reviewers_intro">The people you choose read and handle reports. Only administrators and staff can be chosen.</string>
     <string name="report_reviewers_admins_review">Nobody is chosen, so the organization administrators review reports. Choose people to change that.</string>
     <string name="report_reviewers_save">Save</string>
+    <string name="report_reviewers_empty">No staff or administrators to choose</string>
+    <string name="report_reviewers_empty_hint">Reviewers must be administrators or staff. Change a role under Members, then come back.</string>
     <string name="audit_report_reporter_revealed">%1$s showed the reporter of a report</string>
     <string name="audit_report_reviewers_changed">%1$s changed who reviews reports</string>
     <string name="audit_privacy_notice_changed">%1$s changed the privacy notice link</string>

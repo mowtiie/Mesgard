@@ -33,6 +33,9 @@ internal data class ReportReviewersUiState(
     /** With nobody chosen the organization admins review, so the person is told who will. */
     val adminsReview: Boolean
         get() = selectedIds.isEmpty()
+
+    val showEmptyMessage: Boolean
+        get() = !isLoading && candidates.isEmpty()
 }
 
 /** Choosing who reviews the reports of the organization. Only administrators and staff can be chosen. */
@@ -40,7 +43,7 @@ internal data class ReportReviewersUiState(
 internal class ReportReviewersViewModel @Inject constructor(
     private val observeAdminOrganization: ObserveAdminOrganization,
     private val repository: ReportReviewRepository,
-    contactRepository: ContactRepository,
+    private val contactRepository: ContactRepository,
 ) : ViewModel() {
     private val local = MutableStateFlow(Local())
     private var organizationId: String? = null
@@ -66,6 +69,7 @@ internal class ReportReviewersViewModel @Inject constructor(
     fun onRefresh() {
         local.update { it.copy(isLoading = true) }
         viewModelScope.launch {
+            contactRepository.refreshIfStale()
             val orgId = observeAdminOrganization.organization.first()?.organizationId?.also { organizationId = it }
             val result = orgId?.let { repository.reviewers(it) } ?: AdminResult.Failure(AdminError.NOT_ALLOWED)
             local.update {
