@@ -126,6 +126,9 @@
     <string name="members_empty">No members yet</string>
     <string name="members_empty_hint">Add a member, or import a roster from a CSV file.</string>
     <string name="members_add">Add member</string>
+    <string name="members_fab_menu">Add or import members</string>
+    <string name="state_expanded">Expanded</string>
+    <string name="state_collapsed">Collapsed</string>
     <string name="members_add_button">Add</string>
     <string name="members_add_help">The person gets a temporary password that is shown once. They choose their own password the first time they sign in.</string>
     <string name="members_email_label">Email</string>
