@@ -1,7 +1,9 @@
 package com.mowtiie.mesgard.ui.admin
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -71,6 +73,8 @@ internal fun AdministrationScreenRoute(
     )
 }
 
+private val FabClearance = 88.dp
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AdministrationScreen(
@@ -101,6 +105,9 @@ internal fun AdministrationScreen(
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            MemberFabMenu(onAddMember = navigation.onAddMember, onImportMembers = navigation.onImportMembers)
+        },
     ) { padding ->
         PullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
@@ -112,9 +119,9 @@ internal fun AdministrationScreen(
                     .verticalScroll(rememberScrollState()),
             ) {
                 ServerStatusNotice(forAdministrator = true, modifier = Modifier.padding(16.dp))
-                QuickActions(navigation)
                 ManageSections(uiState, summaries, navigation)
                 RecentActivitySection(uiState)
+                Spacer(Modifier.height(FabClearance))
             }
         }
     }
