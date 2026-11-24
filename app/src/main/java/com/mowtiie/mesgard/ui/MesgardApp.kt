@@ -20,6 +20,7 @@ import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
 import com.mowtiie.mesgard.ui.lock.LockScreenRoute
 import com.mowtiie.mesgard.ui.navigation.MesgardNavHost
 import com.mowtiie.mesgard.ui.privacy.PrivacyNoticeGate
+import com.mowtiie.mesgard.ui.profile.ProfileNoticeDialog
 import com.mowtiie.mesgard.ui.server.LocalServerStatus
 import com.mowtiie.mesgard.ui.server.ServerStatusViewModel
 
@@ -55,6 +56,7 @@ internal fun MesgardApp(
                         conversationToOpen = conversationToOpen,
                         onConversationOpened = onConversationOpened,
                     )
+                    ProfileNoticeDialog(userId = state.userId)
                 })
             }
         }

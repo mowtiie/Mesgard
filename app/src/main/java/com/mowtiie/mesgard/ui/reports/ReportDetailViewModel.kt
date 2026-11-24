@@ -10,6 +10,7 @@ import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.ReportDecision
 import com.mowtiie.mesgard.domain.model.ReportDetail
 import com.mowtiie.mesgard.domain.model.ReportStatus
+import com.mowtiie.mesgard.domain.model.ReportSubject
 import com.mowtiie.mesgard.domain.repository.ReportReviewRepository
 import com.mowtiie.mesgard.ui.navigation.ReportRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -85,10 +86,19 @@ internal class ReportDetailViewModel @Inject constructor(
 
     fun onDialogDismissed() = mutableUiState.update { it.copy(dialog = null) }
 
-    fun onDecisionConfirmed(note: String, removeMessage: Boolean) {
+    /** [followUp] is the removal of the message or the reset of the username, whichever the report is about. */
+    fun onDecisionConfirmed(note: String, followUp: Boolean) {
         val status = (mutableUiState.value.dialog as? ReportDialog.Decide)?.status ?: return
+        val subject = mutableUiState.value.detail?.subject
         mutableUiState.update { it.copy(dialog = null) }
-        decide(ReportDecision(status, note, removeMessage))
+        decide(
+            ReportDecision(
+                status = status,
+                note = note,
+                removeMessage = followUp && subject == ReportSubject.MESSAGE,
+                resetUsername = followUp && subject == ReportSubject.USERNAME,
+            ),
+        )
     }
 
     fun onRevealConfirmed(reason: String) {

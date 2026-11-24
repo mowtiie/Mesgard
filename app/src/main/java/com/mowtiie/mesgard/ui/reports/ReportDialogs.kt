@@ -27,29 +27,29 @@ import com.mowtiie.mesgard.ui.common.NoteField
 @Composable
 internal fun ReportDialogs(
     dialog: ReportDialog?,
-    hasMessage: Boolean,
+    followUp: ReportFollowUp?,
     onDecisionConfirmed: (String, Boolean) -> Unit,
     onRevealConfirmed: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     when (dialog) {
-        is ReportDialog.Decide -> DecisionSheet(dialog.status, hasMessage, onDecisionConfirmed, onDismiss)
+        is ReportDialog.Decide -> DecisionSheet(dialog.status, followUp, onDecisionConfirmed, onDismiss)
         ReportDialog.Reveal -> RevealSheet(onRevealConfirmed, onDismiss)
         is ReportDialog.Revealed -> RevealedDialog(dialog.reporterName, onDismiss)
         null -> Unit
     }
 }
 
-/** Closing a report needs a note, so the decision can be understood later. A message can be removed with it. */
+/** Closing a report needs a note, so the decision can be understood later. A follow up action can come with it. */
 @Composable
 private fun DecisionSheet(
     status: ReportStatus,
-    hasMessage: Boolean,
+    followUp: ReportFollowUp?,
     onConfirm: (String, Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var note by rememberSaveable { mutableStateOf("") }
-    var removeMessage by rememberSaveable { mutableStateOf(false) }
+    var applyFollowUp by rememberSaveable { mutableStateOf(false) }
     val isResolve = status == ReportStatus.RESOLVED
     FormSheet(
         title = stringResource(
@@ -58,7 +58,7 @@ private fun DecisionSheet(
         confirmLabel = stringResource(
             if (isResolve) R.string.report_action_resolve else R.string.report_action_dismiss,
         ),
-        onConfirm = { onConfirm(note, removeMessage && isResolve) },
+        onConfirm = { onConfirm(note, applyFollowUp && isResolve) },
         onDismiss = onDismiss,
         confirmEnabled = note.trim().length >= REPORT_DECISION_NOTE_MIN_LENGTH,
     ) {
@@ -69,17 +69,17 @@ private fun DecisionSheet(
             helper = stringResource(R.string.report_decide_note_helper),
             maxLength = REPORT_NOTE_MAX_LENGTH,
         )
-        if (hasMessage && isResolve) {
+        if (followUp != null && isResolve) {
             ListItem(
                 modifier = Modifier.toggleable(
-                    value = removeMessage,
+                    value = applyFollowUp,
                     role = Role.Checkbox,
-                    onValueChange = { removeMessage = it },
+                    onValueChange = { applyFollowUp = it },
                 ),
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                headlineContent = { Text(stringResource(R.string.report_decide_remove)) },
-                supportingContent = { Text(stringResource(R.string.report_decide_remove_summary)) },
-                trailingContent = { Checkbox(checked = removeMessage, onCheckedChange = null) },
+                headlineContent = { Text(stringResource(followUp.titleResource())) },
+                supportingContent = { Text(stringResource(followUp.summaryResource())) },
+                trailingContent = { Checkbox(checked = applyFollowUp, onCheckedChange = null) },
             )
         }
     }

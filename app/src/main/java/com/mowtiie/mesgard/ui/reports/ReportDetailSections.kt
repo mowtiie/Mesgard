@@ -37,14 +37,12 @@ internal fun LazyListScope.reportDetailItems(detail: ReportDetail, actions: Repo
     if (detail.category == ReportCategory.CHILD_SAFETY) item(key = "child-safety") { ChildSafetyNotice() }
     item(key = "summary") { Summary(detail) }
     if (!detail.status.isClosed) item(key = "actions") { ActionButtons(detail.status, actions) }
-    val isNameReport = detail.subject == ReportSubject.NAME
-    item(key = "message-heading") {
-        SectionHeader(if (isNameReport) R.string.report_section_name else R.string.report_section_message)
-    }
+    val isTextReport = detail.subject == ReportSubject.NAME || detail.subject == ReportSubject.USERNAME
+    item(key = "message-heading") { SectionHeader(detail.subject.sectionResource()) }
     val evidence = detail.evidence
     if (evidence == null) {
-        if (isNameReport && detail.subjectText != null) {
-            item(key = "name") { EvidenceName(detail.subjectText) }
+        if (isTextReport && detail.subjectText != null) {
+            item(key = "name") { EvidenceName(detail.subjectText, detail.subject) }
         } else {
             item(key = "person-only") { Note(R.string.report_person_only) }
         }
@@ -124,9 +122,16 @@ private fun ActionButtons(status: ReportStatus, actions: ReportActions) {
 }
 
 @Composable
-private fun EvidenceName(name: String) {
+private fun EvidenceName(name: String, subject: ReportSubject) {
+    val note = if (subject ==
+        ReportSubject.USERNAME
+    ) {
+        R.string.report_username_copy_note
+    } else {
+        R.string.report_name_copy_note
+    }
     ListItem(
-        overlineContent = { Text(stringResource(R.string.report_name_copy_note)) },
+        overlineContent = { Text(stringResource(note)) },
         headlineContent = { Text(name) },
     )
 }

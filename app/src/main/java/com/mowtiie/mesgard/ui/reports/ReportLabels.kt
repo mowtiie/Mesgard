@@ -28,7 +28,15 @@ internal fun ReportSubject.labelResource(): Int = when (this) {
     ReportSubject.MESSAGE -> R.string.report_subject_label_message
     ReportSubject.PERSON -> R.string.report_subject_label_person
     ReportSubject.NAME -> R.string.report_subject_label_name
+    ReportSubject.USERNAME -> R.string.report_subject_label_username
     ReportSubject.UNKNOWN -> R.string.report_subject_label_unknown
+}
+
+@StringRes
+internal fun ReportSubject.sectionResource(): Int = when (this) {
+    ReportSubject.NAME -> R.string.report_section_name
+    ReportSubject.USERNAME -> R.string.report_section_username
+    else -> R.string.report_section_message
 }
 
 @StringRes

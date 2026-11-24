@@ -47,7 +47,7 @@ internal fun ReportDetailScreenRoute(
     }
     ReportDialogs(
         dialog = uiState.dialog,
-        hasMessage = uiState.detail?.evidence != null,
+        followUp = uiState.detail?.followUp(),
         onDecisionConfirmed = viewModel::onDecisionConfirmed,
         onRevealConfirmed = viewModel::onRevealConfirmed,
         onDismiss = viewModel::onDialogDismissed,

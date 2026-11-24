@@ -498,6 +498,17 @@
     <string name="report_subject_person_summary">How they treat other people.</string>
     <string name="report_subject_name">Their name</string>
     <string name="report_subject_name_summary">A name that copies someone else or is offensive.</string>
+    <string name="report_subject_username">Their username</string>
+    <string name="report_subject_username_summary">A username that copies someone else or is offensive.</string>
+    <string name="report_subject_label_username">Username</string>
+    <string name="report_section_username">Username</string>
+    <string name="report_username_copy_note">This is the username as it was when it was reported. It does not change if the username is changed.</string>
+    <string name="report_decide_reset_username">Reset the username</string>
+    <string name="report_decide_reset_username_summary">It becomes a neutral username, and the person is told. The copy in this report is kept.</string>
+    <string name="profile_notice_title">Your profile was changed</string>
+    <string name="profile_notice_username_reset">Your username was reset because it did not follow the rules of your organization. You can choose another one in Account after 30 days.</string>
+    <string name="profile_notice_other">Your profile was changed because it did not follow the rules of your organization.</string>
+    <string name="profile_notice_ok">OK</string>
     <string name="report_subject_label_message">Message</string>
     <string name="report_subject_label_person">Behavior of a person</string>
     <string name="report_subject_label_name">Name</string>

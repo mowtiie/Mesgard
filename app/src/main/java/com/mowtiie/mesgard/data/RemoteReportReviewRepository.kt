@@ -38,6 +38,7 @@ internal class RemoteReportReviewRepository @Inject constructor(private val remo
                 status = decision.status.wireName(),
                 note = decision.note.trim().ifEmpty { null },
                 removeMessage = decision.removeMessage,
+                resetUsername = decision.resetUsername,
             ),
         )
     }

@@ -14,7 +14,7 @@ internal enum class ReportCategory {
     /** The categories a person can choose for [subject]. Impersonation and offensive content describe a name. */
     companion object {
         fun forSubject(subject: ReportSubject): List<ReportCategory> = when (subject) {
-            ReportSubject.NAME -> listOf(IMPERSONATION, OFFENSIVE_CONTENT, OTHER)
+            ReportSubject.NAME, ReportSubject.USERNAME -> listOf(IMPERSONATION, OFFENSIVE_CONTENT, OTHER)
             ReportSubject.MESSAGE, ReportSubject.PERSON -> listOf(BULLYING, HARASSMENT, CHILD_SAFETY, OTHER)
             ReportSubject.UNKNOWN -> listOf(OTHER)
         }
@@ -26,6 +26,7 @@ internal enum class ReportSubject {
     MESSAGE,
     PERSON,
     NAME,
+    USERNAME,
     UNKNOWN,
 }
 

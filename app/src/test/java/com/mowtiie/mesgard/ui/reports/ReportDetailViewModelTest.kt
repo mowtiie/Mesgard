@@ -113,10 +113,27 @@ class ReportDetailViewModelTest {
         val viewModel = viewModel()
         viewModel.onDialogRequested(ReportDialog.Decide(ReportStatus.RESOLVED))
 
-        viewModel.onDecisionConfirmed("Spoke with both", removeMessage = true)
+        viewModel.onDecisionConfirmed("Spoke with both", followUp = true)
 
         coVerify { repository.decide("r1", ReportDecision(ReportStatus.RESOLVED, "Spoke with both", true)) }
         assertNull(viewModel.uiState.value.dialog)
+    }
+
+    @Test
+    fun `closing a report about a username can reset the username and removes no message`() = runTest {
+        coEvery { repository.detail("r1") } returns AdminResult.Success(detail().copy(subject = ReportSubject.USERNAME))
+        coEvery { repository.decide("r1", any()) } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+        viewModel.onDialogRequested(ReportDialog.Decide(ReportStatus.RESOLVED))
+
+        viewModel.onDecisionConfirmed("Not appropriate", followUp = true)
+
+        coVerify {
+            repository.decide(
+                "r1",
+                ReportDecision(ReportStatus.RESOLVED, "Not appropriate", removeMessage = false, resetUsername = true),
+            )
+        }
     }
 
     @Test
@@ -124,7 +141,7 @@ class ReportDetailViewModelTest {
         coEvery { repository.detail("r1") } returns AdminResult.Success(detail())
         val viewModel = viewModel()
 
-        viewModel.onDecisionConfirmed("Spoke with both", removeMessage = false)
+        viewModel.onDecisionConfirmed("Spoke with both", followUp = false)
 
         coVerify(exactly = 0) { repository.decide(any(), any()) }
     }

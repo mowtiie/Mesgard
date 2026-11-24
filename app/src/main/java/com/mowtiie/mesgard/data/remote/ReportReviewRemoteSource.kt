@@ -98,6 +98,7 @@ internal data class ReportDecisionRequest(
     val status: String,
     val note: String?,
     val removeMessage: Boolean,
+    val resetUsername: Boolean = false,
 )
 
 internal interface ReportReviewRemoteSource {
@@ -152,6 +153,7 @@ internal class SupabaseReportReviewRemoteSource @Inject constructor(private val 
                 put("new_status", request.status)
                 put("action_note", request.note)
                 put("remove_message", request.removeMessage)
+                put("reset_username", request.resetUsername)
             },
         )
     }

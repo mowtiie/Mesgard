@@ -80,7 +80,8 @@ internal class ProfileViewModel @Inject constructor(
 
     fun onStartFailureShown() = localState.update { it.copy(startFailed = false) }
 
-    fun onReportRequested() = open(route.userId, listOf(ReportSubject.PERSON, ReportSubject.NAME))
+    fun onReportRequested() =
+        open(route.userId, listOf(ReportSubject.PERSON, ReportSubject.NAME, ReportSubject.USERNAME))
 
     override suspend fun send(state: ReportUiState): ReportResult {
         val subject = state.subject

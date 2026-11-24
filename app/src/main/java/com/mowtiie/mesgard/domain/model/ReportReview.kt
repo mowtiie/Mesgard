@@ -73,7 +73,12 @@ internal data class ReportDetail(
     val events: List<ReportEvent>,
 )
 
-/** What a reviewer decides. Closing a report needs a note, and the message can be removed with it. */
-internal data class ReportDecision(val status: ReportStatus, val note: String, val removeMessage: Boolean)
+/** What a reviewer decides. Closing a report needs a note, and a message can be removed or a username reset with it. */
+internal data class ReportDecision(
+    val status: ReportStatus,
+    val note: String,
+    val removeMessage: Boolean,
+    val resetUsername: Boolean = false,
+)
 
 internal data class ReportReviewer(val userId: String, val displayName: String)
