@@ -8,6 +8,7 @@ import com.mowtiie.mesgard.domain.model.ReportError
 import com.mowtiie.mesgard.domain.model.ReportResult
 import com.mowtiie.mesgard.domain.repository.ReportRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
+import com.mowtiie.mesgard.ui.reports.ReportStage
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -94,6 +95,22 @@ class ReportMessageViewModelTest {
 
         assertEquals(ReportStage.SENT, viewModel.uiState.value.stage)
         assertEquals(ReportError.ALREADY_REPORTED, viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `a message report is only about the message, so the person is not asked what it is about`() = runTest {
+        viewModel.onReportRequested("m1")
+
+        assertFalse(viewModel.uiState.value.asksForSubject)
+        assertEquals(
+            listOf(
+                ReportCategory.BULLYING,
+                ReportCategory.HARASSMENT,
+                ReportCategory.CHILD_SAFETY,
+                ReportCategory.OTHER,
+            ),
+            viewModel.uiState.value.categories,
+        )
     }
 
     @Test

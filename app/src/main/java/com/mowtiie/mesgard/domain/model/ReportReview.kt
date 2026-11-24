@@ -15,6 +15,7 @@ internal enum class ReportStatus {
 internal data class ReportSummary(
     val id: String,
     val category: ReportCategory,
+    val subject: ReportSubject,
     val status: ReportStatus,
     val subjectName: String,
     val isAnonymous: Boolean,
@@ -56,11 +57,14 @@ internal data class ReportEvent(
 internal data class ReportDetail(
     val id: String,
     val category: ReportCategory,
+    val subject: ReportSubject,
     val status: ReportStatus,
     val note: String?,
     val isAnonymous: Boolean,
     val reporterName: String?,
     val subjectName: String,
+    /** The text of a name, as it was when it was reported. */
+    val subjectText: String?,
     val isMessageRemoved: Boolean,
     val resolutionNote: String?,
     val createdAtEpochMillis: Long,

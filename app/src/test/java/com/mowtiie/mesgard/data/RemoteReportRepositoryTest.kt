@@ -3,9 +3,11 @@ package com.mowtiie.mesgard.data
 import com.mowtiie.mesgard.data.remote.ReportRemoteSource
 import com.mowtiie.mesgard.data.remote.SubmitReportRequest
 import com.mowtiie.mesgard.domain.model.MessageReport
+import com.mowtiie.mesgard.domain.model.PersonReport
 import com.mowtiie.mesgard.domain.model.ReportCategory
 import com.mowtiie.mesgard.domain.model.ReportError
 import com.mowtiie.mesgard.domain.model.ReportResult
+import com.mowtiie.mesgard.domain.model.ReportSubject
 import com.mowtiie.mesgard.testing.InMemoryDatabaseRule
 import com.mowtiie.mesgard.testing.TEST_ORG_ID
 import com.mowtiie.mesgard.testing.conversationEntity
@@ -52,7 +54,34 @@ class RemoteReportRepositoryTest {
         val result = repository.reportMessage(report())
 
         assertEquals(ReportResult.Sent, result)
-        assertEquals(SubmitReportRequest("r1", TEST_ORG_ID, "child_safety", "m1", "Unkind", true), sent.captured)
+        assertEquals(
+            SubmitReportRequest("r1", TEST_ORG_ID, "child_safety", "message", "m1", null, "Unkind", true),
+            sent.captured,
+        )
+    }
+
+    @Test
+    fun `a report about a name goes to the organization of the person with the subject name`() = runTest {
+        val sent = slot<SubmitReportRequest>()
+        coEvery { remote.submit(capture(sent)) } returns Unit
+
+        val result = repository.reportPerson(
+            PersonReport(
+                "r2",
+                "org1",
+                "u2",
+                ReportSubject.NAME,
+                ReportCategory.IMPERSONATION,
+                " Copies a teacher ",
+                false,
+            ),
+        )
+
+        assertEquals(ReportResult.Sent, result)
+        assertEquals(
+            SubmitReportRequest("r2", "org1", "impersonation", "name", null, "u2", "Copies a teacher", false),
+            sent.captured,
+        )
     }
 
     @Test

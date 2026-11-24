@@ -6,6 +6,7 @@ import com.mowtiie.mesgard.domain.model.ReportCategory
 import com.mowtiie.mesgard.domain.model.ReportCursor
 import com.mowtiie.mesgard.domain.model.ReportPage
 import com.mowtiie.mesgard.domain.model.ReportStatus
+import com.mowtiie.mesgard.domain.model.ReportSubject
 import com.mowtiie.mesgard.domain.model.ReportSummary
 import com.mowtiie.mesgard.domain.reports.FindReviewOrganization
 import com.mowtiie.mesgard.domain.repository.ReportReviewRepository
@@ -30,6 +31,7 @@ class ReportsViewModelTest {
     private fun summary(id: String) = ReportSummary(
         id = id,
         category = ReportCategory.BULLYING,
+        subject = ReportSubject.MESSAGE,
         status = ReportStatus.OPEN,
         subjectName = "Student Two",
         isAnonymous = false,

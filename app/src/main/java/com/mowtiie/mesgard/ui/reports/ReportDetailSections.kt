@@ -1,6 +1,5 @@
 package com.mowtiie.mesgard.ui.reports
 
-import android.text.format.Formatter
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -15,16 +14,14 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
-import com.mowtiie.mesgard.domain.model.EvidenceFile
 import com.mowtiie.mesgard.domain.model.EvidenceLine
 import com.mowtiie.mesgard.domain.model.ReportCategory
 import com.mowtiie.mesgard.domain.model.ReportDetail
-import com.mowtiie.mesgard.domain.model.ReportEvent
 import com.mowtiie.mesgard.domain.model.ReportStatus
+import com.mowtiie.mesgard.domain.model.ReportSubject
 import com.mowtiie.mesgard.ui.common.SectionHeader
 
 private val ContentPadding = 16.dp
@@ -40,10 +37,17 @@ internal fun LazyListScope.reportDetailItems(detail: ReportDetail, actions: Repo
     if (detail.category == ReportCategory.CHILD_SAFETY) item(key = "child-safety") { ChildSafetyNotice() }
     item(key = "summary") { Summary(detail) }
     if (!detail.status.isClosed) item(key = "actions") { ActionButtons(detail.status, actions) }
-    item(key = "message-heading") { SectionHeader(R.string.report_section_message) }
+    val isNameReport = detail.subject == ReportSubject.NAME
+    item(key = "message-heading") {
+        SectionHeader(if (isNameReport) R.string.report_section_name else R.string.report_section_message)
+    }
     val evidence = detail.evidence
     if (evidence == null) {
-        item(key = "person-only") { Note(R.string.report_person_only) }
+        if (isNameReport && detail.subjectText != null) {
+            item(key = "name") { EvidenceName(detail.subjectText) }
+        } else {
+            item(key = "person-only") { Note(R.string.report_person_only) }
+        }
     } else {
         item(key = "message") { EvidenceMessage(evidence.conversationTitle, evidence.message, detail.isMessageRemoved) }
         if (evidence.earlier.isNotEmpty()) {
@@ -85,6 +89,7 @@ private fun Summary(detail: ReportDetail) {
     val formatTime = rememberDateTimeFormatter()
     val reporter = detail.reporterName ?: stringResource(R.string.report_reporter_anonymous)
     Field(R.string.report_field_status, stringResource(detail.status.labelResource()))
+    Field(R.string.report_field_subject, stringResource(detail.subject.labelResource()))
     Field(R.string.report_field_type, stringResource(detail.category.labelResource()))
     Field(R.string.report_field_person, detail.subjectName)
     Field(R.string.report_field_reporter, reporter)
@@ -119,6 +124,14 @@ private fun ActionButtons(status: ReportStatus, actions: ReportActions) {
 }
 
 @Composable
+private fun EvidenceName(name: String) {
+    ListItem(
+        overlineContent = { Text(stringResource(R.string.report_name_copy_note)) },
+        headlineContent = { Text(name) },
+    )
+}
+
+@Composable
 private fun Note(text: Int) {
     Text(
         text = stringResource(text),
@@ -140,36 +153,4 @@ private fun EvidenceMessage(conversationTitle: String?, message: EvidenceLine, i
         supportingContent = { Text(message.body.ifEmpty { stringResource(R.string.report_message_no_text) }) },
     )
     Note(if (isRemoved) R.string.report_message_removed else R.string.report_message_copy_note)
-}
-
-@Composable
-private fun EvidenceRow(line: EvidenceLine) {
-    val formatTime = rememberDateTimeFormatter()
-    ListItem(
-        overlineContent = { Text(formatTime(line.sentAtEpochMillis)) },
-        headlineContent = { Text(line.senderName) },
-        supportingContent = { Text(line.body.ifEmpty { stringResource(R.string.report_message_no_text) }) },
-    )
-}
-
-@Composable
-private fun FileRow(file: EvidenceFile) {
-    val size = Formatter.formatShortFileSize(LocalContext.current, file.sizeBytes)
-    ListItem(
-        headlineContent = { Text(file.fileName) },
-        supportingContent = { Text(stringResource(R.string.report_row_summary, file.mimeType, size)) },
-    )
-}
-
-@Composable
-private fun EventRow(event: ReportEvent) {
-    val formatTime = rememberDateTimeFormatter()
-    val actor = event.actorName ?: stringResource(R.string.report_reporter_anonymous)
-    ListItem(
-        headlineContent = { Text(stringResource(event.type.labelResource())) },
-        supportingContent = {
-            val line = stringResource(R.string.report_row_summary, actor, formatTime(event.createdAtEpochMillis))
-            Text(listOfNotNull(line, event.note).joinToString("\n"))
-        },
-    )
 }

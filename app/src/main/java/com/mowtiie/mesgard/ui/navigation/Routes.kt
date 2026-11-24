@@ -14,6 +14,10 @@ internal data object ArchivedRoute
 @Serializable
 internal data object NewChatRoute
 
+/** Without [orgId], as in a conversation, the first organization the person belongs to is used. */
+@Serializable
+internal data class ProfileRoute(val userId: String, val orgId: String? = null)
+
 @Serializable
 internal data object AccountRoute
 

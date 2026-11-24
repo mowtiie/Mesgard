@@ -8,6 +8,7 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.ReportCategory
 import com.mowtiie.mesgard.domain.model.ReportEventType
 import com.mowtiie.mesgard.domain.model.ReportStatus
+import com.mowtiie.mesgard.domain.model.ReportSubject
 
 private const val DATE_TIME_FLAGS =
     DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH
@@ -17,7 +18,17 @@ internal fun ReportCategory.labelResource(): Int = when (this) {
     ReportCategory.BULLYING -> R.string.report_category_bullying
     ReportCategory.HARASSMENT -> R.string.report_category_harassment
     ReportCategory.CHILD_SAFETY -> R.string.report_category_child_safety
+    ReportCategory.IMPERSONATION -> R.string.report_category_impersonation
+    ReportCategory.OFFENSIVE_CONTENT -> R.string.report_category_offensive_content
     ReportCategory.OTHER -> R.string.report_category_other
+}
+
+@StringRes
+internal fun ReportSubject.labelResource(): Int = when (this) {
+    ReportSubject.MESSAGE -> R.string.report_subject_label_message
+    ReportSubject.PERSON -> R.string.report_subject_label_person
+    ReportSubject.NAME -> R.string.report_subject_label_name
+    ReportSubject.UNKNOWN -> R.string.report_subject_label_unknown
 }
 
 @StringRes

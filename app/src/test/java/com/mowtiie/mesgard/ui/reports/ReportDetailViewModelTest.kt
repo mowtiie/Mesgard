@@ -11,6 +11,7 @@ import com.mowtiie.mesgard.domain.model.ReportCategory
 import com.mowtiie.mesgard.domain.model.ReportDecision
 import com.mowtiie.mesgard.domain.model.ReportDetail
 import com.mowtiie.mesgard.domain.model.ReportStatus
+import com.mowtiie.mesgard.domain.model.ReportSubject
 import com.mowtiie.mesgard.domain.repository.AccountRepository
 import com.mowtiie.mesgard.domain.repository.ReportReviewRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
@@ -40,11 +41,13 @@ class ReportDetailViewModelTest {
     private fun detail(status: ReportStatus = ReportStatus.OPEN, isAnonymous: Boolean = true) = ReportDetail(
         id = "r1",
         category = ReportCategory.BULLYING,
+        subject = ReportSubject.MESSAGE,
         status = status,
         note = null,
         isAnonymous = isAnonymous,
         reporterName = null,
         subjectName = "Staff One",
+        subjectText = null,
         isMessageRemoved = false,
         resolutionNote = null,
         createdAtEpochMillis = 0L,

@@ -1,4 +1,4 @@
-package com.mowtiie.mesgard.ui.conversation
+package com.mowtiie.mesgard.ui.reports
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,16 +16,19 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.REPORT_NOTE_MAX_LENGTH
 import com.mowtiie.mesgard.domain.model.ReportCategory
 import com.mowtiie.mesgard.domain.model.ReportError
+import com.mowtiie.mesgard.domain.model.ReportSubject
 import com.mowtiie.mesgard.ui.common.NoteField
 import com.mowtiie.mesgard.ui.settings.RadioGroup
 import com.mowtiie.mesgard.ui.settings.RadioLabel
@@ -38,17 +41,25 @@ private val ProgressStroke = 2.dp
 private const val NOTE_MIN_LINES = 2
 private const val NOTE_MAX_LINES = 4
 
-private val CategoryLabels = listOf(
+private val CategoryLabels = mapOf(
     ReportCategory.BULLYING to RadioLabel(R.string.report_category_bullying),
     ReportCategory.HARASSMENT to RadioLabel(R.string.report_category_harassment),
     ReportCategory.CHILD_SAFETY to RadioLabel(
         R.string.report_category_child_safety,
         R.string.report_category_child_safety_summary,
     ),
+    ReportCategory.IMPERSONATION to RadioLabel(R.string.report_category_impersonation),
+    ReportCategory.OFFENSIVE_CONTENT to RadioLabel(R.string.report_category_offensive_content),
     ReportCategory.OTHER to RadioLabel(R.string.report_category_other),
 )
 
-internal data class ReportMessageActions(
+private val SubjectLabels = mapOf(
+    ReportSubject.PERSON to RadioLabel(R.string.report_subject_person, R.string.report_subject_person_summary),
+    ReportSubject.NAME to RadioLabel(R.string.report_subject_name, R.string.report_subject_name_summary),
+)
+
+internal data class ReportSheetActions(
+    val onSubjectChanged: (ReportSubject) -> Unit,
     val onCategoryChanged: (ReportCategory) -> Unit,
     val onNoteChanged: (String) -> Unit,
     val onAnonymousChanged: (Boolean) -> Unit,
@@ -56,10 +67,28 @@ internal data class ReportMessageActions(
     val onDismiss: () -> Unit,
 )
 
-/** Asks what is wrong with a message, then says the report was sent. It stays on screen after a failure. */
+/** Shows the report sheet while the view model has one open. */
+@Composable
+internal fun ReportSheetHost(viewModel: ReportFormViewModel) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    if (!state.isOpen) return
+    ReportSheet(
+        state = state,
+        actions = ReportSheetActions(
+            onSubjectChanged = viewModel::onSubjectChanged,
+            onCategoryChanged = viewModel::onCategoryChanged,
+            onNoteChanged = viewModel::onNoteChanged,
+            onAnonymousChanged = viewModel::onAnonymousChanged,
+            onSend = viewModel::onSendClicked,
+            onDismiss = viewModel::onDismissed,
+        ),
+    )
+}
+
+/** Asks what is wrong, then says the report was sent. It stays on screen after a failure. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ReportMessageSheet(state: ReportMessageUiState, actions: ReportMessageActions) {
+internal fun ReportSheet(state: ReportUiState, actions: ReportSheetActions) {
     // The rows are list items on the surface color, so the sheet takes it too, and it opens fully, as it is a form.
     ModalBottomSheet(
         onDismissRequest = actions.onDismiss,
@@ -80,20 +109,37 @@ internal fun ReportMessageSheet(state: ReportMessageUiState, actions: ReportMess
 }
 
 @Composable
-private fun ReportForm(state: ReportMessageUiState, actions: ReportMessageActions) {
+private fun ReportForm(state: ReportUiState, actions: ReportSheetActions) {
     Text(
-        text = stringResource(R.string.report_title),
+        text = stringResource(
+            if (state.subjects.contains(ReportSubject.MESSAGE)) R.string.report_title else R.string.report_title_person,
+        ),
         style = MaterialTheme.typography.titleLarge,
         modifier = Modifier.padding(horizontal = SheetPadding).semantics { heading() },
     )
     Text(
-        text = stringResource(R.string.report_intro),
+        text = stringResource(
+            if (state.subjects.contains(ReportSubject.MESSAGE)) R.string.report_intro else R.string.report_intro_person,
+        ),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = SheetPadding),
     )
+    if (state.asksForSubject) {
+        Text(
+            text = stringResource(R.string.report_subject_question),
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(horizontal = SheetPadding).semantics { heading() },
+        )
+        RadioGroup(
+            options = state.subjects.mapNotNull { subject -> SubjectLabels[subject]?.let { subject to it } },
+            selected = state.subject,
+            onSelected = { chosen -> chosen?.let(actions.onSubjectChanged) },
+            enabled = state.stage == ReportStage.FORM,
+        )
+    }
     RadioGroup(
-        options = CategoryLabels,
+        options = state.categories.mapNotNull { category -> CategoryLabels[category]?.let { category to it } },
         selected = state.category,
         onSelected = { chosen -> chosen?.let(actions.onCategoryChanged) },
         enabled = state.stage == ReportStage.FORM,
@@ -127,7 +173,7 @@ private fun ReportForm(state: ReportMessageUiState, actions: ReportMessageAction
 }
 
 @Composable
-private fun SendButton(state: ReportMessageUiState, onSend: () -> Unit) {
+private fun SendButton(state: ReportUiState, onSend: () -> Unit) {
     val sending = stringResource(R.string.report_sending)
     Button(
         onClick = onSend,

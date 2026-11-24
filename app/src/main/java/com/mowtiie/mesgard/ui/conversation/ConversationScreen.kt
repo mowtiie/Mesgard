@@ -52,6 +52,7 @@ import com.mowtiie.mesgard.domain.model.PinnedMessage
 import com.mowtiie.mesgard.ui.common.EmptyState
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
+import com.mowtiie.mesgard.ui.reports.ReportSheetHost
 import java.time.ZoneId
 import kotlinx.coroutines.launch
 
@@ -108,19 +109,7 @@ internal fun ConversationScreenRoute(
         )
     }
     messageActions.readers?.let { MessageInfoSheet(it, onDismiss = actionsViewModel::onInfoDismissed) }
-    val report by reportViewModel.uiState.collectAsStateWithLifecycle()
-    if (report.isOpen) {
-        ReportMessageSheet(
-            state = report,
-            actions = ReportMessageActions(
-                onCategoryChanged = reportViewModel::onCategoryChanged,
-                onNoteChanged = reportViewModel::onNoteChanged,
-                onAnonymousChanged = reportViewModel::onAnonymousChanged,
-                onSend = reportViewModel::onSendClicked,
-                onDismiss = reportViewModel::onDismissed,
-            ),
-        )
-    }
+    ReportSheetHost(reportViewModel)
     val edit by editViewModel.uiState.collectAsStateWithLifecycle()
     val reply by replyViewModel.target.collectAsStateWithLifecycle()
     val mentions by mentionViewModel.uiState.collectAsStateWithLifecycle()

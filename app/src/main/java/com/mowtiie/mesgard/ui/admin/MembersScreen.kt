@@ -1,6 +1,7 @@
 package com.mowtiie.mesgard.ui.admin
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,6 +48,7 @@ import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.common.labelResource
 import com.mowtiie.mesgard.ui.export.ExportDataSheet
 import com.mowtiie.mesgard.ui.legalhold.PlaceHoldSheet
+import com.mowtiie.mesgard.ui.profile.LocalOpenProfile
 
 @Composable
 internal fun MembersScreenRoute(
@@ -174,9 +176,13 @@ private fun MemberList(
     } else if (uiState.showEmptyMessage) {
         EmptyState(R.drawable.illustration_members, R.string.members_empty, R.string.members_empty_hint)
     }
+    val openProfile = LocalOpenProfile.current
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 88.dp)) {
         items(uiState.members, key = { "${it.orgId}:${it.userId}" }) { member ->
             ListItem(
+                modifier = Modifier.clickable(onClickLabel = stringResource(R.string.profile_open)) {
+                    openProfile(member.orgId, member.userId)
+                },
                 leadingContent = { InitialAvatar(member.displayName) },
                 headlineContent = { Text(member.displayName) },
                 supportingContent = { Text(stringResource(member.role.labelResource())) },

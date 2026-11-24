@@ -16,6 +16,7 @@ import com.mowtiie.mesgard.domain.model.ReportCursor
 import com.mowtiie.mesgard.domain.model.ReportDecision
 import com.mowtiie.mesgard.domain.model.ReportEventType
 import com.mowtiie.mesgard.domain.model.ReportStatus
+import com.mowtiie.mesgard.domain.model.ReportSubject
 import com.mowtiie.mesgard.domain.repository.REPORT_PAGE_SIZE
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -95,6 +96,37 @@ class RemoteReportReviewRepositoryTest {
         assertEquals("Hello", detail.evidence?.earlier?.single()?.body)
         assertEquals(2048L, detail.files.single().sizeBytes)
         assertEquals(ReportEventType.REPORTER_REVEALED, detail.events.single().type)
+    }
+
+    @Test
+    fun `a report about a name keeps the frozen name and an unknown subject is not guessed`() = runTest {
+        coEvery { remote.detail("r2") } returns ReportDetailDto(
+            id = "r2",
+            category = "impersonation",
+            subject = "name",
+            status = "open",
+            anonymous = false,
+            subjectName = "Staff One",
+            subjectText = "Mr. Reyes",
+            createdAt = "2026-11-24T08:00:00+00:00",
+        )
+        coEvery { remote.detail("r3") } returns ReportDetailDto(
+            id = "r3",
+            category = "other",
+            subject = "profile_picture",
+            status = "open",
+            anonymous = false,
+            subjectName = "Staff One",
+            createdAt = "2026-11-24T08:00:00+00:00",
+        )
+
+        val name = (repository.detail("r2") as AdminResult.Success).value
+        val other = (repository.detail("r3") as AdminResult.Success).value
+
+        assertEquals(ReportSubject.NAME, name.subject)
+        assertEquals(ReportCategory.IMPERSONATION, name.category)
+        assertEquals("Mr. Reyes", name.subjectText)
+        assertEquals(ReportSubject.UNKNOWN, other.subject)
     }
 
     @Test

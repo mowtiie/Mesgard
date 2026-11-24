@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.stateDescription
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.ui.common.labelResource
+import com.mowtiie.mesgard.ui.profile.LocalOpenProfile
 
 @Composable
 internal fun ContactRow(
@@ -27,6 +28,7 @@ internal fun ContactRow(
 ) {
     val isOnline = contact.userId in uiState.onlineUserIds
     val onlineLabel = stringResource(R.string.contact_online)
+    val openProfile = LocalOpenProfile.current
     ListItem(
         modifier = Modifier
             .clickable(
@@ -34,7 +36,15 @@ internal fun ContactRow(
                 onClickLabel = stringResource(R.string.conversation_start),
             ) { onContactClicked(contact) }
             .semantics { if (isOnline) stateDescription = onlineLabel },
-        leadingContent = { ContactAvatar(contact.displayName, isOnline) },
+        leadingContent = {
+            ContactAvatar(
+                name = contact.displayName,
+                isOnline = isOnline,
+                modifier = Modifier.clickable(onClickLabel = stringResource(R.string.profile_open)) {
+                    openProfile(contact.orgId, contact.userId)
+                },
+            )
+        },
         headlineContent = { Text(contact.displayName) },
         supportingContent = { Text(stringResource(contact.role.labelResource())) },
         trailingContent = { FavoriteToggle(contact.isFavorite) { onFavoriteToggled(contact) } },

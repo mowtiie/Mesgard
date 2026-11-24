@@ -38,6 +38,7 @@ import com.mowtiie.mesgard.domain.model.Attachment
 import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.domain.model.MessageStatus
 import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.profile.LocalOpenProfile
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val BubbleMaxWidth = 480.dp
@@ -129,7 +130,7 @@ private fun BubbleBody(
         horizontalAlignment = if (message.isOwn) Alignment.End else Alignment.Start,
     ) {
         Row(verticalAlignment = Alignment.Bottom) {
-            if (showsAvatar) SenderAvatarSlot(message.senderName, show = endsGroup)
+            if (showsAvatar) SenderAvatarSlot(message.senderName, message.senderId, show = endsGroup)
             Box {
                 Surface(
                     modifier = Modifier
@@ -204,9 +205,18 @@ private fun BubbleContent(
 
 /** Beside the last bubble of a person's run the avatar shows, and the other bubbles keep the same room empty. */
 @Composable
-private fun SenderAvatarSlot(name: String?, show: Boolean) {
+private fun SenderAvatarSlot(name: String?, senderId: String, show: Boolean) {
+    val openProfile = LocalOpenProfile.current
     Box(modifier = Modifier.padding(end = AvatarGap).size(AvatarSize)) {
-        if (show) InitialAvatar(name = name.orEmpty().ifBlank { "?" }, size = AvatarSize)
+        if (show) {
+            InitialAvatar(
+                name = name.orEmpty().ifBlank { "?" },
+                size = AvatarSize,
+                modifier = Modifier.clickable(onClickLabel = stringResource(R.string.profile_open)) {
+                    openProfile(null, senderId)
+                },
+            )
+        }
     }
 }
 

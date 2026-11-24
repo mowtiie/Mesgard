@@ -24,6 +24,7 @@ private const val SET_REVIEWERS_FUNCTION = "set_report_reviewers"
 internal data class ReportRowDto(
     @SerialName("report_id") val reportId: String,
     val category: String,
+    val subject: String = "message",
     val status: String,
     @SerialName("subject_user_id") val subjectUserId: String? = null,
     @SerialName("subject_name") val subjectName: String,
@@ -68,11 +69,13 @@ internal data class ReportEventDto(
 internal data class ReportDetailDto(
     val id: String,
     val category: String,
+    val subject: String = "message",
     val status: String,
     val note: String? = null,
     val anonymous: Boolean,
     @SerialName("reporter_name") val reporterName: String? = null,
     @SerialName("subject_name") val subjectName: String,
+    @SerialName("subject_text") val subjectText: String? = null,
     @SerialName("message_removed") val messageRemoved: Boolean = false,
     @SerialName("resolution_note") val resolutionNote: String? = null,
     @SerialName("created_at") val createdAt: String,
