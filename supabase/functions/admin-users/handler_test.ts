@@ -26,6 +26,7 @@ class FakeApi implements AdminApi {
   removedRecords = new Set<string>();
   order: string[] = [];
   files = new Map<string, string[]>();
+  pictures = new Map<string, string[]>();
   failRemovingFiles = false;
   heldUsers = new Set<string>();
   private nextId = 1;
@@ -94,6 +95,13 @@ class FakeApi implements AdminApi {
   removeAttachmentFiles(paths: string[]) {
     if (this.failRemovingFiles) return Promise.reject(new Error("storage is down"));
     this.order.push(`files ${paths.join(",")}`);
+    return Promise.resolve();
+  }
+  listAvatarPaths(userId: string) {
+    return Promise.resolve(this.pictures.get(userId) ?? []);
+  }
+  removeAvatarFiles(paths: string[]) {
+    this.order.push(`pictures ${paths.join(",")}`);
     return Promise.resolve();
   }
   eraseUserData(_userId: string, oldEmail: string) {
@@ -524,6 +532,20 @@ Deno.test("a server that blanks messages removes the files of the person before 
   assertEquals(api.order, [
     "remove",
     "files conversation/message/report,conversation/message/photo",
+    "scrub ana@school.example",
+    `email ${placeholderEmail(MEMBER)}`,
+  ]);
+});
+
+Deno.test("the pictures of the person are deleted before the database is scrubbed, whatever happens to the messages", async () => {
+  const api = new FakeApi();
+  api.pictures.set(MEMBER, ["org/member/1", "org/member/2"]);
+
+  await erase(api);
+
+  assertEquals(api.order, [
+    "remove",
+    "pictures org/member/1,org/member/2",
     "scrub ana@school.example",
     `email ${placeholderEmail(MEMBER)}`,
   ]);

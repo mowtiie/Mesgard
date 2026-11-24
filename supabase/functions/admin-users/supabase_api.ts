@@ -3,6 +3,7 @@ import type { Role } from "./validation.ts";
 
 const LOGIN_DISABLED_DURATION = "876000h";
 const ATTACHMENTS_BUCKET = "message-attachments";
+const AVATARS_BUCKET = "avatars";
 const STORAGE_DELETE_BATCH = 100;
 
 export interface SupabaseApiSettings {
@@ -30,6 +31,19 @@ export function createSupabaseApi({ url, anonKey, serviceRoleKey }: SupabaseApiS
   async function expectOk(response: Response, what: string): Promise<Response> {
     if (!response.ok) throw new Error(`${what} failed with status ${response.status}`);
     return response;
+  }
+
+  async function removeFiles(bucket: string, paths: string[]) {
+    for (let start = 0; start < paths.length; start += STORAGE_DELETE_BATCH) {
+      await expectOk(
+        await fetch(`${url}/storage/v1/object/${bucket}`, {
+          method: "DELETE",
+          headers: asService,
+          body: JSON.stringify({ prefixes: paths.slice(start, start + STORAGE_DELETE_BATCH) }),
+        }),
+        "Deleting files",
+      );
+    }
   }
 
   return {
@@ -245,16 +259,23 @@ export function createSupabaseApi({ url, anonKey, serviceRoleKey }: SupabaseApiS
     },
 
     async removeAttachmentFiles(paths) {
-      for (let start = 0; start < paths.length; start += STORAGE_DELETE_BATCH) {
-        await expectOk(
-          await fetch(`${url}/storage/v1/object/${ATTACHMENTS_BUCKET}`, {
-            method: "DELETE",
-            headers: asService,
-            body: JSON.stringify({ prefixes: paths.slice(start, start + STORAGE_DELETE_BATCH) }),
-          }),
-          "Deleting files",
-        );
-      }
+      await removeFiles(ATTACHMENTS_BUCKET, paths);
+    },
+
+    async listAvatarPaths(userId) {
+      const response = await expectOk(
+        await fetch(`${url}/rest/v1/rpc/list_user_avatar_paths`, {
+          method: "POST",
+          headers: asService,
+          body: JSON.stringify({ target_user_id: userId }),
+        }),
+        "Listing the pictures of a person",
+      );
+      return await response.json();
+    },
+
+    async removeAvatarFiles(paths) {
+      await removeFiles(AVATARS_BUCKET, paths);
     },
 
     async eraseUserData(userId, oldEmail) {

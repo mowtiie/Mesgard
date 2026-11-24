@@ -1,5 +1,5 @@
 begin;
-select plan(30);
+select plan(32);
 
 -- Seed: organization a has the administrator a01 (the reviewer, as nobody is designated), staff a02 and a03, and
 -- students a04, a05 and a06. Organization b has the student b04. The default policy is staff and administrators.
@@ -223,6 +223,17 @@ select is(
   (select count(*)::int from public.audit_logs where action in ('member.picture_removed', 'organization.profile_picture_policy_changed')),
   2,
   'the policy change and the removal are in the audit log'
+);
+
+select is(
+  (select count(*)::int from public.list_user_avatar_paths(tests.seed_id('20', 'a', 2))),
+  2,
+  'the pictures of a person are listed so the files can be deleted when they are erased'
+);
+select is(
+  (select count(*)::int from public.list_user_avatar_paths(tests.seed_id('20', 'a', 4))),
+  0,
+  'a picture kept as evidence is not listed'
 );
 
 select * from finish();

@@ -39,6 +39,10 @@ export interface AdminApi {
   listAttachmentPaths(userId: string): Promise<string[]>;
   /** Deletes files from Storage, which SQL cannot do. Files that are already gone are not an error. */
   removeAttachmentFiles(paths: string[]): Promise<void>;
+  /** The storage paths of the profile pictures of the person, without those a report keeps as evidence. */
+  listAvatarPaths(userId: string): Promise<string[]>;
+  /** Deletes profile pictures from Storage. Files that are already gone are not an error. */
+  removeAvatarFiles(paths: string[]): Promise<void>;
   /** Scrubs the database side of a person who is in no organization. */
   eraseUserData(userId: string, oldEmail: string): Promise<void>;
   /** Replaces the email of a login with a placeholder and keeps the login disabled. */
@@ -259,6 +263,8 @@ async function eraseMember(
   if (email !== null && !isErasedEmail(email)) {
     // The files go first: the database still knows where they are, so a failure here can be repeated.
     if (policy === "blank_messages") await api.removeAttachmentFiles(await api.listAttachmentPaths(request.userId));
+    const pictures = await api.listAvatarPaths(request.userId);
+    if (pictures.length > 0) await api.removeAvatarFiles(pictures);
     await api.eraseUserData(request.userId, email);
     await api.replaceEmail(request.userId, placeholderEmail(request.userId));
     await api.recordAudit(token, request.orgId, "member.erased", request.userId);
