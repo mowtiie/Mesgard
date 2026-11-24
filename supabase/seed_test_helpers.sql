@@ -55,4 +55,13 @@ as $$
   select (kind_prefix || '000000-0000-4000-8000-000000000' || organization_letter || lpad(item_number::text, 2, '0'))::uuid;
 $$;
 
+create function tests.avatar_path(organization_letter text, member_number int, version int)
+returns text
+language sql
+immutable
+as $$
+  select tests.seed_id('10', organization_letter, 0)::text || '/' || tests.seed_id('20', organization_letter, member_number)::text
+    || '/' || version::text;
+$$;
+
 grant execute on all functions in schema tests to anon, authenticated, service_role;
