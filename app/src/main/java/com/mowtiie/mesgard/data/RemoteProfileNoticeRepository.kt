@@ -38,5 +38,8 @@ internal class RemoteProfileNoticeRepository @Inject constructor(private val rem
     }
 }
 
-internal fun noticeKindOf(wireName: String): ProfileNoticeKind =
-    if (wireName == "username_reset") ProfileNoticeKind.USERNAME_RESET else ProfileNoticeKind.OTHER
+internal fun noticeKindOf(wireName: String): ProfileNoticeKind = when (wireName) {
+    "username_reset" -> ProfileNoticeKind.USERNAME_RESET
+    "picture_removed" -> ProfileNoticeKind.PICTURE_REMOVED
+    else -> ProfileNoticeKind.OTHER
+}

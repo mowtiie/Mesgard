@@ -26,6 +26,7 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.admin.RuleSummaries
 import com.mowtiie.mesgard.domain.model.MessagingRules
 import com.mowtiie.mesgard.ui.admin.groups.labelResource
+import com.mowtiie.mesgard.ui.admin.pictures.labelResource
 import com.mowtiie.mesgard.ui.admin.usernames.labelResource
 import com.mowtiie.mesgard.ui.common.NavigationChevron
 import com.mowtiie.mesgard.ui.common.SectionHeader
@@ -83,6 +84,13 @@ private fun RulesSection(summaries: RuleSummaries, navigation: AdminNavigation) 
         title = R.string.messaging_rules_title,
         summary = rulesSummary(summaries.messagingRules),
         onClick = navigation.onOpenMessagingRules,
+    )
+    ManageRow(
+        icon = { Icon(Icons.Outlined.AccountCircle, contentDescription = null) },
+        title = R.string.picture_policy_title,
+        summary = summaries.profilePicturePolicy?.let { stringResource(it.labelResource()) }
+            ?: stringResource(R.string.settings_picture_policy_summary),
+        onClick = navigation.onOpenProfilePicturePolicy,
     )
     ManageRow(
         icon = { Icon(Icons.Outlined.AlternateEmail, contentDescription = null) },

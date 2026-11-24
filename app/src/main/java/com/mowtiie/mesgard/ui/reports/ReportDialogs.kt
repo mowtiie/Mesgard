@@ -22,13 +22,23 @@ import com.mowtiie.mesgard.domain.model.REPORT_NOTE_MAX_LENGTH
 import com.mowtiie.mesgard.domain.model.ReportStatus
 import com.mowtiie.mesgard.ui.common.FormSheet
 import com.mowtiie.mesgard.ui.common.NoteField
+import com.mowtiie.mesgard.ui.settings.RadioGroup
+import com.mowtiie.mesgard.ui.settings.RadioLabel
+
+private const val NO_BLOCK_DAYS = 0
+
+private val BlockOptions = listOf(
+    NO_BLOCK_DAYS to RadioLabel(R.string.report_block_none),
+    7 to RadioLabel(R.string.report_block_7),
+    30 to RadioLabel(R.string.report_block_30),
+)
 
 /** Whichever question is open: closing a report, asking who reported, or the answer to that. */
 @Composable
 internal fun ReportDialogs(
     dialog: ReportDialog?,
     followUp: ReportFollowUp?,
-    onDecisionConfirmed: (String, Boolean) -> Unit,
+    onDecisionConfirmed: (String, Boolean, Int?) -> Unit,
     onRevealConfirmed: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -45,11 +55,12 @@ internal fun ReportDialogs(
 private fun DecisionSheet(
     status: ReportStatus,
     followUp: ReportFollowUp?,
-    onConfirm: (String, Boolean) -> Unit,
+    onConfirm: (String, Boolean, Int?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var note by rememberSaveable { mutableStateOf("") }
     var applyFollowUp by rememberSaveable { mutableStateOf(false) }
+    var blockDays by rememberSaveable { mutableStateOf(NO_BLOCK_DAYS) }
     val isResolve = status == ReportStatus.RESOLVED
     FormSheet(
         title = stringResource(
@@ -58,7 +69,7 @@ private fun DecisionSheet(
         confirmLabel = stringResource(
             if (isResolve) R.string.report_action_resolve else R.string.report_action_dismiss,
         ),
-        onConfirm = { onConfirm(note, applyFollowUp && isResolve) },
+        onConfirm = { onConfirm(note, applyFollowUp && isResolve, blockDays.takeIf { it != NO_BLOCK_DAYS }) },
         onDismiss = onDismiss,
         confirmEnabled = note.trim().length >= REPORT_DECISION_NOTE_MIN_LENGTH,
     ) {
@@ -81,6 +92,13 @@ private fun DecisionSheet(
                 supportingContent = { Text(stringResource(followUp.summaryResource())) },
                 trailingContent = { Checkbox(checked = applyFollowUp, onCheckedChange = null) },
             )
+            if (followUp == ReportFollowUp.REMOVE_PICTURE && applyFollowUp) {
+                RadioGroup(
+                    options = BlockOptions,
+                    selected = blockDays,
+                    onSelected = { blockDays = it ?: NO_BLOCK_DAYS },
+                )
+            }
         }
     }
 }

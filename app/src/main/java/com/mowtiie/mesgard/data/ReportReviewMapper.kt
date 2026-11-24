@@ -51,7 +51,7 @@ private fun EvidenceDto.toEvidence() = ReportEvidence(
 
 private fun EvidenceLineDto.toLine() = EvidenceLine(senderName, body, parseEpochMillis(sentAt))
 
-private fun EvidenceFileDto.toFile() = EvidenceFile(fileName, mimeType, sizeBytes)
+private fun EvidenceFileDto.toFile() = EvidenceFile(fileName, mimeType, sizeBytes, storagePath)
 
 private fun ReportEventDto.toEvent() = ReportEvent(
     type = reportEventTypeOf(action),

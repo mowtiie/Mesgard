@@ -86,8 +86,11 @@ internal class ReportDetailViewModel @Inject constructor(
 
     fun onDialogDismissed() = mutableUiState.update { it.copy(dialog = null) }
 
-    /** [followUp] is the removal of the message or the reset of the username, whichever the report is about. */
-    fun onDecisionConfirmed(note: String, followUp: Boolean) {
+    /**
+     * [followUp] is the removal of the message, the reset of the username or the removal of the picture, whichever the
+     * report is about. [blockDays] blocks new pictures for that long after a picture was removed.
+     */
+    fun onDecisionConfirmed(note: String, followUp: Boolean, blockDays: Int? = null) {
         val status = (mutableUiState.value.dialog as? ReportDialog.Decide)?.status ?: return
         val subject = mutableUiState.value.detail?.subject
         mutableUiState.update { it.copy(dialog = null) }
@@ -97,6 +100,8 @@ internal class ReportDetailViewModel @Inject constructor(
                 note = note,
                 removeMessage = followUp && subject == ReportSubject.MESSAGE,
                 resetUsername = followUp && subject == ReportSubject.USERNAME,
+                removePicture = followUp && subject == ReportSubject.PROFILE_PICTURE,
+                blockDays = blockDays.takeIf { followUp && subject == ReportSubject.PROFILE_PICTURE },
             ),
         )
     }

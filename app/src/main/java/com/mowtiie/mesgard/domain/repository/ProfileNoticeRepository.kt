@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.domain.repository
 
 internal enum class ProfileNoticeKind {
     USERNAME_RESET,
+    PICTURE_REMOVED,
     OTHER,
 }
 

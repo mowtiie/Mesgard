@@ -55,6 +55,7 @@ internal data class EvidenceFileDto(
     @SerialName("file_name") val fileName: String,
     @SerialName("mime_type") val mimeType: String,
     @SerialName("size_bytes") val sizeBytes: Long,
+    @SerialName("storage_path") val storagePath: String = "",
 )
 
 @Serializable
@@ -99,6 +100,8 @@ internal data class ReportDecisionRequest(
     val note: String?,
     val removeMessage: Boolean,
     val resetUsername: Boolean = false,
+    val removePicture: Boolean = false,
+    val blockDays: Int? = null,
 )
 
 internal interface ReportReviewRemoteSource {
@@ -154,6 +157,8 @@ internal class SupabaseReportReviewRemoteSource @Inject constructor(private val 
                 put("action_note", request.note)
                 put("remove_message", request.removeMessage)
                 put("reset_username", request.resetUsername)
+                put("remove_picture", request.removePicture)
+                put("block_days", request.blockDays)
             },
         )
     }

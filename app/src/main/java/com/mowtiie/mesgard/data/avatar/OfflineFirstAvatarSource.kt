@@ -25,6 +25,7 @@ import kotlinx.coroutines.withContext
 internal const val AVATAR_DIRECTORY = "avatars"
 private const val TAG = "AvatarSource"
 private const val PARTIAL_SUFFIX = ".part"
+private const val EVIDENCE_PREFIX = "evidence_"
 private const val RETRY_AFTER_MS = 60_000L
 
 /** Profile pictures are kept next to the attachments, outside backups and encrypted by the same vault. */
@@ -42,23 +43,31 @@ internal class OfflineFirstAvatarSource @Inject constructor(
     override fun observeRef(userId: String): Flow<AvatarRef?> =
         profileDao.observeAvatarRef(userId).map { stored -> stored?.let { AvatarRef(it.orgId, it.userId, it.version) } }
 
-    override suspend fun localPath(ref: AvatarRef): String? = withContext(Dispatchers.IO) {
-        val file = fileOf(ref)
-        if (file.isFile) return@withContext file.path
-        lock.withLock {
-            if (file.isFile) return@withLock file.path
-            if (recentlyFailed(file.name)) return@withLock null
-            fetch(ref, file)
+    override suspend fun localPath(ref: AvatarRef): String? =
+        obtain(fileOf(ref), avatarObjectName(ref.orgId, ref.userId, ref.version)) {
+            removeOlderVersions(ref, keep = it)
         }
-    }
 
-    private suspend fun fetch(ref: AvatarRef, file: File): String? {
+    override suspend fun evidencePath(storagePath: String): String? =
+        obtain(File(avatarDirectory(), EVIDENCE_PREFIX + storagePath.replace('/', '_')), storagePath) {}
+
+    private suspend fun obtain(file: File, objectName: String, afterStoring: (File) -> Unit): String? =
+        withContext(Dispatchers.IO) {
+            if (file.isFile) return@withContext file.path
+            lock.withLock {
+                if (file.isFile) return@withLock file.path
+                if (recentlyFailed(file.name)) return@withLock null
+                fetch(objectName, file, afterStoring)
+            }
+        }
+
+    private suspend fun fetch(objectName: String, file: File, afterStoring: (File) -> Unit): String? {
         val partial = File(file.parentFile, file.name + PARTIAL_SUFFIX)
         return try {
-            remote.download(avatarObjectName(ref.orgId, ref.userId, ref.version), partial)
+            remote.download(objectName, partial)
             check(partial.renameTo(file)) { "Cannot store the picture" }
             vault.seal(file)
-            removeOlderVersions(ref, keep = file)
+            afterStoring(file)
             file.path
         } catch (exception: HttpRequestException) {
             rememberFailure(exception, partial, file)
@@ -86,10 +95,7 @@ internal class OfflineFirstAvatarSource @Inject constructor(
             .forEach { it.delete() }
     }
 
-    private fun fileOf(ref: AvatarRef): File = File(
-        File(context.noBackupFilesDir, AVATAR_DIRECTORY).also {
-            it.mkdirs()
-        },
-        "${ref.orgId}_${ref.userId}_${ref.version}",
-    )
+    private fun avatarDirectory(): File = File(context.noBackupFilesDir, AVATAR_DIRECTORY).also { it.mkdirs() }
+
+    private fun fileOf(ref: AvatarRef): File = File(avatarDirectory(), "${ref.orgId}_${ref.userId}_${ref.version}")
 }

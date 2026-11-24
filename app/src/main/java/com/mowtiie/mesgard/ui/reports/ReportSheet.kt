@@ -57,6 +57,10 @@ private val SubjectLabels = mapOf(
     ReportSubject.PERSON to RadioLabel(R.string.report_subject_person, R.string.report_subject_person_summary),
     ReportSubject.NAME to RadioLabel(R.string.report_subject_name, R.string.report_subject_name_summary),
     ReportSubject.USERNAME to RadioLabel(R.string.report_subject_username, R.string.report_subject_username_summary),
+    ReportSubject.PROFILE_PICTURE to RadioLabel(
+        R.string.report_subject_picture,
+        R.string.report_subject_picture_summary,
+    ),
 )
 
 internal data class ReportSheetActions(

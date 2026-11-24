@@ -76,6 +76,19 @@ class OfflineFirstAvatarSourceTest {
     }
 
     @Test
+    fun `a picture a report keeps is fetched for the reviewer and kept apart from the pictures of people`() = runTest {
+        coEvery { remote.download(any(), any()) } coAnswers { secondArg<File>().writeText("picture") }
+
+        val path = source.evidencePath("$TEST_ORG_ID/u1/2")
+
+        assertNotNull(path)
+        assertTrue(File(path!!).name.startsWith("evidence_"))
+        coVerify { remote.download("$TEST_ORG_ID/u1/2", any()) }
+        source.localPath(ref)
+        assertTrue(File(path).isFile)
+    }
+
+    @Test
     fun `the version of a person comes from the roster on the phone`() = runTest {
         databaseRule.database.contactDao().upsertAll(
             listOf(contactEntity("u1").copy(avatarVersion = 3), contactEntity("u2")),

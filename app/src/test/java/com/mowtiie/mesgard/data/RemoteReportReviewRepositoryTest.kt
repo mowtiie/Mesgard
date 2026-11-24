@@ -84,7 +84,7 @@ class RemoteReportReviewRepositoryTest {
                 sentAt = "2026-11-20T07:00:00+00:00",
                 context = listOf(EvidenceLineDto("Student One", "Hello", "2026-11-20T06:59:00+00:00")),
             ),
-            files = listOf(EvidenceFileDto("photo.png", "image/png", 2048)),
+            files = listOf(EvidenceFileDto("photo.png", "image/png", 2048, "org/u1/2")),
             events = listOf(ReportEventDto("reporter_revealed", "Checking", null, "2026-11-20T09:00:00+00:00")),
         )
 
@@ -95,6 +95,7 @@ class RemoteReportReviewRepositoryTest {
         assertEquals("Of course.", detail.evidence?.message?.body)
         assertEquals("Hello", detail.evidence?.earlier?.single()?.body)
         assertEquals(2048L, detail.files.single().sizeBytes)
+        assertEquals("org/u1/2", detail.files.single().storagePath)
         assertEquals(ReportEventType.REPORTER_REVEALED, detail.events.single().type)
     }
 
@@ -113,7 +114,7 @@ class RemoteReportReviewRepositoryTest {
         coEvery { remote.detail("r3") } returns ReportDetailDto(
             id = "r3",
             category = "other",
-            subject = "profile_picture",
+            subject = "group_name",
             status = "open",
             anonymous = false,
             subjectName = "Staff One",

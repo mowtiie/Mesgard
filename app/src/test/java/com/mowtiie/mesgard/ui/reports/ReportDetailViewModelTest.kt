@@ -137,6 +137,43 @@ class ReportDetailViewModelTest {
     }
 
     @Test
+    fun `closing a report about a picture can remove it and block new pictures`() = runTest {
+        coEvery { repository.detail("r1") } returns
+            AdminResult.Success(detail().copy(subject = ReportSubject.PROFILE_PICTURE))
+        coEvery { repository.decide("r1", any()) } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+        viewModel.onDialogRequested(ReportDialog.Decide(ReportStatus.RESOLVED))
+
+        viewModel.onDecisionConfirmed("Not appropriate", followUp = true, blockDays = 7)
+
+        coVerify {
+            repository.decide(
+                "r1",
+                ReportDecision(
+                    ReportStatus.RESOLVED,
+                    "Not appropriate",
+                    removeMessage = false,
+                    resetUsername = false,
+                    removePicture = true,
+                    blockDays = 7,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `a block is only sent together with removing the picture`() = runTest {
+        coEvery { repository.detail("r1") } returns AdminResult.Success(detail())
+        coEvery { repository.decide("r1", any()) } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+        viewModel.onDialogRequested(ReportDialog.Decide(ReportStatus.RESOLVED))
+
+        viewModel.onDecisionConfirmed("Spoke with both", followUp = true, blockDays = 30)
+
+        coVerify { repository.decide("r1", ReportDecision(ReportStatus.RESOLVED, "Spoke with both", true)) }
+    }
+
+    @Test
     fun `a decision without a question asked sends nothing`() = runTest {
         coEvery { repository.detail("r1") } returns AdminResult.Success(detail())
         val viewModel = viewModel()

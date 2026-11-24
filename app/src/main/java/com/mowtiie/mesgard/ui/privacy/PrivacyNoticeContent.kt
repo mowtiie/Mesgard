@@ -33,6 +33,7 @@ private val SummaryBlocks = listOf(
     SummaryBlock(R.string.privacy_block_groups, R.string.privacy_summary_groups),
     SummaryBlock(R.string.privacy_block_retention, R.string.privacy_summary_retention),
     SummaryBlock(R.string.privacy_block_online, R.string.privacy_summary_online),
+    SummaryBlock(R.string.privacy_block_pictures, R.string.privacy_summary_pictures),
     SummaryBlock(R.string.privacy_block_reports, R.string.privacy_summary_reports),
     SummaryBlock(R.string.privacy_block_device, R.string.privacy_summary_device),
     SummaryBlock(R.string.privacy_block_questions, R.string.privacy_summary_questions),

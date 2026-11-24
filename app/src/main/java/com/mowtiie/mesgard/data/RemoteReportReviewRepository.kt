@@ -39,6 +39,8 @@ internal class RemoteReportReviewRepository @Inject constructor(private val remo
                 note = decision.note.trim().ifEmpty { null },
                 removeMessage = decision.removeMessage,
                 resetUsername = decision.resetUsername,
+                removePicture = decision.removePicture,
+                blockDays = decision.blockDays,
             ),
         )
     }

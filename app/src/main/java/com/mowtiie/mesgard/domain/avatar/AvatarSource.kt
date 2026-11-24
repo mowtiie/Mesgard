@@ -10,6 +10,9 @@ internal interface AvatarSource {
     /** The path of the local file of the picture, fetched when needed. It is null when it cannot be had now. */
     suspend fun localPath(ref: AvatarRef): String?
 
+    /** The local file of a picture a report keeps as evidence, for the reviewers. Null when it cannot be had now. */
+    suspend fun evidencePath(storagePath: String): String?
+
     /** The picture version of a person as the roster on the phone knows it, null when they have none. */
     fun observeRef(userId: String): Flow<AvatarRef?>
 }

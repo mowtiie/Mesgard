@@ -25,6 +25,7 @@ internal fun ProfileNoticeDialog(userId: String, viewModel: ProfileNoticeViewMod
         text = {
             val text = when (notice.kind) {
                 ProfileNoticeKind.USERNAME_RESET -> R.string.profile_notice_username_reset
+                ProfileNoticeKind.PICTURE_REMOVED -> R.string.profile_notice_picture_removed
                 ProfileNoticeKind.OTHER -> R.string.profile_notice_other
             }
             Text(stringResource(text))

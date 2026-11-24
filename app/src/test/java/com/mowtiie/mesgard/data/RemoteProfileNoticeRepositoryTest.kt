@@ -21,13 +21,20 @@ class RemoteProfileNoticeRepositoryTest {
 
     @Test
     fun `a notice the app does not know is kept as another kind`() = runTest {
-        coEvery { remote.unseen() } returns
-            listOf(ProfileNoticeDto("n1", "username_reset"), ProfileNoticeDto("n2", "x"))
+        coEvery { remote.unseen() } returns listOf(
+            ProfileNoticeDto("n1", "username_reset"),
+            ProfileNoticeDto("n2", "x"),
+            ProfileNoticeDto("n3", "picture_removed"),
+        )
 
         val notices = repository.unseen()
 
         assertEquals(
-            listOf(ProfileNotice("n1", ProfileNoticeKind.USERNAME_RESET), ProfileNotice("n2", ProfileNoticeKind.OTHER)),
+            listOf(
+                ProfileNotice("n1", ProfileNoticeKind.USERNAME_RESET),
+                ProfileNotice("n2", ProfileNoticeKind.OTHER),
+                ProfileNotice("n3", ProfileNoticeKind.PICTURE_REMOVED),
+            ),
             notices,
         )
     }

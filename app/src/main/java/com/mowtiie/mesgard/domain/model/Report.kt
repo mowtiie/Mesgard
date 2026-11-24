@@ -15,6 +15,7 @@ internal enum class ReportCategory {
     companion object {
         fun forSubject(subject: ReportSubject): List<ReportCategory> = when (subject) {
             ReportSubject.NAME, ReportSubject.USERNAME -> listOf(IMPERSONATION, OFFENSIVE_CONTENT, OTHER)
+            ReportSubject.PROFILE_PICTURE -> listOf(IMPERSONATION, OFFENSIVE_CONTENT, CHILD_SAFETY, OTHER)
             ReportSubject.MESSAGE, ReportSubject.PERSON -> listOf(BULLYING, HARASSMENT, CHILD_SAFETY, OTHER)
             ReportSubject.UNKNOWN -> listOf(OTHER)
         }
@@ -27,6 +28,7 @@ internal enum class ReportSubject {
     PERSON,
     NAME,
     USERNAME,
+    PROFILE_PICTURE,
     UNKNOWN,
 }
 

@@ -36,7 +36,12 @@ internal data class ReportEvidence(
     val earlier: List<EvidenceLine>,
 )
 
-internal data class EvidenceFile(val fileName: String, val mimeType: String, val sizeBytes: Long)
+internal data class EvidenceFile(
+    val fileName: String,
+    val mimeType: String,
+    val sizeBytes: Long,
+    val storagePath: String = "",
+)
 
 internal enum class ReportEventType {
     SUBMITTED,
@@ -79,6 +84,8 @@ internal data class ReportDecision(
     val note: String,
     val removeMessage: Boolean,
     val resetUsername: Boolean = false,
+    val removePicture: Boolean = false,
+    val blockDays: Int? = null,
 )
 
 internal data class ReportReviewer(val userId: String, val displayName: String)

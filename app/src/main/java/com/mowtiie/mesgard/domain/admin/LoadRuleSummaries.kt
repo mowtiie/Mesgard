@@ -3,10 +3,12 @@ package com.mowtiie.mesgard.domain.admin
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupCreationPolicy
 import com.mowtiie.mesgard.domain.model.MessagingRules
+import com.mowtiie.mesgard.domain.model.ProfilePicturePolicy
 import com.mowtiie.mesgard.domain.model.UsernamePolicy
 import com.mowtiie.mesgard.domain.repository.GroupCreationRepository
 import com.mowtiie.mesgard.domain.repository.LegalHoldRepository
 import com.mowtiie.mesgard.domain.repository.MessagingRulesRepository
+import com.mowtiie.mesgard.domain.repository.ProfilePictureRepository
 import com.mowtiie.mesgard.domain.repository.RetentionRepository
 import com.mowtiie.mesgard.domain.repository.UsernameRepository
 import javax.inject.Inject
@@ -23,6 +25,7 @@ internal data class RuleSummaries(
     val activeHoldCount: Int? = null,
     val groupCreation: GroupCreationPolicy? = null,
     val usernamePolicy: UsernamePolicy? = null,
+    val profilePicturePolicy: ProfilePicturePolicy? = null,
 )
 
 /** The days messages are kept, or [days] null when they are kept without a limit. */
@@ -34,6 +37,7 @@ internal class LoadRuleSummaries @Inject constructor(
     private val legalHoldRepository: LegalHoldRepository,
     private val groupCreationRepository: GroupCreationRepository,
     private val usernameRepository: UsernameRepository,
+    private val profilePictureRepository: ProfilePictureRepository,
 ) {
     suspend operator fun invoke(organizationId: String): RuleSummaries = coroutineScope {
         val retention = async { retentionRepository.retentionDays(organizationId) }
@@ -41,12 +45,14 @@ internal class LoadRuleSummaries @Inject constructor(
         val holds = async { legalHoldRepository.activeHolds(organizationId) }
         val creation = async { groupCreationRepository.rules(organizationId) }
         val usernames = async { usernameRepository.rules(organizationId) }
+        val pictures = async { profilePictureRepository.rules(organizationId) }
         RuleSummaries(
             retention = (retention.await() as? AdminResult.Success)?.let { RetentionSummary(it.value) },
             messagingRules = (rules.await() as? AdminResult.Success)?.value,
             activeHoldCount = (holds.await() as? AdminResult.Success)?.value?.size,
             groupCreation = (creation.await() as? AdminResult.Success)?.value?.policy,
             usernamePolicy = (usernames.await() as? AdminResult.Success)?.value?.policy,
+            profilePicturePolicy = (pictures.await() as? AdminResult.Success)?.value?.policy,
         )
     }
 }

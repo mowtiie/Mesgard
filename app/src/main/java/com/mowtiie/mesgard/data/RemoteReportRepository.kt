@@ -94,5 +94,6 @@ internal fun ReportSubject.wireName(): String = when (this) {
     ReportSubject.PERSON -> "person"
     ReportSubject.NAME -> "name"
     ReportSubject.USERNAME -> "username"
+    ReportSubject.PROFILE_PICTURE -> "profile_picture"
     ReportSubject.UNKNOWN -> error("An unknown subject is never sent")
 }

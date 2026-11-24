@@ -41,7 +41,9 @@ internal fun LazyListScope.reportDetailItems(detail: ReportDetail, actions: Repo
     item(key = "message-heading") { SectionHeader(detail.subject.sectionResource()) }
     val evidence = detail.evidence
     if (evidence == null) {
-        if (isTextReport && detail.subjectText != null) {
+        if (detail.subject == ReportSubject.PROFILE_PICTURE) {
+            item(key = "picture") { EvidencePicture(detail.files.firstOrNull()?.storagePath) }
+        } else if (isTextReport && detail.subjectText != null) {
             item(key = "name") { EvidenceName(detail.subjectText, detail.subject) }
         } else {
             item(key = "person-only") { Note(R.string.report_person_only) }

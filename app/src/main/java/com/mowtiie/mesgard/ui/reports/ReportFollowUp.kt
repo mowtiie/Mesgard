@@ -9,12 +9,14 @@ import com.mowtiie.mesgard.domain.model.ReportSubject
 internal enum class ReportFollowUp {
     REMOVE_MESSAGE,
     RESET_USERNAME,
+    REMOVE_PICTURE,
 }
 
 /** Null when there is nothing to take down, as for the conduct or the name of a person. */
 internal fun ReportDetail.followUp(): ReportFollowUp? = when (subject) {
     ReportSubject.MESSAGE -> if (evidence != null) ReportFollowUp.REMOVE_MESSAGE else null
     ReportSubject.USERNAME -> ReportFollowUp.RESET_USERNAME
+    ReportSubject.PROFILE_PICTURE -> ReportFollowUp.REMOVE_PICTURE
     else -> null
 }
 
@@ -22,10 +24,12 @@ internal fun ReportDetail.followUp(): ReportFollowUp? = when (subject) {
 internal fun ReportFollowUp.titleResource(): Int = when (this) {
     ReportFollowUp.REMOVE_MESSAGE -> R.string.report_decide_remove
     ReportFollowUp.RESET_USERNAME -> R.string.report_decide_reset_username
+    ReportFollowUp.REMOVE_PICTURE -> R.string.report_decide_remove_picture
 }
 
 @StringRes
 internal fun ReportFollowUp.summaryResource(): Int = when (this) {
     ReportFollowUp.REMOVE_MESSAGE -> R.string.report_decide_remove_summary
     ReportFollowUp.RESET_USERNAME -> R.string.report_decide_reset_username_summary
+    ReportFollowUp.REMOVE_PICTURE -> R.string.report_decide_remove_picture_summary
 }
