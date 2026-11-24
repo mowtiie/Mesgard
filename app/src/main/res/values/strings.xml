@@ -9,8 +9,7 @@
         <item quantity="one">%d conversation with new messages</item>
         <item quantity="other">%d conversations with new messages</item>
     </plurals>
-    <string name="sign_in_title">Sign in to continue</string>
-    <string name="sign_in_help">Accounts are created by the administrator of your organization.</string>
+    <string name="sign_in_version">Version %1$s</string>
     <string name="sign_in_forgot_password">Forgot password?</string>
     <string name="sign_in_in_progress">Signing in</string>
     <string name="forgot_password_title">Forgot your password?</string>

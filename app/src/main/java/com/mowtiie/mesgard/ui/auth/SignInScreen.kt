@@ -2,9 +2,12 @@ package com.mowtiie.mesgard.ui.auth
 
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,20 +38,23 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mowtiie.mesgard.BuildConfig
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.SignInError
 import com.mowtiie.mesgard.ui.common.AuthHeader
 import com.mowtiie.mesgard.ui.common.CenteredForm
 import com.mowtiie.mesgard.ui.common.ServerCard
+import com.mowtiie.mesgard.ui.common.rememberIsCompact
 import com.mowtiie.mesgard.ui.server.ServerStatusNotice
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
 private val FieldSpacing = 16.dp
+private val HeaderSpacing = 16.dp
+private val SectionSpacing = 8.dp
 private val ProgressSize = 20.dp
 private val ProgressStrokeWidth = 2.dp
 
@@ -96,6 +102,7 @@ internal fun SignInScreen(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         offlineMessage = R.string.sign_in_offline_banner,
+        footer = { if (!rememberIsCompact()) VersionLabel() },
     ) {
         SignInForm(
             uiState = uiState,
@@ -149,31 +156,36 @@ private fun ColumnScope.SignInForm(
     LaunchedEffect(fieldError, uiState.isSubmitting) {
         if (fieldError != null && !uiState.isSubmitting) passwordFocus.requestFocus()
     }
-    AuthHeader(R.string.sign_in_title)
+    AuthHeader()
+    Spacer(Modifier.height(HeaderSpacing))
     ServerStatusNotice(forAdministrator = false)
     if (uiState.serverHost.isNotBlank()) {
         ServerCard(uiState.serverHost, onChangeServerClicked, enabled = !uiState.isSubmitting)
+        Spacer(Modifier.height(SectionSpacing))
     }
-    EmailField(
-        email = uiState.email,
-        enabled = !uiState.isSubmitting,
-        hasError = fieldError != null,
-        onChange = onEmailChanged,
-        onNext = { passwordFocus.requestFocus() },
-    )
-    PasswordField(
-        password = uiState.password,
-        enabled = !uiState.isSubmitting,
-        error = fieldError,
-        onChange = onPasswordChanged,
-        onDone = submit,
-        focusRequester = passwordFocus,
-    )
-    TextButton(onClick = onForgotPasswordClicked, modifier = Modifier.align(Alignment.End)) {
-        Text(stringResource(R.string.sign_in_forgot_password))
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(FieldSpacing)) {
+            EmailField(
+                email = uiState.email,
+                enabled = !uiState.isSubmitting,
+                hasError = fieldError != null,
+                onChange = onEmailChanged,
+                onNext = { passwordFocus.requestFocus() },
+            )
+            PasswordField(
+                password = uiState.password,
+                enabled = !uiState.isSubmitting,
+                error = fieldError,
+                onChange = onPasswordChanged,
+                onDone = submit,
+                focusRequester = passwordFocus,
+            )
+        }
+        TextButton(onClick = onForgotPasswordClicked, modifier = Modifier.align(Alignment.End)) {
+            Text(stringResource(R.string.sign_in_forgot_password))
+        }
     }
     SignInButton(uiState, submit)
-    SignInHelp()
 }
 
 @Composable
@@ -201,13 +213,11 @@ private fun SignInButton(uiState: SignInUiState, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SignInHelp() {
+private fun VersionLabel() {
     Text(
-        text = stringResource(R.string.sign_in_help),
-        style = MaterialTheme.typography.bodyMedium,
+        text = stringResource(R.string.sign_in_version, BuildConfig.VERSION_NAME),
+        style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth().padding(top = FieldSpacing),
     )
 }
 

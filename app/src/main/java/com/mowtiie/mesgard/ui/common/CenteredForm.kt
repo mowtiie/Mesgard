@@ -22,18 +22,20 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.connectivity.ConnectionSnackbarHost
 
 private val FormMaxWidth = 400.dp
-private val ContentPadding = 24.dp
+private val ContentPadding = 16.dp
 private val FieldSpacing = 16.dp
 
 /**
  * A form that is centered on the screen. It scrolls when it does not fit, so the keyboard, landscape and large fonts
- * never hide the button. [snackbarHost] sits at the bottom, with the connection snackbar under it.
+ * never hide the button. [footer] stays at the very bottom of the screen, under the form. [snackbarHost] sits at the
+ * bottom, with the connection snackbar under it.
  */
 @Composable
 internal fun CenteredForm(
     modifier: Modifier = Modifier,
     snackbarHost: @Composable () -> Unit = {},
     @StringRes offlineMessage: Int = R.string.offline_banner,
+    footer: @Composable ColumnScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Scaffold(
@@ -60,6 +62,11 @@ internal fun CenteredForm(
                     )
                 }
             }
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                content = footer,
+            )
         }
     }
 }

@@ -38,11 +38,11 @@ internal fun rememberIsCompact(): Boolean =
     WindowInsets.isImeVisible || LocalConfiguration.current.screenHeightDp < COMPACT_HEIGHT_DP
 
 /**
- * The brand at the top of the screens before sign in: a mark, the name, the tagline and what the screen is for. The
- * mark and the tagline give way when space is short, so the fields stay in view.
+ * The brand at the top of the screens before sign in: a mark, the name, the tagline and, when given, what the screen
+ * is for. The mark and the tagline give way when space is short, so the fields stay in view.
  */
 @Composable
-internal fun AuthHeader(@StringRes headline: Int, modifier: Modifier = Modifier) {
+internal fun AuthHeader(@StringRes headline: Int? = null, modifier: Modifier = Modifier) {
     val isCompact = rememberIsCompact()
     Column(
         modifier = modifier.semantics(mergeDescendants = true) { heading() },
@@ -63,12 +63,14 @@ internal fun AuthHeader(@StringRes headline: Int, modifier: Modifier = Modifier)
                 textAlign = TextAlign.Center,
             )
         }
-        Text(
-            text = stringResource(headline),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-        )
+        if (headline != null) {
+            Text(
+                text = stringResource(headline),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 
