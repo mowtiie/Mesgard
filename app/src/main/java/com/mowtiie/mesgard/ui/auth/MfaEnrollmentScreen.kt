@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,7 +35,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.MfaEnrollment
 import com.mowtiie.mesgard.ui.admin.sensitiveClip
-import com.mowtiie.mesgard.ui.common.AuthHeader
 import com.mowtiie.mesgard.ui.common.CenteredForm
 import com.mowtiie.mesgard.ui.common.SecureWindowEffect
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
@@ -96,7 +97,7 @@ internal fun MfaEnrollmentScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         offlineMessage = R.string.mfa_offline_banner,
     ) {
-        AuthHeader(R.string.mfa_enroll_title)
+        EnrollmentHeading()
         when {
             uiState.isLoading -> CircularProgressIndicator()
             uiState.enrollment == null -> StartFailure(uiState, onRetryClicked)
@@ -106,6 +107,16 @@ internal fun MfaEnrollmentScreen(
             Text(stringResource(dismissLabel))
         }
     }
+}
+
+@Composable
+private fun EnrollmentHeading() {
+    Text(
+        text = stringResource(R.string.mfa_enroll_title),
+        style = MaterialTheme.typography.headlineSmall,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.semantics { heading() },
+    )
 }
 
 @Composable
