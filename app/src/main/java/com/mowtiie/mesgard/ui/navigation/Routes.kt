@@ -19,6 +19,9 @@ internal data object NewChatRoute
 internal data class ProfileRoute(val userId: String, val orgId: String? = null)
 
 @Serializable
+internal data class ProfilePictureRoute(val orgId: String)
+
+@Serializable
 internal data object AccountRoute
 
 @Serializable

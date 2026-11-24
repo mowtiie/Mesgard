@@ -36,6 +36,7 @@ internal fun AccountScreenRoute(
     onBack: () -> Unit,
     onChangePassword: () -> Unit,
     onSetUpMfa: () -> Unit,
+    onOpenProfilePicture: (String) -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AccountViewModel = hiltViewModel(),
@@ -56,7 +57,10 @@ internal fun AccountScreenRoute(
         onSignOutDismissed = viewModel::onSignOutDismissed,
         onErrorShown = viewModel::onErrorShown,
         modifier = modifier,
-        usernames = { account -> UsernameSection(account.memberships) },
+        profileSections = { account ->
+            PictureSection(account.memberships, onOpenProfilePicture)
+            UsernameSection(account.memberships)
+        },
     )
 }
 
@@ -73,7 +77,7 @@ internal fun AccountScreen(
     onSignOutDismissed: () -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
-    usernames: @Composable (Account) -> Unit = {},
+    profileSections: @Composable (Account) -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val errorMessage = uiState.error?.let { stringResource(it.messageResource()) }
@@ -100,7 +104,7 @@ internal fun AccountScreen(
             }
             uiState.account?.let { account ->
                 AccountHeader(account)
-                usernames(account)
+                profileSections(account)
                 AccountDetails(account, uiState.mfa, onChangePassword, onMfaClicked)
             }
             HorizontalDivider(modifier = Modifier.padding(top = ContentPadding))

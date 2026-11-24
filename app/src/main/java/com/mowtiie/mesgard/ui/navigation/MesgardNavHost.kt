@@ -39,6 +39,7 @@ import com.mowtiie.mesgard.ui.privacy.PrivacyNoticeScreenRoute
 import com.mowtiie.mesgard.ui.privacy.PrivacyNoticeSettingsScreenRoute
 import com.mowtiie.mesgard.ui.profile.LocalOpenProfile
 import com.mowtiie.mesgard.ui.profile.ProfileScreenRoute
+import com.mowtiie.mesgard.ui.profile.picture.ProfilePictureScreenRoute
 import com.mowtiie.mesgard.ui.reports.ReportDetailScreenRoute
 import com.mowtiie.mesgard.ui.reports.ReportReviewersScreenRoute
 import com.mowtiie.mesgard.ui.reports.ReportsScreenRoute
@@ -110,11 +111,15 @@ internal fun MesgardNavHost(
                     onBack = { navController.popBackStack() },
                     onChangePassword = { navController.navigate(ChangePasswordRoute) },
                     onSetUpMfa = { navController.navigate(MfaSetupRoute) },
+                    onOpenProfilePicture = { navController.navigate(ProfilePictureRoute(it)) },
                     onSignOut = onSignOut,
                 )
             }
             composable<MfaSetupRoute> {
                 MfaSetupScreenRoute(onFinished = { navController.popBackStack() })
+            }
+            composable<ProfilePictureRoute> {
+                ProfilePictureScreenRoute(onBack = { navController.popBackStack() })
             }
             composable<ChangePasswordRoute> {
                 ChangePasswordScreenRoute(onBack = { navController.popBackStack() })
