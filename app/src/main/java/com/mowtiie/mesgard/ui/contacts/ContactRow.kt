@@ -3,6 +3,7 @@ package com.mowtiie.mesgard.ui.contacts
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -10,7 +11,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -53,7 +53,7 @@ private fun FavoriteToggle(isFavorite: Boolean, onClick: () -> Unit) {
             )
         } else {
             Icon(
-                painterResource(R.drawable.ic_star_outline),
+                Icons.Outlined.Star,
                 contentDescription = stringResource(R.string.contact_add_favorite),
             )
         }

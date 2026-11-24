@@ -3,6 +3,10 @@ package com.mowtiie.mesgard.ui.auth
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Error
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -16,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentType
@@ -101,14 +104,14 @@ internal fun PasswordField(
 
 @Composable
 private fun ErrorIcon() {
-    Icon(painter = painterResource(R.drawable.ic_error), contentDescription = null)
+    Icon(imageVector = Icons.Outlined.Error, contentDescription = null)
 }
 
 @Composable
 internal fun PasswordVisibilityToggle(visible: Boolean, onClick: () -> Unit) {
     IconButton(onClick = onClick) {
         Icon(
-            painter = painterResource(if (visible) R.drawable.ic_visibility_off else R.drawable.ic_visibility),
+            imageVector = if (visible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
             contentDescription = stringResource(
                 if (visible) R.string.sign_in_hide_password else R.string.sign_in_show_password,
             ),

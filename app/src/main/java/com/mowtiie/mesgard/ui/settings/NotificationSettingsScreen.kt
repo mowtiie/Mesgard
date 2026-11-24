@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -15,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
@@ -77,7 +77,7 @@ private fun PushSetupRow(distributorName: String?, onChoose: () -> Unit) {
             if (isSetUp) {
                 Icon(Icons.Outlined.Notifications, contentDescription = null)
             } else {
-                Icon(painterResource(R.drawable.ic_notifications_off), contentDescription = null)
+                Icon(Icons.Outlined.NotificationsOff, contentDescription = null)
             }
         },
         headlineContent = { Text(stringResource(R.string.settings_push)) },

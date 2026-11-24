@@ -5,14 +5,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Chat
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Flag
+import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -45,20 +50,20 @@ internal fun ManageSections(uiState: AdministrationUiState, summaries: RuleSumma
     )
     SectionHeader(R.string.admin_section_structure)
     ManageRow(
-        icon = { Icon(painterResource(R.drawable.ic_group_outline), contentDescription = null) },
+        icon = { Icon(Icons.Outlined.Group, contentDescription = null) },
         title = R.string.groups_title,
         summary = uiState.groupCount?.let { pluralStringResource(R.plurals.admin_groups_count, it, it) }
             ?: stringResource(R.string.settings_groups_summary),
         onClick = navigation.onOpenGroups,
     )
     ManageRow(
-        icon = { Icon(painterResource(R.drawable.ic_upload), contentDescription = null) },
+        icon = { Icon(Icons.Outlined.Upload, contentDescription = null) },
         title = R.string.import_groups_title,
         summary = stringResource(R.string.settings_import_groups_summary),
         onClick = navigation.onImportGroups,
     )
     ManageRow(
-        icon = { Icon(painterResource(R.drawable.ic_group_outline), contentDescription = null) },
+        icon = { Icon(Icons.Outlined.Group, contentDescription = null) },
         title = R.string.group_creation_title,
         summary = summaries.groupCreation?.let { stringResource(it.labelResource()) }
             ?: stringResource(R.string.settings_group_creation_summary),
@@ -72,13 +77,13 @@ internal fun ManageSections(uiState: AdministrationUiState, summaries: RuleSumma
 private fun RulesSection(summaries: RuleSummaries, navigation: AdminNavigation) {
     SectionHeader(R.string.admin_section_rules)
     ManageRow(
-        icon = { Icon(painterResource(R.drawable.ic_chat_outline), contentDescription = null) },
+        icon = { Icon(Icons.Outlined.Chat, contentDescription = null) },
         title = R.string.messaging_rules_title,
         summary = rulesSummary(summaries.messagingRules),
         onClick = navigation.onOpenMessagingRules,
     )
     ManageRow(
-        icon = { Icon(painterResource(R.drawable.ic_schedule), contentDescription = null) },
+        icon = { Icon(Icons.Outlined.Schedule, contentDescription = null) },
         title = R.string.retention_title,
         summary = retentionSummary(summaries),
         onClick = navigation.onOpenRetention,
@@ -90,7 +95,7 @@ private fun RulesSection(summaries: RuleSummaries, navigation: AdminNavigation) 
         onClick = navigation.onOpenLegalHolds,
     )
     ManageRow(
-        icon = { Icon(painterResource(R.drawable.ic_description), contentDescription = null) },
+        icon = { Icon(Icons.Outlined.Description, contentDescription = null) },
         title = R.string.privacy_notice_settings_title,
         summary = stringResource(R.string.settings_privacy_notice_summary),
         onClick = navigation.onOpenPrivacyNoticeSettings,
@@ -101,7 +106,7 @@ private fun RulesSection(summaries: RuleSummaries, navigation: AdminNavigation) 
 private fun OversightSection(navigation: AdminNavigation) {
     SectionHeader(R.string.admin_section_oversight)
     ManageRow(
-        icon = { Icon(painterResource(R.drawable.ic_flag), contentDescription = null) },
+        icon = { Icon(Icons.Outlined.Flag, contentDescription = null) },
         title = R.string.report_reviewers_title,
         summary = stringResource(R.string.settings_report_reviewers_summary),
         onClick = navigation.onOpenReportReviewers,

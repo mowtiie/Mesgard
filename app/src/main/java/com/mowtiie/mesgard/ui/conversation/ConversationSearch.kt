@@ -1,13 +1,13 @@
 package com.mowtiie.mesgard.ui.conversation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.SearchHit
@@ -47,7 +47,7 @@ internal fun ConversationBarActions(
     IconButton(onClick = { onMuteChanged(!isMuted) }) {
         if (isMuted) {
             Icon(
-                painterResource(R.drawable.ic_notifications_off_filled),
+                Icons.Filled.NotificationsOff,
                 contentDescription = stringResource(R.string.conversation_unmute),
             )
         } else {

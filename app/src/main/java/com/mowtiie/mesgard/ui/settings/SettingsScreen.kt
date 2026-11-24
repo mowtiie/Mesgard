@@ -3,9 +3,11 @@ package com.mowtiie.mesgard.ui.settings
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -15,7 +17,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -72,7 +73,7 @@ internal fun SettingsScreen(
             AccountSummary(navigation.onOpenAccount)
             SectionHeader(R.string.settings_section_preferences)
             SettingsCategoryRow(
-                icon = { Icon(painterResource(R.drawable.ic_palette), contentDescription = null) },
+                icon = { Icon(Icons.Outlined.Palette, contentDescription = null) },
                 title = R.string.settings_appearance,
                 summary = appearanceSummary(uiState.settings),
                 onClick = navigation.onOpenAppearance,
@@ -91,7 +92,7 @@ internal fun SettingsScreen(
                 onClick = navigation.onOpenSecurity,
             )
             SettingsCategoryRow(
-                icon = { Icon(painterResource(R.drawable.ic_description), contentDescription = null) },
+                icon = { Icon(Icons.Outlined.Description, contentDescription = null) },
                 title = R.string.your_data_title,
                 summary = stringResource(R.string.your_data_summary),
                 onClick = navigation.onOpenPrivacyNotice,

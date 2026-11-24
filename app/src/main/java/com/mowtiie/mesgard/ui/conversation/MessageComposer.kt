@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Send
+import androidx.compose.material.icons.outlined.AttachFile
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -31,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -86,7 +86,7 @@ private fun AttachButton(pickers: AttachmentPickers) {
     var isMenuOpen by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { isMenuOpen = true }) {
-            Icon(painterResource(R.drawable.ic_attach_file), contentDescription = stringResource(R.string.attach))
+            Icon(Icons.Outlined.AttachFile, contentDescription = stringResource(R.string.attach))
         }
         DropdownMenu(expanded = isMenuOpen, onDismissRequest = { isMenuOpen = false }) {
             DropdownMenuItem(

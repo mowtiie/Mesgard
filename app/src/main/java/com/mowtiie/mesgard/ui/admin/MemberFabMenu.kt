@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButtonMenu
 import androidx.compose.material3.FloatingActionButtonMenuItem
@@ -19,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -75,7 +75,7 @@ internal fun MemberFabMenu(onAddMember: () -> Unit, onImportMembers: () -> Unit,
                 isExpanded = false
                 onImportMembers()
             },
-            icon = { Icon(painterResource(R.drawable.ic_upload), contentDescription = null) },
+            icon = { Icon(Icons.Outlined.Upload, contentDescription = null) },
             text = { Text(stringResource(R.string.members_import)) },
         )
     }

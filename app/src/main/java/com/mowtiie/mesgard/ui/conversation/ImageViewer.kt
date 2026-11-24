@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -51,7 +52,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -245,7 +245,7 @@ private fun ViewerBar(title: String, subtitle: String?, onClose: () -> Unit, onO
                 colors = IconButtonDefaults.outlinedIconButtonColors(contentColor = Color.White),
             ) {
                 Icon(
-                    painterResource(R.drawable.ic_open_in_new),
+                    Icons.AutoMirrored.Outlined.OpenInNew,
                     contentDescription = stringResource(R.string.attachment_open_with),
                 )
             }

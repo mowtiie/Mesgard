@@ -1,8 +1,9 @@
 package com.mowtiie.mesgard.ui.settings
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -29,7 +30,7 @@ internal class AdministrationEntryViewModel @Inject constructor(observeAdminOrga
 @Composable
 internal fun AdministrationRow(onOpen: () -> Unit) {
     SettingsCategoryRow(
-        icon = { Icon(painterResource(R.drawable.ic_shield), contentDescription = null) },
+        icon = { Icon(Icons.Outlined.Shield, contentDescription = null) },
         title = R.string.settings_administration,
         summary = stringResource(R.string.settings_administration_summary),
         onClick = onOpen,

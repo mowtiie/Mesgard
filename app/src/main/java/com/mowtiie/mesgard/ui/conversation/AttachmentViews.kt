@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -177,7 +179,7 @@ private fun FailedImage() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(ItemSpacing),
     ) {
-        Icon(painterResource(R.drawable.ic_error), contentDescription = null, tint = MaterialTheme.colorScheme.error)
+        Icon(Icons.Outlined.Error, contentDescription = null, tint = MaterialTheme.colorScheme.error)
         Text(
             text = stringResource(R.string.attachment_failed_hint),
             style = MaterialTheme.typography.labelMedium,
@@ -200,7 +202,7 @@ private fun FileAttachment(attachment: Attachment, isDownloading: Boolean, onCli
         if (isDownloading) {
             CircularProgressIndicator(modifier = Modifier.size(FileIconSize).padding(ItemSpacing))
         } else {
-            Icon(painterResource(R.drawable.ic_description), contentDescription = null, Modifier.size(FileIconSize))
+            Icon(Icons.Outlined.Description, contentDescription = null, Modifier.size(FileIconSize))
         }
         Column {
             Text(text = attachment.fileName, style = MaterialTheme.typography.bodyMedium, maxLines = 2)

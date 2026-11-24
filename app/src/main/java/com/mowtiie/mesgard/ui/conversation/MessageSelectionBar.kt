@@ -2,7 +2,9 @@ package com.mowtiie.mesgard.ui.conversation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Reply
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -14,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.mowtiie.mesgard.R
@@ -52,7 +53,7 @@ internal fun MessageSelectionBar(
                     },
                 ) {
                     Icon(
-                        painterResource(R.drawable.ic_reply),
+                        Icons.AutoMirrored.Outlined.Reply,
                         contentDescription = stringResource(R.string.message_reply),
                     )
                 }
@@ -65,7 +66,7 @@ internal fun MessageSelectionBar(
                     },
                 ) {
                     Icon(
-                        painterResource(R.drawable.ic_content_copy),
+                        Icons.Outlined.ContentCopy,
                         contentDescription = stringResource(R.string.message_copy),
                     )
                 }

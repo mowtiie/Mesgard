@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -15,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -113,7 +115,7 @@ private fun StatusIcons(conversation: ConversationSummary) {
 @Composable
 private fun PinnedIcon() {
     Icon(
-        painter = painterResource(R.drawable.ic_push_pin),
+        imageVector = Icons.Filled.PushPin,
         contentDescription = stringResource(R.string.conversation_pinned),
         modifier = Modifier.size(MutedIconSize),
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -123,7 +125,7 @@ private fun PinnedIcon() {
 @Composable
 private fun MutedIcon() {
     Icon(
-        painter = painterResource(R.drawable.ic_notifications_off),
+        imageVector = Icons.Outlined.NotificationsOff,
         contentDescription = stringResource(R.string.conversation_muted),
         modifier = Modifier.size(MutedIconSize),
         tint = MaterialTheme.colorScheme.onSurfaceVariant,

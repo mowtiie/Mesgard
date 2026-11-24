@@ -2,11 +2,11 @@ package com.mowtiie.mesgard.ui.common
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.painterResource
-import com.mowtiie.mesgard.R
 
 /** Trailing icon of a row that opens another page of the app. */
 @Composable
@@ -22,7 +22,7 @@ internal fun NavigationChevron() {
 @Composable
 internal fun ExternalLinkIcon() {
     Icon(
-        painter = painterResource(R.drawable.ic_open_in_new),
+        imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -32,7 +32,7 @@ internal fun ExternalLinkIcon() {
 @Composable
 internal fun CopyIcon() {
     Icon(
-        painter = painterResource(R.drawable.ic_content_copy),
+        imageVector = Icons.Outlined.ContentCopy,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
     )

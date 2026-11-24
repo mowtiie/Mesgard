@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
@@ -59,7 +59,7 @@ internal fun MessageMetadataLabel(message: Message, modifier: Modifier = Modifie
                 tint = color,
             )
             message.status == MessageStatus.PENDING -> Image(
-                painter = painterResource(R.drawable.ic_schedule),
+                imageVector = Icons.Outlined.Schedule,
                 contentDescription = null,
                 modifier = Modifier.size(StatusIconSize),
                 colorFilter = ColorFilter.tint(color),

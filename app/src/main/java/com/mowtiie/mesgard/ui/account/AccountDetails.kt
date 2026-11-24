@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -17,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -98,7 +98,7 @@ private fun MfaRow(state: MfaRowState, onClick: () -> Unit) {
     }
     ListItem(
         modifier = rowModifier,
-        leadingContent = { Icon(painterResource(R.drawable.ic_shield), contentDescription = null) },
+        leadingContent = { Icon(Icons.Outlined.Shield, contentDescription = null) },
         headlineContent = { Text(stringResource(R.string.account_mfa)) },
         supportingContent = { Text(stringResource(supporting)) },
         trailingContent = if (state == MfaRowState.REQUIRED) null else ({ NavigationChevron() }),
