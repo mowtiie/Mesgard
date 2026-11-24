@@ -401,7 +401,7 @@ select throws_ok(
 );
 select throws_ok(
   format(
-    $$select public.submit_report(%L, %L, 'other', null, %L, null, false, 'username')$$,
+    $$select public.submit_report(%L, %L, 'other', null, %L, null, false, 'profile_picture')$$,
     tests.seed_id('70', 'a', 22), tests.seed_id('10', 'a', 0), tests.seed_id('20', 'a', 5)
   ),
   '22023',
