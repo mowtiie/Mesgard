@@ -50,7 +50,7 @@ select is(
 );
 select throws_ok(
   format($$select public.set_username(%L, 'another.one')$$, tests.seed_id('10', 'a', 0)),
-  '54000',
+  '22023',
   null,
   'a username changes once every 30 days'
 );

@@ -218,7 +218,7 @@ begin
     raise exception 'Your organization does not allow changing usernames' using errcode = '42501';
   end if;
   if current_row.username_changed_at is not null and current_row.username_changed_at > now() - interval '30 days' then
-    raise exception 'A username can change once every 30 days' using errcode = '54000';
+    raise exception 'A username can change once every 30 days' using errcode = '22023';
   end if;
   if chosen = current_row.username then
     return;
