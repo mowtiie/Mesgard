@@ -59,7 +59,16 @@ internal fun MesgardNavHost(
         }
     }
 
-    NavHost(navController = navController, startDestination = MainRoute, modifier = modifier) {
+    val transitions = rememberSharedAxisTransitions()
+    NavHost(
+        navController = navController,
+        startDestination = MainRoute,
+        modifier = modifier,
+        enterTransition = { transitions.forwardEnter },
+        exitTransition = { transitions.forwardExit },
+        popEnterTransition = { transitions.backEnter },
+        popExitTransition = { transitions.backExit },
+    ) {
         composable<MainRoute> {
             MainScreen(
                 onConversationClick = { conversationId -> navController.navigate(ConversationRoute(conversationId)) },
