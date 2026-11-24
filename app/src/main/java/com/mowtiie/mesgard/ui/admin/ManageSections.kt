@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.AlternateEmail
 import androidx.compose.material.icons.outlined.Chat
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Flag
@@ -25,6 +26,7 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.admin.RuleSummaries
 import com.mowtiie.mesgard.domain.model.MessagingRules
 import com.mowtiie.mesgard.ui.admin.groups.labelResource
+import com.mowtiie.mesgard.ui.admin.usernames.labelResource
 import com.mowtiie.mesgard.ui.common.NavigationChevron
 import com.mowtiie.mesgard.ui.common.SectionHeader
 import java.time.format.DateTimeFormatter
@@ -81,6 +83,13 @@ private fun RulesSection(summaries: RuleSummaries, navigation: AdminNavigation) 
         title = R.string.messaging_rules_title,
         summary = rulesSummary(summaries.messagingRules),
         onClick = navigation.onOpenMessagingRules,
+    )
+    ManageRow(
+        icon = { Icon(Icons.Outlined.AlternateEmail, contentDescription = null) },
+        title = R.string.username_policy_title,
+        summary = summaries.usernamePolicy?.let { stringResource(it.labelResource()) }
+            ?: stringResource(R.string.settings_username_policy_summary),
+        onClick = navigation.onOpenUsernamePolicy,
     )
     ManageRow(
         icon = { Icon(Icons.Outlined.Schedule, contentDescription = null) },

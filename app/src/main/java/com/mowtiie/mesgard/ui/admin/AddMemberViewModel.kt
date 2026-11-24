@@ -108,8 +108,8 @@ private fun AdminError.toAddMemberError() = when (this) {
     AdminError.NOT_ALLOWED -> AddMemberError.NOT_ALLOWED
     AdminError.NOT_A_MEMBER, AdminError.LAST_ADMIN, AdminError.NOT_ERASABLE, AdminError.LEGAL_HOLD,
     AdminError.GROUP_NOT_EMPTY, AdminError.GROUP_TREE_INVALID,
-    AdminError.GROUP_LIMIT,
-    AdminError.UNKNOWN,
+    AdminError.GROUP_LIMIT, AdminError.USERNAME_INVALID, AdminError.USERNAME_RESERVED, AdminError.USERNAME_TAKEN,
+    AdminError.USERNAME_TOO_SOON, AdminError.UNKNOWN,
     -> AddMemberError.UNKNOWN
 }
 

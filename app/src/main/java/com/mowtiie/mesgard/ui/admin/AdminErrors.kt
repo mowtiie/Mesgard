@@ -15,5 +15,16 @@ internal fun AdminError.messageResource(): Int = when (this) {
     AdminError.GROUP_NOT_EMPTY -> R.string.admin_error_group_not_empty
     AdminError.GROUP_TREE_INVALID -> R.string.admin_error_group_tree_invalid
     AdminError.GROUP_LIMIT -> R.string.admin_error_group_limit
+    AdminError.USERNAME_INVALID, AdminError.USERNAME_RESERVED, AdminError.USERNAME_TAKEN,
+    AdminError.USERNAME_TOO_SOON,
+    -> usernameMessageResource()
     AdminError.UNKNOWN -> R.string.admin_error_unknown
+}
+
+@StringRes
+private fun AdminError.usernameMessageResource(): Int = when (this) {
+    AdminError.USERNAME_INVALID -> R.string.admin_error_username_invalid
+    AdminError.USERNAME_RESERVED -> R.string.admin_error_username_reserved
+    AdminError.USERNAME_TAKEN -> R.string.admin_error_username_taken
+    else -> R.string.admin_error_username_too_soon
 }

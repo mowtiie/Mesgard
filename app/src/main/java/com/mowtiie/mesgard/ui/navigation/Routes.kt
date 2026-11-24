@@ -85,6 +85,9 @@ internal data object RetentionRoute
 internal data object GroupCreationRoute
 
 @Serializable
+internal data object UsernamePolicyRoute
+
+@Serializable
 internal data object ImportGroupsRoute
 
 @Serializable

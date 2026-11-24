@@ -224,7 +224,7 @@ private fun AdminError.interruptedResource(): Int = when (this) {
     AdminError.NOT_ALLOWED -> R.string.admin_error_not_allowed
     AdminError.NOT_A_MEMBER, AdminError.LAST_ADMIN, AdminError.NOT_ERASABLE, AdminError.LEGAL_HOLD,
     AdminError.GROUP_NOT_EMPTY, AdminError.GROUP_TREE_INVALID,
-    AdminError.GROUP_LIMIT,
-    AdminError.UNKNOWN,
+    AdminError.GROUP_LIMIT, AdminError.USERNAME_INVALID, AdminError.USERNAME_RESERVED, AdminError.USERNAME_TAKEN,
+    AdminError.USERNAME_TOO_SOON, AdminError.UNKNOWN,
     -> R.string.import_interrupted_unknown
 }

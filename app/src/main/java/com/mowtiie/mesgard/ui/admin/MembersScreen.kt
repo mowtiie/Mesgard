@@ -219,6 +219,10 @@ private fun MemberMenu(
             dismiss()
             onMemberAction(member, MemberAction.RESET_MFA)
         }
+        MemberMenuItem(R.string.members_reset_username) {
+            dismiss()
+            onMemberAction(member, MemberAction.RESET_USERNAME)
+        }
         MemberMenuItem(R.string.export_menu) {
             dismiss()
             onExportData(member)

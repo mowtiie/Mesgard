@@ -60,6 +60,14 @@ internal fun MembersDialogs(
             onConfirm = onConfirm,
             onDismiss = onDismiss,
         )
+        is MembersDialog.ConfirmResetUsername -> ConfirmDialog(
+            title = R.string.members_reset_username_title,
+            message = stringResource(R.string.members_reset_username_message, dialog.member.displayName),
+            confirmLabel = R.string.members_reset_username_confirm,
+            isWorking = isWorking,
+            onConfirm = onConfirm,
+            onDismiss = onDismiss,
+        )
         is MembersDialog.ConfirmRemove ->
             RemoveDialog(dialog, erasureMode, isWorking, onEraseToggled, onConfirm, onDismiss)
         is MembersDialog.TemporaryPassword -> TemporaryPasswordDialog(dialog.memberName, dialog.password, onDismiss)

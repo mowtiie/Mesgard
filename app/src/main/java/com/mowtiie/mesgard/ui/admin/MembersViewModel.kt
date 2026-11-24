@@ -12,6 +12,7 @@ import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AdminRepository
 import com.mowtiie.mesgard.domain.repository.ContactRepository
+import com.mowtiie.mesgard.domain.repository.UsernameRepository
 import com.mowtiie.mesgard.ui.common.matchesQuery
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -31,6 +32,7 @@ internal class MembersViewModel @Inject constructor(
     private val observeAdminOrganization: ObserveAdminOrganization,
     private val contactRepository: ContactRepository,
     private val adminRepository: AdminRepository,
+    private val usernameRepository: UsernameRepository,
 ) : ViewModel() {
     private val localState = MutableStateFlow(LocalState())
 
@@ -77,6 +79,7 @@ internal class MembersViewModel @Inject constructor(
                 MemberAction.CHANGE_ROLE -> MembersDialog.ChangeRole(member, selected = member.role)
                 MemberAction.RESET_PASSWORD -> MembersDialog.ConfirmResetPassword(member)
                 MemberAction.RESET_MFA -> MembersDialog.ConfirmResetMfa(member)
+                MemberAction.RESET_USERNAME -> MembersDialog.ConfirmResetUsername(member)
                 MemberAction.REMOVE -> MembersDialog.ConfirmRemove(member)
             },
         )
@@ -117,6 +120,8 @@ internal class MembersViewModel @Inject constructor(
             }
         is MembersDialog.ConfirmResetMfa ->
             adminRepository.resetMfa(organizationId, dialog.member.userId).toOutcome { null }
+        is MembersDialog.ConfirmResetUsername ->
+            usernameRepository.reset(organizationId, dialog.member.userId).toOutcome { null }
         is MembersDialog.ConfirmRemove -> if (dialog.erase) {
             adminRepository.eraseMember(organizationId, dialog.member.userId).toOutcome { null }
         } else {
@@ -154,6 +159,7 @@ internal fun AdminError.toMembersError() = when (this) {
     AdminError.LAST_ADMIN -> MembersError.LAST_ADMIN
     AdminError.NOT_ERASABLE, AdminError.LEGAL_HOLD -> MembersError.NOT_ERASABLE
     AdminError.GROUP_NOT_EMPTY, AdminError.GROUP_TREE_INVALID, AdminError.GROUP_LIMIT,
-    AdminError.UNKNOWN,
+    AdminError.USERNAME_INVALID, AdminError.USERNAME_RESERVED, AdminError.USERNAME_TAKEN,
+    AdminError.USERNAME_TOO_SOON, AdminError.UNKNOWN,
     -> MembersError.UNKNOWN
 }

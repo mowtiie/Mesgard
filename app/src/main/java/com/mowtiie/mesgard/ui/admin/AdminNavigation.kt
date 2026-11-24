@@ -11,6 +11,7 @@ internal data class AdminNavigation(
     val onOpenLegalHolds: () -> Unit,
     val onOpenRetention: () -> Unit,
     val onOpenGroupCreation: () -> Unit,
+    val onOpenUsernamePolicy: () -> Unit,
     val onImportGroups: () -> Unit,
     val onOpenMessagingRules: () -> Unit,
     val onAddMember: () -> Unit,

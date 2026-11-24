@@ -8,6 +8,7 @@ internal enum class MemberAction {
     CHANGE_ROLE,
     RESET_PASSWORD,
     RESET_MFA,
+    RESET_USERNAME,
     REMOVE,
 }
 
@@ -17,6 +18,8 @@ internal sealed interface MembersDialog {
     data class ConfirmResetPassword(val member: Contact) : MembersDialog
 
     data class ConfirmResetMfa(val member: Contact) : MembersDialog
+
+    data class ConfirmResetUsername(val member: Contact) : MembersDialog
 
     /** [erase] also erases the personal data of the person, as far as the server allows. */
     data class ConfirmRemove(val member: Contact, val erase: Boolean = false) : MembersDialog

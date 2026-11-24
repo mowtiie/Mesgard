@@ -15,6 +15,7 @@ import com.mowtiie.mesgard.domain.model.RemovedMember
 import com.mowtiie.mesgard.domain.repository.AccountRepository
 import com.mowtiie.mesgard.domain.repository.AdminRepository
 import com.mowtiie.mesgard.domain.repository.ContactRepository
+import com.mowtiie.mesgard.domain.repository.UsernameRepository
 import com.mowtiie.mesgard.testing.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -46,12 +47,17 @@ class MembersViewModelTest {
         every { observeContacts() } returns contacts
         coEvery { refresh() } returns RefreshResult.Success
     }
+    private val usernameRepository = mockk<UsernameRepository>()
     private val adminRepository = mockk<AdminRepository> {
         coEvery { erasureMode() } returns AdminResult.Success(ErasureMode.KEEP_MESSAGES)
     }
 
-    private fun viewModel() =
-        MembersViewModel(ObserveAdminOrganization(accountRepository), contactRepository, adminRepository)
+    private fun viewModel() = MembersViewModel(
+        ObserveAdminOrganization(accountRepository),
+        contactRepository,
+        adminRepository,
+        usernameRepository,
+    )
 
     @Test
     fun `lists the members of the administered organization only`() = runTest {
@@ -127,6 +133,21 @@ class MembersViewModelTest {
         viewModel.onDialogConfirmed()
 
         coVerify { adminRepository.resetMfa(ORG, "u1") }
+        viewModel.uiState.test { assertNull(expectMostRecentItem().dialog) }
+    }
+
+    @Test
+    fun `resets the username after the dialog is confirmed`() = runTest {
+        coEvery { usernameRepository.reset(ORG, "u1") } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+
+        viewModel.onMemberAction(contacts.value[0], MemberAction.RESET_USERNAME)
+        viewModel.uiState.test {
+            assertEquals(MembersDialog.ConfirmResetUsername(contacts.value[0]), expectMostRecentItem().dialog)
+        }
+        viewModel.onDialogConfirmed()
+
+        coVerify { usernameRepository.reset(ORG, "u1") }
         viewModel.uiState.test { assertNull(expectMostRecentItem().dialog) }
     }
 

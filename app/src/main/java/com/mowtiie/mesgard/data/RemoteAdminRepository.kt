@@ -63,6 +63,9 @@ private const val GROUP_PARENT_CONSTRAINT = "groups_org_id_parent_id_fkey"
 private fun badRequestError(message: String?) = when {
     message.isGroupTreeRefusal() -> AdminError.GROUP_TREE_INVALID
     message.mentions("You can create at most") -> AdminError.GROUP_LIMIT
+    message.mentions("Invalid username") -> AdminError.USERNAME_INVALID
+    message.mentions("Username is reserved") -> AdminError.USERNAME_RESERVED
+    message.mentions("once every 30 days") -> AdminError.USERNAME_TOO_SOON
     else -> AdminError.UNKNOWN
 }
 

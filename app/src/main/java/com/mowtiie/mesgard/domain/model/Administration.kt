@@ -32,6 +32,10 @@ internal enum class AdminError {
     GROUP_NOT_EMPTY,
     GROUP_TREE_INVALID,
     GROUP_LIMIT,
+    USERNAME_INVALID,
+    USERNAME_RESERVED,
+    USERNAME_TAKEN,
+    USERNAME_TOO_SOON,
     UNKNOWN,
 }
 
