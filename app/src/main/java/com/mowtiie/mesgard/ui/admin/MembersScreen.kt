@@ -185,11 +185,18 @@ private fun MemberList(
                 },
                 leadingContent = { InitialAvatar(member.displayName) },
                 headlineContent = { Text(member.displayName) },
-                supportingContent = { Text(stringResource(member.role.labelResource())) },
+                supportingContent = { Text(memberSupportingText(member)) },
                 trailingContent = { MemberMenu(member, onMemberAction, onLegalHold, onExportData) },
             )
         }
     }
+}
+
+@Composable
+private fun memberSupportingText(member: Contact): String {
+    val role = stringResource(member.role.labelResource())
+    if (member.username.isEmpty()) return role
+    return stringResource(R.string.contact_username_and_role, member.username, role)
 }
 
 @Composable

@@ -505,6 +505,8 @@
     <string name="report_field_subject">Subject</string>
     <string name="report_section_name">Name</string>
     <string name="report_name_copy_note">This is the name as it was when it was reported. It does not change if the name is changed.</string>
+    <string name="contact_username">@%1$s</string>
+    <string name="contact_username_and_role">@%1$s · %2$s</string>
     <string name="profile_title">Profile</string>
     <string name="profile_message">Message</string>
     <string name="profile_report">Report</string>

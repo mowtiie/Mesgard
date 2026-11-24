@@ -13,6 +13,7 @@ internal data class Contact(
     val displayName: String,
     val role: OrgRole,
     val isFavorite: Boolean = false,
+    val username: String = "",
 )
 
 /** [Unavailable] means the server could not be asked, so the roster kept on the phone is searched instead. */

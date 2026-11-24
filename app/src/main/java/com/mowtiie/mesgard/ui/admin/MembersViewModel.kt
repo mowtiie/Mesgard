@@ -42,7 +42,7 @@ internal class MembersViewModel @Inject constructor(
         MembersUiState(
             organizationName = organization?.organizationName,
             members = contacts.filter {
-                it.orgId == organization?.organizationId && matchesQuery(it.displayName, local.query)
+                it.orgId == organization?.organizationId && it.matchesQuery(local.query)
             },
             query = local.query,
             isRefreshing = local.isRefreshing,

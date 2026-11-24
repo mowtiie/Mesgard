@@ -8,5 +8,6 @@ internal data class ContactDto(
     @SerialName("org_id") val orgId: String,
     @SerialName("user_id") val userId: String,
     val role: String,
+    val username: String = "",
     val user: SenderDto,
 )

@@ -111,6 +111,13 @@ private fun ProfileContent(person: Contact, uiState: ProfileUiState, onMessage: 
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.semantics { heading() },
         )
+        if (person.username.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.contact_username, person.username),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         Text(
             text = stringResource(person.role.labelResource()),
             style = MaterialTheme.typography.bodyLarge,

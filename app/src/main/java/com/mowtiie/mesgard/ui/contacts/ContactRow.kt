@@ -46,9 +46,16 @@ internal fun ContactRow(
             )
         },
         headlineContent = { Text(contact.displayName) },
-        supportingContent = { Text(stringResource(contact.role.labelResource())) },
+        supportingContent = { Text(contactSupportingText(contact)) },
         trailingContent = { FavoriteToggle(contact.isFavorite) { onFavoriteToggled(contact) } },
     )
+}
+
+@Composable
+private fun contactSupportingText(contact: Contact): String {
+    val role = stringResource(contact.role.labelResource())
+    if (contact.username.isEmpty()) return role
+    return stringResource(R.string.contact_username_and_role, contact.username, role)
 }
 
 /** Filled while the person is a favorite, which is the toggled on state, and outlined otherwise. */

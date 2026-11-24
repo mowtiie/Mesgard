@@ -58,7 +58,7 @@ internal class AddGroupMembersViewModel @Inject constructor(
             candidates = contacts.filter {
                 it.orgId == organization?.organizationId &&
                     it.userId !in local.existingIds &&
-                    matchesQuery(it.displayName, local.query)
+                    it.matchesQuery(local.query)
             },
             selectedIds = local.selectedIds,
             query = local.query,

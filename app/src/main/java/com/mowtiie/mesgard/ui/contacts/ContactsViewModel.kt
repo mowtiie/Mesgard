@@ -98,7 +98,7 @@ internal class ContactsViewModel @Inject constructor(
                 query.isEmpty() -> emptyList()
                 // A person found by searching is marked from the roster, so the star follows a change at once.
                 serverAnswered -> server.contacts.orEmpty().map { it.copy(isFavorite = it.userId in favoriteIds) }
-                else -> allContacts.filter { matchesQuery(it.displayName, query) }
+                else -> allContacts.filter { it.matchesQuery(query) }
             },
             isSearching = isSearching,
             // The server was asked and did not answer, so what is listed comes from the stored roster.

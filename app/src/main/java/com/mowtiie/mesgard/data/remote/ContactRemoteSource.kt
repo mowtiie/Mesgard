@@ -16,17 +16,18 @@ private const val MEMBERS_TABLE = "org_members"
 private const val CREATE_DIRECT_FUNCTION = "create_direct_conversation"
 private const val FAVORITES_TABLE = "favorite_contacts"
 internal const val SEARCH_RESULT_LIMIT = 20
+private const val USERNAME_PREFIX = "@"
 private val SEARCH_COLUMNS =
-    Columns.raw("org_id, user_id, role, user:profiles!org_members_user_id_fkey!inner(id, display_name)")
+    Columns.raw("org_id, user_id, role, username, user:profiles!org_members_user_id_fkey!inner(id, display_name)")
 private val CONTACT_COLUMNS =
-    Columns.raw("org_id, user_id, role, user:profiles!org_members_user_id_fkey(id, display_name)")
+    Columns.raw("org_id, user_id, role, username, user:profiles!org_members_user_id_fkey(id, display_name)")
 
 internal interface ContactRemoteSource {
     suspend fun fetchContacts(excludingUserId: String?): List<ContactDto>
 
     suspend fun createDirectConversation(orgId: String, otherUserId: String): String
 
-    /** Up to [SEARCH_RESULT_LIMIT] people whose name contains the text, whatever the size of the roster. */
+    /** Up to [SEARCH_RESULT_LIMIT] people whose name or username contains the text, whatever the size of the roster. */
     suspend fun searchContacts(query: String, excludingUserId: String?): List<ContactDto>
 
     suspend fun fetchContactsByIds(userIds: Collection<String>): List<ContactDto>
@@ -51,7 +52,11 @@ internal class SupabaseContactRemoteSource @Inject constructor(private val clien
     override suspend fun searchContacts(query: String, excludingUserId: String?): List<ContactDto> =
         client.from(MEMBERS_TABLE).select(SEARCH_COLUMNS) {
             filter {
-                ilike("user.display_name", "%${escapeForLike(query)}%")
+                val pattern = "%${escapeForLike(query.removePrefix(USERNAME_PREFIX))}%"
+                or {
+                    ilike("user.display_name", pattern)
+                    ilike("username", pattern)
+                }
                 if (excludingUserId != null) neq("user_id", excludingUserId)
             }
             order("created_at", Order.ASCENDING)
