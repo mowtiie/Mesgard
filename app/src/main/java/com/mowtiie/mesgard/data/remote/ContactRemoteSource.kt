@@ -18,9 +18,14 @@ private const val FAVORITES_TABLE = "favorite_contacts"
 internal const val SEARCH_RESULT_LIMIT = 20
 private const val USERNAME_PREFIX = "@"
 private val SEARCH_COLUMNS =
-    Columns.raw("org_id, user_id, role, username, user:profiles!org_members_user_id_fkey!inner(id, display_name)")
+    Columns.raw(
+        "org_id, user_id, role, username, avatar_version, " +
+            "user:profiles!org_members_user_id_fkey!inner(id, display_name)",
+    )
 private val CONTACT_COLUMNS =
-    Columns.raw("org_id, user_id, role, username, user:profiles!org_members_user_id_fkey(id, display_name)")
+    Columns.raw(
+        "org_id, user_id, role, username, avatar_version, user:profiles!org_members_user_id_fkey(id, display_name)",
+    )
 
 internal interface ContactRemoteSource {
     suspend fun fetchContacts(excludingUserId: String?): List<ContactDto>

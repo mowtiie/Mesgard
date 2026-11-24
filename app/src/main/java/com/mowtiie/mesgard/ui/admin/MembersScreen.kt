@@ -38,13 +38,14 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.HoldTarget
 import com.mowtiie.mesgard.domain.model.OrgRole
+import com.mowtiie.mesgard.ui.common.AvatarImage
 import com.mowtiie.mesgard.ui.common.EmptyState
-import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.NoResultsState
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.SearchAction
 import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
+import com.mowtiie.mesgard.ui.common.avatarRef
 import com.mowtiie.mesgard.ui.common.labelResource
 import com.mowtiie.mesgard.ui.export.ExportDataSheet
 import com.mowtiie.mesgard.ui.legalhold.PlaceHoldSheet
@@ -183,7 +184,7 @@ private fun MemberList(
                 modifier = Modifier.clickable(onClickLabel = stringResource(R.string.profile_open)) {
                     openProfile(member.orgId, member.userId)
                 },
-                leadingContent = { InitialAvatar(member.displayName) },
+                leadingContent = { AvatarImage(member.avatarRef(), member.displayName) },
                 headlineContent = { Text(member.displayName) },
                 supportingContent = { Text(memberSupportingText(member)) },
                 trailingContent = { MemberMenu(member, onMemberAction, onLegalHold, onExportData) },

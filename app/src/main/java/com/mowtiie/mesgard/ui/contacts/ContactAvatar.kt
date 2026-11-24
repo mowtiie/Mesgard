@@ -11,7 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.ui.common.AvatarImage
+import com.mowtiie.mesgard.ui.common.avatarRef
 
 private val DotSize = 14.dp
 private val DotRing = 2.dp
@@ -21,9 +23,9 @@ private val DotRing = 2.dp
  * list behind it, so it reads on any avatar color. The row says "Online" to screen readers, so the dot has no label.
  */
 @Composable
-internal fun ContactAvatar(name: String, isOnline: Boolean, modifier: Modifier = Modifier) {
+internal fun ContactAvatar(contact: Contact, isOnline: Boolean, modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
-        InitialAvatar(name)
+        AvatarImage(contact.avatarRef(), contact.displayName)
         if (isOnline) {
             Box(
                 modifier = Modifier.align(Alignment.BottomEnd)

@@ -32,9 +32,15 @@ internal class OfflineFirstAccountRepository @Inject constructor(
             account?.let {
                 Account(
                     displayName = it.displayName,
+                    userId = it.userId,
                     email = it.email,
                     memberships = memberships.map { membership ->
-                        AccountMembership(membership.orgId, membership.orgName, membership.role.toOrgRole())
+                        AccountMembership(
+                            membership.orgId,
+                            membership.orgName,
+                            membership.role.toOrgRole(),
+                            membership.avatarVersion,
+                        )
                     },
                 )
             }
@@ -46,7 +52,7 @@ internal class OfflineFirstAccountRepository @Inject constructor(
         return attemptRemote(TAG) {
             val displayName = requireNotNull(remoteSource.fetchDisplayName(userId)) { "The profile does not exist" }
             val memberships = remoteSource.fetchMemberships(userId).map {
-                AccountMembershipEntity(it.orgId, it.organization.name, it.role)
+                AccountMembershipEntity(it.orgId, it.organization.name, it.role, it.avatarVersion)
             }
             database.withTransaction {
                 accountDao.deleteAccounts()

@@ -4,6 +4,7 @@ import android.content.Context
 import com.mowtiie.mesgard.data.attachment.ATTACHMENT_DIRECTORY
 import com.mowtiie.mesgard.data.attachment.PLAIN_ATTACHMENT_DIRECTORY
 import com.mowtiie.mesgard.data.attachment.SHARED_ATTACHMENT_DIRECTORY
+import com.mowtiie.mesgard.data.avatar.AVATAR_DIRECTORY
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
@@ -21,6 +22,7 @@ internal class RoomLocalDataEraser @Inject constructor(
     override suspend fun eraseAll() = withContext(Dispatchers.IO) {
         database.clearAllTables()
         File(context.noBackupFilesDir, ATTACHMENT_DIRECTORY).deleteRecursively()
+        File(context.noBackupFilesDir, AVATAR_DIRECTORY).deleteRecursively()
         File(context.cacheDir, SHARED_ATTACHMENT_DIRECTORY).deleteRecursively()
         File(context.cacheDir, PLAIN_ATTACHMENT_DIRECTORY).deleteRecursively()
         Unit

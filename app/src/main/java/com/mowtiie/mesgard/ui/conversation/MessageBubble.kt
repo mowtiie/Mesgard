@@ -37,7 +37,7 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Attachment
 import com.mowtiie.mesgard.domain.model.Message
 import com.mowtiie.mesgard.domain.model.MessageStatus
-import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.AvatarImage
 import com.mowtiie.mesgard.ui.profile.LocalOpenProfile
 import com.mowtiie.mesgard.ui.theme.MesgardTheme
 
@@ -209,7 +209,8 @@ private fun SenderAvatarSlot(name: String?, senderId: String, show: Boolean) {
     val openProfile = LocalOpenProfile.current
     Box(modifier = Modifier.padding(end = AvatarGap).size(AvatarSize)) {
         if (show) {
-            InitialAvatar(
+            AvatarImage(
+                userId = senderId,
                 name = name.orEmpty().ifBlank { "?" },
                 size = AvatarSize,
                 modifier = Modifier.clickable(onClickLabel = stringResource(R.string.profile_open)) {

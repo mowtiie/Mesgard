@@ -28,7 +28,7 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Account
 import com.mowtiie.mesgard.domain.model.AccountMembership
 import com.mowtiie.mesgard.domain.model.OrgRole
-import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.AvatarImage
 import com.mowtiie.mesgard.ui.common.NavigationChevron
 import com.mowtiie.mesgard.ui.common.SectionHeader
 import com.mowtiie.mesgard.ui.common.labelResource
@@ -46,7 +46,7 @@ internal fun AccountHeader(account: Account) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(ContentPadding),
     ) {
-        InitialAvatar(name = account.displayName, size = AccountAvatarSize)
+        AvatarImage(ref = account.avatarRef, name = account.displayName, size = AccountAvatarSize)
         Text(
             text = account.displayName,
             style = MaterialTheme.typography.headlineSmall,

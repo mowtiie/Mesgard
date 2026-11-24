@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
 
 private const val PROFILES_TABLE = "profiles"
 private const val MEMBERS_TABLE = "org_members"
-private val MEMBERSHIP_COLUMNS = Columns.raw("org_id, role, organization:organizations(name)")
+private val MEMBERSHIP_COLUMNS = Columns.raw("org_id, role, avatar_version, organization:organizations(name)")
 
 @Serializable
 internal data class ProfileNameDto(@SerialName("display_name") val displayName: String)
@@ -22,6 +22,7 @@ internal data class AccountMembershipDto(
     @SerialName("org_id") val orgId: String,
     val role: String,
     val organization: OrganizationNameDto,
+    @SerialName("avatar_version") val avatarVersion: Int? = null,
 )
 
 internal interface AccountRemoteSource {

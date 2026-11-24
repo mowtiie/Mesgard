@@ -38,7 +38,7 @@ internal fun ContactRow(
             .semantics { if (isOnline) stateDescription = onlineLabel },
         leadingContent = {
             ContactAvatar(
-                name = contact.displayName,
+                contact = contact,
                 isOnline = isOnline,
                 modifier = Modifier.clickable(onClickLabel = stringResource(R.string.profile_open)) {
                     openProfile(contact.orgId, contact.userId)

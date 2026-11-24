@@ -16,4 +16,5 @@ internal data class AccountMembershipEntity(
     @PrimaryKey @ColumnInfo(name = "org_id") val orgId: String,
     @ColumnInfo(name = "org_name") val orgName: String,
     val role: String,
+    @ColumnInfo(name = "avatar_version") val avatarVersion: Int? = null,
 )

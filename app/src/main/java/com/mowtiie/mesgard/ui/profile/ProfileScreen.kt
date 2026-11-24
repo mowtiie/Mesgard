@@ -32,10 +32,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Contact
+import com.mowtiie.mesgard.ui.common.AvatarImage
 import com.mowtiie.mesgard.ui.common.EmptyState
-import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.ScrollingPage
 import com.mowtiie.mesgard.ui.common.TitledScreen
+import com.mowtiie.mesgard.ui.common.avatarRef
 import com.mowtiie.mesgard.ui.common.labelResource
 import com.mowtiie.mesgard.ui.reports.ReportSheetHost
 
@@ -105,7 +106,7 @@ private fun ProfileContent(person: Contact, uiState: ProfileUiState, onMessage: 
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing),
     ) {
-        InitialAvatar(person.displayName, size = ProfileAvatarSize)
+        AvatarImage(person.avatarRef(), person.displayName, size = ProfileAvatarSize)
         Text(
             text = person.displayName,
             style = MaterialTheme.typography.headlineSmall,

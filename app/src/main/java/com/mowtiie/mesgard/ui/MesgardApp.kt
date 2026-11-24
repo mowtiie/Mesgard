@@ -14,6 +14,8 @@ import com.mowtiie.mesgard.ui.auth.MfaCodeRoute
 import com.mowtiie.mesgard.ui.auth.MfaEnrollmentRoute
 import com.mowtiie.mesgard.ui.auth.PasswordChangeRoute
 import com.mowtiie.mesgard.ui.auth.SignInRoute
+import com.mowtiie.mesgard.ui.common.AvatarViewModel
+import com.mowtiie.mesgard.ui.common.LocalAvatarSource
 import com.mowtiie.mesgard.ui.connectivity.ConnectivityViewModel
 import com.mowtiie.mesgard.ui.connectivity.LocalConnectionRetry
 import com.mowtiie.mesgard.ui.connectivity.LocalConnectionStatus
@@ -32,6 +34,7 @@ internal fun MesgardApp(
     viewModel: AppViewModel = hiltViewModel(),
     connectivityViewModel: ConnectivityViewModel = hiltViewModel(),
     serverStatusViewModel: ServerStatusViewModel = hiltViewModel(),
+    avatarViewModel: AvatarViewModel = hiltViewModel(),
 ) {
     val authState by viewModel.authState.collectAsStateWithLifecycle()
     val isLocked by viewModel.isLocked.collectAsStateWithLifecycle()
@@ -41,6 +44,7 @@ internal fun MesgardApp(
         LocalConnectionStatus provides connectionStatus,
         LocalConnectionRetry provides connectivityViewModel::onRetryClicked,
         LocalServerStatus provides serverStatus,
+        LocalAvatarSource provides avatarViewModel.source,
     ) {
         when (val state = authState) {
             AuthState.Loading -> Surface(modifier = Modifier.fillMaxSize()) {}
