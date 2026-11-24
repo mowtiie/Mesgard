@@ -1,5 +1,5 @@
 begin;
-select plan(58);
+select plan(72);
 
 -- Seed: organization a has the administrator a01, staff a02 and a03, students a04, a05 and a06. Conversation a01 is
 -- direct between a04 and a02, message a02 is the reply of a02, message a01 is a04's own message.
@@ -379,6 +379,107 @@ select is(
     and name = tests.seed_id('40', 'a', 1)::text || '/' || tests.seed_id('50', 'a', 97)::text || '/photo'),
   1,
   'the reviewer still reads the file kept as evidence'
+);
+
+-- Report subjects.
+select tests.authenticate_as(tests.seed_id('20', 'a', 4));
+select lives_ok(
+  format(
+    $$select public.submit_report(%L, %L, 'impersonation', null, %L, null, false, 'name')$$,
+    tests.seed_id('70', 'a', 21), tests.seed_id('10', 'a', 0), tests.seed_id('20', 'a', 5)
+  ),
+  'a person reports the name of another person, besides a report about their conduct'
+);
+select throws_ok(
+  format(
+    $$select public.submit_report(%L, %L, 'other', null, %L, null, false, 'name')$$,
+    tests.seed_id('70', 'a', 22), tests.seed_id('10', 'a', 0), tests.seed_id('20', 'a', 5)
+  ),
+  '23505',
+  null,
+  'the same person cannot report the same name twice'
+);
+select throws_ok(
+  format(
+    $$select public.submit_report(%L, %L, 'other', null, %L, null, false, 'username')$$,
+    tests.seed_id('70', 'a', 22), tests.seed_id('10', 'a', 0), tests.seed_id('20', 'a', 5)
+  ),
+  '22023',
+  null,
+  'a subject whose feature does not exist yet is refused'
+);
+select throws_ok(
+  format(
+    $$select public.submit_report(%L, %L, 'other', %L, null, null, false, 'name')$$,
+    tests.seed_id('70', 'a', 22), tests.seed_id('10', 'a', 0), tests.seed_id('50', 'a', 2)
+  ),
+  '22023',
+  null,
+  'a name report needs a person, not a message'
+);
+select throws_ok(
+  format(
+    $$select public.submit_report(%L, %L, 'spam', null, %L)$$,
+    tests.seed_id('70', 'a', 22), tests.seed_id('10', 'a', 0), tests.seed_id('20', 'a', 5)
+  ),
+  '23514',
+  null,
+  'an unknown category is refused'
+);
+select throws_ok(
+  $$select count(*) from public.report_evidence$$,
+  '42501',
+  null,
+  'a reporter cannot read evidence'
+);
+
+select tests.authenticate_as(tests.seed_id('20', 'a', 6));
+select lives_ok(
+  format(
+    $$select public.submit_report(%L, %L, 'offensive_content', null, %L)$$,
+    tests.seed_id('70', 'a', 23), tests.seed_id('10', 'a', 0), tests.seed_id('20', 'a', 5)
+  ),
+  'offensive content is a category'
+);
+
+reset role;
+select is(
+  (select subject from public.reports where id = tests.seed_id('70', 'a', 23)),
+  'person',
+  'a report without a subject is about the conduct of a person'
+);
+select is(
+  (select subject from public.reports where id = tests.seed_id('70', 'a', 1)),
+  'message',
+  'a report of a message has the subject message'
+);
+select throws_ok(
+  $$update public.report_evidence set subject_text = 'x' where subject_text is not null$$,
+  '23001',
+  null,
+  'the frozen name cannot be changed'
+);
+
+select tests.authenticate_as(tests.seed_id('20', 'a', 1));
+select is(
+  public.get_report(tests.seed_id('70', 'a', 21)) ->> 'subject',
+  'name',
+  'a reviewer sees the subject'
+);
+select is(
+  public.get_report(tests.seed_id('70', 'a', 21)) ->> 'subject_text',
+  (select display_name from public.profiles where id = tests.seed_id('20', 'a', 5)),
+  'a reviewer sees the frozen name'
+);
+select is(
+  public.get_report(tests.seed_id('70', 'a', 21)) -> 'evidence',
+  'null'::jsonb,
+  'a name report has no message evidence'
+);
+select is(
+  (select subject from public.list_reports(tests.seed_id('10', 'a', 0)) where report_id = tests.seed_id('70', 'a', 21)),
+  'name',
+  'the list shows the subject'
 );
 
 -- Two-step verification.
