@@ -20,4 +20,6 @@ internal data class ConversationEntity(
     @ColumnInfo(name = "marked_unread", defaultValue = "0") val markedUnread: Boolean = false,
     @ColumnInfo(name = "hidden_before") val hiddenBeforeEpochMillis: Long? = null,
     @ColumnInfo(name = "group_path") val groupPath: String? = null,
+    @ColumnInfo(name = "group_id") val groupId: String? = null,
+    @ColumnInfo(name = "group_avatar_version") val groupAvatarVersion: Int? = null,
 )

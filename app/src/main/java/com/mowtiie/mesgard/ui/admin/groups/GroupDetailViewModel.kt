@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.mowtiie.mesgard.domain.admin.ObserveAdminOrganization
+import com.mowtiie.mesgard.domain.avatar.AvatarRef
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminResult
 import com.mowtiie.mesgard.domain.model.GroupDetail
@@ -52,12 +53,22 @@ internal data class GroupDetailUiState(
     val isAdmin: Boolean = false,
     val isUserCreated: Boolean = false,
     val ownRole: GroupRole? = null,
+    val avatar: AvatarRef? = null,
+    val orgId: String = "",
     val dialog: GroupDetailDialog? = null,
     val error: AdminError? = null,
 ) {
     /** Organization admins and owners of the group change its name and its roster. */
     val canManage: Boolean
         get() = isAdmin || ownRole == GroupRole.OWNER
+
+    /** Administrators and the owners and moderators of the group set its picture. */
+    val canChangePicture: Boolean
+        get() = isAdmin || ownRole == GroupRole.OWNER || ownRole == GroupRole.MODERATOR
+
+    /** The owner of a group cannot report it; everyone else in the organization can. */
+    val canReport: Boolean
+        get() = !isLoading && ownRole != GroupRole.OWNER
 
     val isOnlyOwner: Boolean
         get() = ownRole == GroupRole.OWNER && members.count { it.role == GroupRole.OWNER } == 1
@@ -97,6 +108,8 @@ internal class GroupDetailViewModel @Inject constructor(
             isAdmin = adminOrganization != null,
             isUserCreated = local.group?.isUserCreated == true,
             ownRole = local.group?.members?.firstOrNull { it.userId == authRepository.currentUserId }?.role,
+            avatar = local.group?.avatar,
+            orgId = local.group?.orgId.orEmpty(),
             dialog = local.dialog,
             error = local.error,
         )

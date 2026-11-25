@@ -5,7 +5,7 @@ import android.util.Log
 import com.mowtiie.mesgard.data.attachment.AttachmentVault
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.remote.AvatarRemoteSource
-import com.mowtiie.mesgard.data.remote.avatarObjectName
+import com.mowtiie.mesgard.data.remote.objectName
 import com.mowtiie.mesgard.domain.avatar.AvatarRef
 import com.mowtiie.mesgard.domain.avatar.AvatarSource
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -43,10 +43,9 @@ internal class OfflineFirstAvatarSource @Inject constructor(
     override fun observeRef(userId: String): Flow<AvatarRef?> =
         profileDao.observeAvatarRef(userId).map { stored -> stored?.let { AvatarRef(it.orgId, it.userId, it.version) } }
 
-    override suspend fun localPath(ref: AvatarRef): String? =
-        obtain(fileOf(ref), avatarObjectName(ref.orgId, ref.userId, ref.version)) {
-            removeOlderVersions(ref, keep = it)
-        }
+    override suspend fun localPath(ref: AvatarRef): String? = obtain(fileOf(ref), ref.objectName()) {
+        removeOlderVersions(ref, keep = it)
+    }
 
     override suspend fun evidencePath(storagePath: String): String? =
         obtain(File(avatarDirectory(), EVIDENCE_PREFIX + storagePath.replace('/', '_')), storagePath) {}

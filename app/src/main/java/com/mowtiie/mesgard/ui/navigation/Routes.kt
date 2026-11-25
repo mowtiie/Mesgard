@@ -22,6 +22,9 @@ internal data class ProfileRoute(val userId: String, val orgId: String? = null)
 internal data class ProfilePictureRoute(val orgId: String)
 
 @Serializable
+internal data class GroupPictureRoute(val groupId: String)
+
+@Serializable
 internal data object AccountRoute
 
 @Serializable

@@ -37,8 +37,8 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.Group
 import com.mowtiie.mesgard.ui.chats.messageResource
+import com.mowtiie.mesgard.ui.common.AvatarImage
 import com.mowtiie.mesgard.ui.common.EmptyState
-import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.NoResultsState
 import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
@@ -252,7 +252,7 @@ private fun LazyListScope.groups(uiState: ContactsUiState, onGroupClicked: (Grou
                 enabled = !uiState.isStartingConversation,
                 onClickLabel = stringResource(R.string.conversation_open),
             ) { onGroupClicked(group) },
-            leadingContent = { InitialAvatar(group.name) },
+            leadingContent = { AvatarImage(group.avatar, group.name) },
             headlineContent = { Text(group.name) },
         )
     }

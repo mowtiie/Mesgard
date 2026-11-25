@@ -24,9 +24,11 @@ internal fun GroupMenu(
     isMember: Boolean,
     canAnnounce: Boolean,
     canReadMessages: Boolean,
+    canReport: Boolean,
+    onReport: () -> Unit,
     actions: GroupMenuActions,
 ) {
-    if (!isAdmin && !isMember) return
+    if (!isAdmin && !isMember && !canReport) return
     OverflowMenu { dismiss ->
         @Composable
         fun item(text: Int, onClick: () -> Unit) = DropdownMenuItem(
@@ -43,6 +45,7 @@ internal fun GroupMenu(
             item(R.string.legal_hold_menu, actions.onLegalHold)
         }
         if (canReadMessages) item(R.string.group_read_messages, actions.onReadMessages)
+        if (canReport) item(R.string.group_report, onReport)
         if (isMember) item(R.string.group_leave, actions.onLeave)
     }
 }

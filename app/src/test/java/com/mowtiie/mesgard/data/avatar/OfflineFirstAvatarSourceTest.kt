@@ -89,6 +89,16 @@ class OfflineFirstAvatarSourceTest {
     }
 
     @Test
+    fun `the picture of a group is fetched from the folder of the group`() = runTest {
+        coEvery { remote.download(any(), any()) } coAnswers { secondArg<File>().writeText("picture") }
+
+        val path = source.localPath(AvatarRef(TEST_ORG_ID, "g1", 2, isGroup = true))
+
+        assertNotNull(path)
+        coVerify { remote.download("$TEST_ORG_ID/groups/g1/2", any()) }
+    }
+
+    @Test
     fun `the version of a person comes from the roster on the phone`() = runTest {
         databaseRule.database.contactDao().upsertAll(
             listOf(contactEntity("u1").copy(avatarVersion = 3), contactEntity("u2")),

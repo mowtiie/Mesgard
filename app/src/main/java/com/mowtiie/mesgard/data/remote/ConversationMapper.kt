@@ -19,6 +19,8 @@ internal fun ConversationSummaryDto.toEntity(isMuted: Boolean = false) = Convers
     markedUnread = markedUnread,
     hiddenBeforeEpochMillis = hiddenBefore?.let(::parseEpochMillis),
     groupPath = groupPath,
+    groupId = groupId,
+    groupAvatarVersion = groupAvatarVersion,
 )
 
 internal fun ConversationSummaryDto.toLastMessageEntity(): MessageEntity? {

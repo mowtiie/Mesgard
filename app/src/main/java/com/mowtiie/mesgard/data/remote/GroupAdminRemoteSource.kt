@@ -21,6 +21,8 @@ internal data class GroupRowDto(
     val kind: String = "other",
     @SerialName("parent_id") val parentId: String? = null,
     @SerialName("user_created") val userCreated: Boolean = false,
+    @SerialName("org_id") val orgId: String? = null,
+    @SerialName("avatar_version") val avatarVersion: Int? = null,
 )
 
 /** Where a new group sits, in the words of the server. */
@@ -89,15 +91,21 @@ internal interface GroupAdminRemoteSource {
 
 internal class SupabaseGroupAdminRemoteSource @Inject constructor(private val client: SupabaseClient) :
     GroupAdminRemoteSource {
-    override suspend fun listGroups(orgId: String): List<GroupRowDto> =
-        client.from(GROUPS_TABLE).select(Columns.raw("id, name, kind, parent_id, group_members(count)")) {
-            filter { eq("org_id", orgId) }
-            order("name", Order.ASCENDING)
-        }.decodeList()
+    override suspend fun listGroups(orgId: String): List<GroupRowDto> = client.from(
+        GROUPS_TABLE,
+    ).select(Columns.raw("id, name, kind, parent_id, avatar_version, group_members(count)")) {
+        filter { eq("org_id", orgId) }
+        order("name", Order.ASCENDING)
+    }.decodeList()
 
     override suspend fun fetchGroup(groupId: String): GroupRowDto? = client.from(
         GROUPS_TABLE,
-    ).select(Columns.list("id", "name", "posting_policy", "includes_everyone", "kind", "parent_id", "user_created")) {
+    ).select(
+        Columns.list(
+            "id", "org_id", "name", "posting_policy", "includes_everyone", "kind", "parent_id", "user_created",
+            "avatar_version",
+        ),
+    ) {
         filter { eq("id", groupId) }
     }.decodeList<GroupRowDto>().firstOrNull()
 

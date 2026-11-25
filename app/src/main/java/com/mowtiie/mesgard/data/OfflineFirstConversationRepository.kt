@@ -11,6 +11,7 @@ import com.mowtiie.mesgard.data.remote.toEntity
 import com.mowtiie.mesgard.data.remote.toLastMessageEntity
 import com.mowtiie.mesgard.data.remote.toRefreshResult
 import com.mowtiie.mesgard.di.ApplicationScope
+import com.mowtiie.mesgard.domain.avatar.AvatarRef
 import com.mowtiie.mesgard.domain.model.ConversationSummary
 import com.mowtiie.mesgard.domain.model.ConversationType
 import com.mowtiie.mesgard.domain.model.RefreshResult
@@ -124,6 +125,10 @@ internal class OfflineFirstConversationRepository @Inject constructor(
         isArchived = item.archivedAtEpochMillis != null,
         isMarkedUnread = item.markedUnread,
         groupPath = item.groupPath,
+        groupAvatar = item.groupId?.let { id ->
+            item.groupAvatarVersion?.let { AvatarRef(item.orgId, id, it, isGroup = true) }
+        },
+        groupId = item.groupId,
         isWithFavorite = isWithFavorite,
     )
 }

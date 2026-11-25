@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.data
 
 import com.mowtiie.mesgard.data.remote.GroupAdminRemoteSource
 import com.mowtiie.mesgard.data.remote.GroupPlacementFields
+import com.mowtiie.mesgard.domain.avatar.AvatarRef
 import com.mowtiie.mesgard.domain.model.AdminError
 import com.mowtiie.mesgard.domain.model.AdminGroup
 import com.mowtiie.mesgard.domain.model.AdminResult
@@ -25,7 +26,14 @@ internal class RemoteGroupAdminRepository @Inject constructor(private val remote
     GroupAdminRepository {
     override suspend fun listGroups(orgId: String): AdminResult<List<AdminGroup>> = attemptAdmin {
         remote.listGroups(orgId).map {
-            AdminGroup(it.id, it.name, it.members.firstOrNull()?.count ?: 0, it.kind.toKind(), it.parentId)
+            AdminGroup(
+                it.id,
+                it.name,
+                it.members.firstOrNull()?.count ?: 0,
+                it.kind.toKind(),
+                it.parentId,
+                it.avatarVersion?.let { version -> AvatarRef(orgId, it.id, version, isGroup = true) },
+            )
         }
     }
 
@@ -38,6 +46,10 @@ internal class RemoteGroupAdminRepository @Inject constructor(private val remote
             settings = GroupSettings(group.postingPolicy.toPostingPolicy(), group.includesEveryone),
             placement = GroupPlacement(group.kind.toKind(), group.parentId),
             isUserCreated = group.userCreated,
+            orgId = group.orgId.orEmpty(),
+            avatar = group.orgId?.let { org ->
+                group.avatarVersion?.let { AvatarRef(org, groupId, it, isGroup = true) }
+            },
         )
     }
 

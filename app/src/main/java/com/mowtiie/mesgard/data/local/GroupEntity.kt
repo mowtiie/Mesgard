@@ -10,4 +10,5 @@ internal data class GroupEntity(
     @ColumnInfo(name = "org_id") val orgId: String,
     val name: String,
     @ColumnInfo(name = "can_start_conversation") val canStartConversation: Boolean,
+    @ColumnInfo(name = "avatar_version") val avatarVersion: Int? = null,
 )

@@ -112,6 +112,33 @@ class GroupDetailViewModelTest {
     }
 
     @Test
+    fun `administrators, owners and moderators change the picture and an owner cannot report the group`() = runTest {
+        val asModerator = detail.copy(
+            members = listOf(GroupMember("u1", GroupRole.MODERATOR), GroupMember("u2", GroupRole.OWNER)),
+        )
+        coEvery { groupAdminRepository.fetchGroup("g1") } returns AdminResult.Success(asModerator)
+        viewModel().uiState.test {
+            val state = expectMostRecentItem()
+            assertTrue(state.canChangePicture)
+            assertTrue(state.canReport)
+        }
+
+        val asMember = detail.copy(
+            members = listOf(GroupMember("u1", GroupRole.MEMBER), GroupMember("u2", GroupRole.OWNER)),
+        )
+        coEvery { groupAdminRepository.fetchGroup("g1") } returns AdminResult.Success(asMember)
+        viewModel().uiState.test { assertFalse(expectMostRecentItem().canChangePicture) }
+
+        val asOwner = detail.copy(members = listOf(GroupMember("u1", GroupRole.OWNER)))
+        coEvery { groupAdminRepository.fetchGroup("g1") } returns AdminResult.Success(asOwner)
+        viewModel().uiState.test {
+            val state = expectMostRecentItem()
+            assertTrue(state.canChangePicture)
+            assertFalse(state.canReport)
+        }
+    }
+
+    @Test
     fun `a member who leaves is removed from the group and the screen closes`() = runTest {
         coEvery { groupAdminRepository.fetchGroup("g1") } returns AdminResult.Success(detail)
         coEvery { groupAdminRepository.removeMember("g1", "u1") } returns AdminResult.Success(Unit)

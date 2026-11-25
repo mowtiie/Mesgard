@@ -21,4 +21,6 @@ internal data class ConversationSummaryDto(
     @SerialName("marked_unread") val markedUnread: Boolean = false,
     @SerialName("hidden_before") val hiddenBefore: String? = null,
     @SerialName("group_path") val groupPath: String? = null,
+    @SerialName("group_id") val groupId: String? = null,
+    @SerialName("group_avatar_version") val groupAvatarVersion: Int? = null,
 )

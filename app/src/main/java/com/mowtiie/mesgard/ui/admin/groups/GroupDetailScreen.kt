@@ -50,6 +50,7 @@ import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.legalhold.PlaceHoldSheet
+import com.mowtiie.mesgard.ui.reports.ReportSheetHost
 
 private val FabClearance = 88.dp
 
@@ -60,10 +61,12 @@ internal fun GroupDetailScreenRoute(
     onAddMembers: () -> Unit,
     onLeft: () -> Unit,
     onReadMessages: () -> Unit,
+    onOpenPicture: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: GroupDetailViewModel = hiltViewModel(),
     treeViewModel: GroupTreeViewModel = hiltViewModel(),
     accessViewModel: GroupAccessViewModel = hiltViewModel(),
+    reportViewModel: GroupReportViewModel = hiltViewModel(),
 ) {
     val access by accessViewModel.uiState.collectAsStateWithLifecycle()
     var isOpenMessagesShown by rememberSaveable { mutableStateOf(false) }
@@ -94,6 +97,7 @@ internal fun GroupDetailScreenRoute(
         )
     }
     GroupTreeDialogs(tree, treeViewModel)
+    ReportSheetHost(reportViewModel)
     GroupDetailScreen(
         uiState = uiState,
         treeError = tree.error ?: access.error,
@@ -102,6 +106,8 @@ internal fun GroupDetailScreenRoute(
             accessViewModel.onErrorShown()
         },
         onReadMessages = { isOpenMessagesShown = true },
+        onOpenPicture = onOpenPicture,
+        onReport = { reportViewModel.onReportRequested(uiState.orgId, hasPicture = uiState.avatar != null) },
         placeSummary = placeSummary(tree),
         onChangeKind = { treeViewModel.onDialogChanged(GroupTreeDialog.KIND) },
         onMove = { treeViewModel.onDialogChanged(GroupTreeDialog.PARENT) },
@@ -146,6 +152,8 @@ internal fun GroupDetailScreen(
     announcedTo: Int?,
     onAnnouncementShown: () -> Unit,
     onReadMessages: () -> Unit,
+    onOpenPicture: () -> Unit,
+    onReport: () -> Unit,
     onLegalHold: () -> Unit,
     onBack: () -> Unit,
     onAddMembers: () -> Unit,
@@ -204,6 +212,8 @@ internal fun GroupDetailScreen(
                 isMember = uiState.ownRole != null,
                 canAnnounce = canAnnounce,
                 canReadMessages = uiState.isAdmin && uiState.isUserCreated,
+                canReport = uiState.canReport,
+                onReport = onReport,
                 actions = GroupMenuActions(
                     onAnnounce,
                     onChangeKind,
@@ -230,7 +240,7 @@ internal fun GroupDetailScreen(
                 onRefresh = onRefresh,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                MemberList(uiState, onDialogRequested, onRoleSelected, onSettingsChanged)
+                MemberList(uiState, onDialogRequested, onRoleSelected, onSettingsChanged, onOpenPicture)
             }
         }
     }
@@ -247,6 +257,7 @@ private fun MemberList(
     onDialogRequested: (GroupDetailDialog) -> Unit,
     onRoleSelected: (GroupMemberRow, GroupRole) -> Unit,
     onSettingsChanged: (GroupSettings) -> Unit,
+    onOpenPicture: () -> Unit,
 ) {
     if (uiState.members.isEmpty() && !uiState.isLoading) {
         EmptyState(
@@ -256,6 +267,9 @@ private fun MemberList(
         )
     }
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = FabClearance)) {
+        if (uiState.canChangePicture) {
+            item(key = "picture") { GroupPictureRow(uiState, onOpenPicture) }
+        }
         if (uiState.isAdmin) {
             item(key = "settings") {
                 GroupSettingsRows(

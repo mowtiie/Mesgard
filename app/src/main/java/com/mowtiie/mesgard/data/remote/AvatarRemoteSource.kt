@@ -1,5 +1,6 @@
 package com.mowtiie.mesgard.data.remote
 
+import com.mowtiie.mesgard.domain.avatar.AvatarRef
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.UploadData
 import io.github.jan.supabase.storage.storage
@@ -12,6 +13,12 @@ import javax.inject.Inject
 private const val AVATAR_BUCKET = "avatars"
 
 internal fun avatarObjectName(orgId: String, userId: String, version: Int) = "$orgId/$userId/$version"
+
+internal fun groupAvatarObjectName(orgId: String, groupId: String, version: Int) = "$orgId/groups/$groupId/$version"
+
+/** Where the picture of [this] is kept in Storage. */
+internal fun AvatarRef.objectName(): String =
+    if (isGroup) groupAvatarObjectName(orgId, userId, version) else avatarObjectName(orgId, userId, version)
 
 internal interface AvatarRemoteSource {
     suspend fun download(storagePath: String, target: File)

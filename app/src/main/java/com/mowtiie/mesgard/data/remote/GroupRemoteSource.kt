@@ -24,7 +24,7 @@ internal interface GroupRemoteSource {
 
 internal class SupabaseGroupRemoteSource @Inject constructor(private val client: SupabaseClient) : GroupRemoteSource {
     override suspend fun fetchGroups(): List<GroupDto> =
-        client.from(GROUPS_TABLE).select(Columns.list("id", "org_id", "name")) {
+        client.from(GROUPS_TABLE).select(Columns.list("id", "org_id", "name", "avatar_version")) {
             order("name", Order.ASCENDING)
             limit(GROUP_LIMIT.toLong())
         }.decodeList<GroupDto>()

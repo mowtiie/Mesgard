@@ -1,3 +1,11 @@
 package com.mowtiie.mesgard.domain.model
 
-internal data class Group(val id: String, val orgId: String, val name: String, val canStartConversation: Boolean)
+import com.mowtiie.mesgard.domain.avatar.AvatarRef
+
+internal data class Group(
+    val id: String,
+    val orgId: String,
+    val name: String,
+    val canStartConversation: Boolean,
+    val avatar: AvatarRef? = null,
+)

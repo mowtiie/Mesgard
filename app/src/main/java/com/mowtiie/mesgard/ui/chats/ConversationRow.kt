@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.ConversationSummary
 import com.mowtiie.mesgard.domain.model.ConversationType
+import com.mowtiie.mesgard.ui.common.AvatarImage
 import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.SelectedAvatar
 import com.mowtiie.mesgard.ui.common.fallbackTitleResource
@@ -65,7 +66,7 @@ internal fun ConversationRow(
         } else {
             ListItemDefaults.colors()
         },
-        leadingContent = { if (isSelected) SelectedAvatar() else InitialAvatar(title) },
+        leadingContent = { if (isSelected) SelectedAvatar() else ConversationAvatar(conversation, title) },
         overlineContent = conversation.groupPath?.let { path ->
             { Text(text = path, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         },
@@ -144,6 +145,11 @@ private fun UnreadBadge(count: Int) {
     Badge(modifier = Modifier.semantics { contentDescription = description }) {
         Text(formatUnreadCount(count))
     }
+}
+
+@Composable
+private fun ConversationAvatar(conversation: ConversationSummary, title: String) {
+    if (conversation.groupAvatar != null) AvatarImage(conversation.groupAvatar, title) else InitialAvatar(title)
 }
 
 @Preview(showBackground = true)

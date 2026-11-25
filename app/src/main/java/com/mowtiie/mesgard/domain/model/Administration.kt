@@ -1,5 +1,7 @@
 package com.mowtiie.mesgard.domain.model
 
+import com.mowtiie.mesgard.domain.avatar.AvatarRef
+
 internal data class NewMember(val email: String, val displayName: String, val role: OrgRole)
 
 internal enum class SkipReason {
@@ -79,6 +81,7 @@ internal data class AdminGroup(
     val memberCount: Int,
     val kind: GroupKind = GroupKind.OTHER,
     val parentId: String? = null,
+    val avatar: AvatarRef? = null,
 )
 
 internal data class GroupMember(val userId: String, val role: GroupRole)
@@ -103,4 +106,6 @@ internal data class GroupDetail(
     val placement: GroupPlacement = GroupPlacement(),
     /** Created by a person, not an administrator: its messages need break-glass access to be read. */
     val isUserCreated: Boolean = false,
+    val avatar: AvatarRef? = null,
+    val orgId: String = "",
 )

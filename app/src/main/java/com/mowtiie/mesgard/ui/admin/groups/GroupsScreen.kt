@@ -35,8 +35,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.GroupKind
 import com.mowtiie.mesgard.ui.admin.messageResource
+import com.mowtiie.mesgard.ui.common.AvatarImage
 import com.mowtiie.mesgard.ui.common.EmptyState
-import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.NoResultsState
 import com.mowtiie.mesgard.ui.common.SearchAction
 import com.mowtiie.mesgard.ui.common.SearchAppBar
@@ -146,7 +146,7 @@ private fun GroupList(uiState: GroupsUiState, onOpenGroup: (String) -> Unit) {
             val group = row.group
             ListItem(
                 modifier = Modifier.padding(start = LevelIndent * row.depth).clickable { onOpenGroup(group.id) },
-                leadingContent = { InitialAvatar(group.name) },
+                leadingContent = { AvatarImage(group.avatar, group.name) },
                 headlineContent = { Text(group.name) },
                 supportingContent = {
                     val members =
