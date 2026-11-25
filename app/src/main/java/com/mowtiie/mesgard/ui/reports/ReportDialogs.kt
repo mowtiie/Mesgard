@@ -1,11 +1,13 @@
 package com.mowtiie.mesgard.ui.reports
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,6 +28,7 @@ import com.mowtiie.mesgard.ui.settings.RadioGroup
 import com.mowtiie.mesgard.ui.settings.RadioLabel
 
 private const val NO_BLOCK_DAYS = 0
+private const val GROUP_NAME_MAX_LENGTH = 200
 
 private val BlockOptions = listOf(
     NO_BLOCK_DAYS to RadioLabel(R.string.report_block_none),
@@ -38,7 +41,7 @@ private val BlockOptions = listOf(
 internal fun ReportDialogs(
     dialog: ReportDialog?,
     followUp: ReportFollowUp?,
-    onDecisionConfirmed: (String, Boolean, Int?) -> Unit,
+    onDecisionConfirmed: (String, Boolean, Int?, String?) -> Unit,
     onRevealConfirmed: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -55,12 +58,14 @@ internal fun ReportDialogs(
 private fun DecisionSheet(
     status: ReportStatus,
     followUp: ReportFollowUp?,
-    onConfirm: (String, Boolean, Int?) -> Unit,
+    onConfirm: (String, Boolean, Int?, String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var note by rememberSaveable { mutableStateOf("") }
     var applyFollowUp by rememberSaveable { mutableStateOf(false) }
     var blockDays by rememberSaveable { mutableStateOf(NO_BLOCK_DAYS) }
+    var newGroupName by rememberSaveable { mutableStateOf("") }
+    val renames = followUp == ReportFollowUp.RENAME_GROUP
     val isResolve = status == ReportStatus.RESOLVED
     FormSheet(
         title = stringResource(
@@ -69,9 +74,17 @@ private fun DecisionSheet(
         confirmLabel = stringResource(
             if (isResolve) R.string.report_action_resolve else R.string.report_action_dismiss,
         ),
-        onConfirm = { onConfirm(note, applyFollowUp && isResolve, blockDays.takeIf { it != NO_BLOCK_DAYS }) },
+        onConfirm = {
+            onConfirm(
+                note,
+                applyFollowUp && isResolve,
+                blockDays.takeIf { it != NO_BLOCK_DAYS },
+                newGroupName.takeIf { renames && applyFollowUp },
+            )
+        },
         onDismiss = onDismiss,
-        confirmEnabled = note.trim().length >= REPORT_DECISION_NOTE_MIN_LENGTH,
+        confirmEnabled = note.trim().length >= REPORT_DECISION_NOTE_MIN_LENGTH &&
+            !(renames && applyFollowUp && newGroupName.isBlank()),
     ) {
         NoteField(
             value = note,
@@ -81,25 +94,50 @@ private fun DecisionSheet(
             maxLength = REPORT_NOTE_MAX_LENGTH,
         )
         if (followUp != null && isResolve) {
-            ListItem(
-                modifier = Modifier.toggleable(
-                    value = applyFollowUp,
-                    role = Role.Checkbox,
-                    onValueChange = { applyFollowUp = it },
-                ),
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                headlineContent = { Text(stringResource(followUp.titleResource())) },
-                supportingContent = { Text(stringResource(followUp.summaryResource())) },
-                trailingContent = { Checkbox(checked = applyFollowUp, onCheckedChange = null) },
+            FollowUpChoice(
+                followUp = followUp,
+                state = FollowUpState(applyFollowUp, blockDays, newGroupName),
+                onApplyChanged = { applyFollowUp = it },
+                onBlockDaysChanged = { blockDays = it },
+                onNewGroupNameChanged = { newGroupName = it },
             )
-            if (followUp == ReportFollowUp.REMOVE_PICTURE && applyFollowUp) {
-                RadioGroup(
-                    options = BlockOptions,
-                    selected = blockDays,
-                    onSelected = { blockDays = it ?: NO_BLOCK_DAYS },
-                )
-            }
         }
+    }
+}
+
+private data class FollowUpState(val apply: Boolean, val blockDays: Int, val newGroupName: String)
+
+/** The follow up a reviewer can apply with the decision, and what it needs: a block, or a new group name. */
+@Composable
+private fun FollowUpChoice(
+    followUp: ReportFollowUp,
+    state: FollowUpState,
+    onApplyChanged: (Boolean) -> Unit,
+    onBlockDaysChanged: (Int) -> Unit,
+    onNewGroupNameChanged: (String) -> Unit,
+) {
+    ListItem(
+        modifier = Modifier.toggleable(value = state.apply, role = Role.Checkbox, onValueChange = onApplyChanged),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        headlineContent = { Text(stringResource(followUp.titleResource())) },
+        supportingContent = { Text(stringResource(followUp.summaryResource())) },
+        trailingContent = { Checkbox(checked = state.apply, onCheckedChange = null) },
+    )
+    if (followUp == ReportFollowUp.RENAME_GROUP && state.apply) {
+        OutlinedTextField(
+            value = state.newGroupName,
+            onValueChange = { onNewGroupNameChanged(it.take(GROUP_NAME_MAX_LENGTH)) },
+            label = { Text(stringResource(R.string.report_rename_group_label)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+    if (followUp == ReportFollowUp.REMOVE_PICTURE && state.apply) {
+        RadioGroup(
+            options = BlockOptions,
+            selected = state.blockDays,
+            onSelected = { onBlockDaysChanged(it ?: NO_BLOCK_DAYS) },
+        )
     }
 }
 

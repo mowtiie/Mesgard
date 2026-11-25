@@ -162,6 +162,62 @@ class ReportDetailViewModelTest {
     }
 
     @Test
+    fun `closing a report about a group picture removes it without a block`() = runTest {
+        coEvery { repository.detail("r1") } returns
+            AdminResult.Success(detail().copy(subject = ReportSubject.GROUP_PICTURE))
+        coEvery { repository.decide("r1", any()) } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+        viewModel.onDialogRequested(ReportDialog.Decide(ReportStatus.RESOLVED))
+
+        viewModel.onDecisionConfirmed("Not appropriate", followUp = true, blockDays = 7)
+
+        coVerify {
+            repository.decide(
+                "r1",
+                ReportDecision(ReportStatus.RESOLVED, "Not appropriate", removeMessage = false, removePicture = true),
+            )
+        }
+    }
+
+    @Test
+    fun `closing a report about a group name can rename the group`() = runTest {
+        coEvery { repository.detail("r1") } returns
+            AdminResult.Success(detail().copy(subject = ReportSubject.GROUP_NAME))
+        coEvery { repository.decide("r1", any()) } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+        viewModel.onDialogRequested(ReportDialog.Decide(ReportStatus.RESOLVED))
+
+        viewModel.onDecisionConfirmed("Not appropriate", followUp = true, newGroupName = " Grade 10 A ")
+
+        coVerify {
+            repository.decide(
+                "r1",
+                ReportDecision(
+                    ReportStatus.RESOLVED,
+                    "Not appropriate",
+                    removeMessage = false,
+                    renameGroupTo = "Grade 10 A",
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `a new group name is only sent when the follow up is applied to a group name`() = runTest {
+        coEvery { repository.detail("r1") } returns
+            AdminResult.Success(detail().copy(subject = ReportSubject.GROUP_NAME))
+        coEvery { repository.decide("r1", any()) } returns AdminResult.Success(Unit)
+        val viewModel = viewModel()
+        viewModel.onDialogRequested(ReportDialog.Decide(ReportStatus.RESOLVED))
+
+        viewModel.onDecisionConfirmed("Fine as it is", followUp = false, newGroupName = "Other")
+
+        coVerify {
+            repository.decide("r1", ReportDecision(ReportStatus.RESOLVED, "Fine as it is", removeMessage = false))
+        }
+    }
+
+    @Test
     fun `a block is only sent together with removing the picture`() = runTest {
         coEvery { repository.detail("r1") } returns AdminResult.Success(detail())
         coEvery { repository.decide("r1", any()) } returns AdminResult.Success(Unit)

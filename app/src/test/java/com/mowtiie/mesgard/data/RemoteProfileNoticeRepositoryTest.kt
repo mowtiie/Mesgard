@@ -25,6 +25,8 @@ class RemoteProfileNoticeRepositoryTest {
             ProfileNoticeDto("n1", "username_reset"),
             ProfileNoticeDto("n2", "x"),
             ProfileNoticeDto("n3", "picture_removed"),
+            ProfileNoticeDto("n4", "group_picture_removed"),
+            ProfileNoticeDto("n5", "group_renamed"),
         )
 
         val notices = repository.unseen()
@@ -34,6 +36,8 @@ class RemoteProfileNoticeRepositoryTest {
                 ProfileNotice("n1", ProfileNoticeKind.USERNAME_RESET),
                 ProfileNotice("n2", ProfileNoticeKind.OTHER),
                 ProfileNotice("n3", ProfileNoticeKind.PICTURE_REMOVED),
+                ProfileNotice("n4", ProfileNoticeKind.GROUP_PICTURE_REMOVED),
+                ProfileNotice("n5", ProfileNoticeKind.GROUP_RENAMED),
             ),
             notices,
         )

@@ -2,6 +2,7 @@ package com.mowtiie.mesgard.data
 
 import com.mowtiie.mesgard.data.remote.ReportRemoteSource
 import com.mowtiie.mesgard.data.remote.SubmitReportRequest
+import com.mowtiie.mesgard.domain.model.GroupReport
 import com.mowtiie.mesgard.domain.model.MessageReport
 import com.mowtiie.mesgard.domain.model.PersonReport
 import com.mowtiie.mesgard.domain.model.ReportCategory
@@ -80,6 +81,32 @@ class RemoteReportRepositoryTest {
         assertEquals(ReportResult.Sent, result)
         assertEquals(
             SubmitReportRequest("r2", "org1", "impersonation", "name", null, "u2", "Copies a teacher", false),
+            sent.captured,
+        )
+    }
+
+    @Test
+    fun `a report about a group names the group and no person`() = runTest {
+        val sent = slot<SubmitReportRequest>()
+        coEvery { remote.submit(capture(sent)) } returns Unit
+
+        val result = repository.reportGroup(
+            GroupReport(
+                "r3",
+                "org1",
+                "g1",
+                ReportSubject.GROUP_PICTURE,
+                ReportCategory.OFFENSIVE_CONTENT,
+                " Not suitable ",
+                true,
+            ),
+        )
+
+        assertEquals(ReportResult.Sent, result)
+        assertEquals(
+            SubmitReportRequest(
+                "r3", "org1", "offensive_content", "group_picture", null, null, "Not suitable", true, "g1",
+            ),
             sent.captured,
         )
     }

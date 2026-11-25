@@ -4,6 +4,7 @@ import android.util.Log
 import com.mowtiie.mesgard.data.local.MesgardDatabase
 import com.mowtiie.mesgard.data.remote.ReportRemoteSource
 import com.mowtiie.mesgard.data.remote.SubmitReportRequest
+import com.mowtiie.mesgard.domain.model.GroupReport
 import com.mowtiie.mesgard.domain.model.MessageReport
 import com.mowtiie.mesgard.domain.model.PersonReport
 import com.mowtiie.mesgard.domain.model.ReportCategory
@@ -56,6 +57,20 @@ internal class RemoteReportRepository @Inject constructor(
         ),
     )
 
+    override suspend fun reportGroup(report: GroupReport): ReportResult = submit(
+        SubmitReportRequest(
+            reportId = report.reportId,
+            orgId = report.orgId,
+            category = report.category.wireName(),
+            subject = report.subject.wireName(),
+            messageId = null,
+            userId = null,
+            groupId = report.groupId,
+            note = report.note.trim().ifEmpty { null },
+            isAnonymous = report.isAnonymous,
+        ),
+    )
+
     private suspend fun submit(request: SubmitReportRequest): ReportResult = try {
         remote.submit(request)
         ReportResult.Sent
@@ -95,5 +110,7 @@ internal fun ReportSubject.wireName(): String = when (this) {
     ReportSubject.NAME -> "name"
     ReportSubject.USERNAME -> "username"
     ReportSubject.PROFILE_PICTURE -> "profile_picture"
+    ReportSubject.GROUP_PICTURE -> "group_picture"
+    ReportSubject.GROUP_NAME -> "group_name"
     ReportSubject.UNKNOWN -> error("An unknown subject is never sent")
 }

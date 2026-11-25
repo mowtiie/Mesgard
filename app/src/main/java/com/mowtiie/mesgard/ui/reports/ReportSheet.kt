@@ -61,6 +61,14 @@ private val SubjectLabels = mapOf(
         R.string.report_subject_picture,
         R.string.report_subject_picture_summary,
     ),
+    ReportSubject.GROUP_NAME to RadioLabel(
+        R.string.report_subject_group_name,
+        R.string.report_subject_group_name_summary,
+    ),
+    ReportSubject.GROUP_PICTURE to RadioLabel(
+        R.string.report_subject_group_picture,
+        R.string.report_subject_group_picture_summary,
+    ),
 )
 
 internal data class ReportSheetActions(

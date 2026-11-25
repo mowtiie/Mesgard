@@ -14,8 +14,10 @@ internal enum class ReportCategory {
     /** The categories a person can choose for [subject]. Impersonation and offensive content describe a name. */
     companion object {
         fun forSubject(subject: ReportSubject): List<ReportCategory> = when (subject) {
-            ReportSubject.NAME, ReportSubject.USERNAME -> listOf(IMPERSONATION, OFFENSIVE_CONTENT, OTHER)
-            ReportSubject.PROFILE_PICTURE -> listOf(IMPERSONATION, OFFENSIVE_CONTENT, CHILD_SAFETY, OTHER)
+            ReportSubject.NAME, ReportSubject.USERNAME, ReportSubject.GROUP_NAME ->
+                listOf(IMPERSONATION, OFFENSIVE_CONTENT, OTHER)
+            ReportSubject.PROFILE_PICTURE, ReportSubject.GROUP_PICTURE ->
+                listOf(IMPERSONATION, OFFENSIVE_CONTENT, CHILD_SAFETY, OTHER)
             ReportSubject.MESSAGE, ReportSubject.PERSON -> listOf(BULLYING, HARASSMENT, CHILD_SAFETY, OTHER)
             ReportSubject.UNKNOWN -> listOf(OTHER)
         }
@@ -29,6 +31,8 @@ internal enum class ReportSubject {
     NAME,
     USERNAME,
     PROFILE_PICTURE,
+    GROUP_PICTURE,
+    GROUP_NAME,
     UNKNOWN,
 }
 
@@ -47,6 +51,17 @@ internal data class PersonReport(
     val reportId: String,
     val orgId: String,
     val userId: String,
+    val subject: ReportSubject,
+    val category: ReportCategory,
+    val note: String,
+    val isAnonymous: Boolean,
+)
+
+/** A report about the picture or the name of a group. */
+internal data class GroupReport(
+    val reportId: String,
+    val orgId: String,
+    val groupId: String,
     val subject: ReportSubject,
     val category: ReportCategory,
     val note: String,

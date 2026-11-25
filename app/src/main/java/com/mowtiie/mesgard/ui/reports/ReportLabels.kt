@@ -30,6 +30,8 @@ internal fun ReportSubject.labelResource(): Int = when (this) {
     ReportSubject.NAME -> R.string.report_subject_label_name
     ReportSubject.USERNAME -> R.string.report_subject_label_username
     ReportSubject.PROFILE_PICTURE -> R.string.report_subject_label_picture
+    ReportSubject.GROUP_PICTURE -> R.string.report_subject_label_group_picture
+    ReportSubject.GROUP_NAME -> R.string.report_subject_label_group_name
     ReportSubject.UNKNOWN -> R.string.report_subject_label_unknown
 }
 
@@ -38,6 +40,8 @@ internal fun ReportSubject.sectionResource(): Int = when (this) {
     ReportSubject.NAME -> R.string.report_section_name
     ReportSubject.USERNAME -> R.string.report_section_username
     ReportSubject.PROFILE_PICTURE -> R.string.report_section_picture
+    ReportSubject.GROUP_PICTURE -> R.string.report_section_group_picture
+    ReportSubject.GROUP_NAME -> R.string.report_section_group_name
     else -> R.string.report_section_message
 }
 

@@ -88,9 +88,10 @@ internal class ReportDetailViewModel @Inject constructor(
 
     /**
      * [followUp] is the removal of the message, the reset of the username or the removal of the picture, whichever the
-     * report is about. [blockDays] blocks new pictures for that long after a picture was removed.
+     * report is about. [blockDays] blocks new pictures for that long after a picture was removed, and [newGroupName]
+     * is the name a group gets when a report about its name is closed with the follow up.
      */
-    fun onDecisionConfirmed(note: String, followUp: Boolean, blockDays: Int? = null) {
+    fun onDecisionConfirmed(note: String, followUp: Boolean, blockDays: Int? = null, newGroupName: String? = null) {
         val status = (mutableUiState.value.dialog as? ReportDialog.Decide)?.status ?: return
         val subject = mutableUiState.value.detail?.subject
         mutableUiState.update { it.copy(dialog = null) }
@@ -100,8 +101,12 @@ internal class ReportDetailViewModel @Inject constructor(
                 note = note,
                 removeMessage = followUp && subject == ReportSubject.MESSAGE,
                 resetUsername = followUp && subject == ReportSubject.USERNAME,
-                removePicture = followUp && subject == ReportSubject.PROFILE_PICTURE,
+                removePicture = followUp &&
+                    (
+                        subject == ReportSubject.PROFILE_PICTURE || subject == ReportSubject.GROUP_PICTURE
+                        ),
                 blockDays = blockDays.takeIf { followUp && subject == ReportSubject.PROFILE_PICTURE },
+                renameGroupTo = newGroupName?.trim().takeIf { followUp && subject == ReportSubject.GROUP_NAME },
             ),
         )
     }

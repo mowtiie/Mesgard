@@ -37,11 +37,12 @@ internal fun LazyListScope.reportDetailItems(detail: ReportDetail, actions: Repo
     if (detail.category == ReportCategory.CHILD_SAFETY) item(key = "child-safety") { ChildSafetyNotice() }
     item(key = "summary") { Summary(detail) }
     if (!detail.status.isClosed) item(key = "actions") { ActionButtons(detail.status, actions) }
-    val isTextReport = detail.subject == ReportSubject.NAME || detail.subject == ReportSubject.USERNAME
+    val isTextReport = detail.subject in setOf(ReportSubject.NAME, ReportSubject.USERNAME, ReportSubject.GROUP_NAME)
+    val isPictureReport = detail.subject in setOf(ReportSubject.PROFILE_PICTURE, ReportSubject.GROUP_PICTURE)
     item(key = "message-heading") { SectionHeader(detail.subject.sectionResource()) }
     val evidence = detail.evidence
     if (evidence == null) {
-        if (detail.subject == ReportSubject.PROFILE_PICTURE) {
+        if (isPictureReport) {
             item(key = "picture") { EvidencePicture(detail.files.firstOrNull()?.storagePath) }
         } else if (isTextReport && detail.subjectText != null) {
             item(key = "name") { EvidenceName(detail.subjectText, detail.subject) }
@@ -91,7 +92,8 @@ private fun Summary(detail: ReportDetail) {
     Field(R.string.report_field_status, stringResource(detail.status.labelResource()))
     Field(R.string.report_field_subject, stringResource(detail.subject.labelResource()))
     Field(R.string.report_field_type, stringResource(detail.category.labelResource()))
-    Field(R.string.report_field_person, detail.subjectName)
+    val isGroupReport = detail.subject == ReportSubject.GROUP_PICTURE || detail.subject == ReportSubject.GROUP_NAME
+    Field(if (isGroupReport) R.string.report_field_group else R.string.report_field_person, detail.subjectName)
     Field(R.string.report_field_reporter, reporter)
     Field(R.string.report_field_date, formatTime(detail.createdAtEpochMillis))
     detail.note?.let { Field(R.string.report_field_details, it) }

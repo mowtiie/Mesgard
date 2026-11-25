@@ -17,6 +17,7 @@ internal data class SubmitReportRequest(
     val userId: String?,
     val note: String?,
     val isAnonymous: Boolean,
+    val groupId: String? = null,
 )
 
 internal interface ReportRemoteSource {
@@ -35,6 +36,7 @@ internal class SupabaseReportRemoteSource @Inject constructor(private val client
                 put("report_subject", request.subject)
                 put("target_message_id", request.messageId)
                 put("target_user_id", request.userId)
+                put("target_group_id", request.groupId)
                 put("report_note", request.note)
                 put("report_anonymous", request.isAnonymous)
             },

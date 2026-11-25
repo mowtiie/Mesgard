@@ -114,7 +114,7 @@ class RemoteReportReviewRepositoryTest {
         coEvery { remote.detail("r3") } returns ReportDetailDto(
             id = "r3",
             category = "other",
-            subject = "group_name",
+            subject = "something_new",
             status = "open",
             anonymous = false,
             subjectName = "Staff One",
@@ -128,6 +128,39 @@ class RemoteReportReviewRepositoryTest {
         assertEquals(ReportCategory.IMPERSONATION, name.category)
         assertEquals("Mr. Reyes", name.subjectText)
         assertEquals(ReportSubject.UNKNOWN, other.subject)
+    }
+
+    @Test
+    fun `a report about a group name is named after the group`() = runTest {
+        coEvery { remote.detail("r4") } returns ReportDetailDto(
+            id = "r4",
+            category = "offensive_content",
+            subject = "group_name",
+            status = "open",
+            anonymous = false,
+            subjectName = "Grade 10",
+            subjectText = "Grade 10",
+            createdAt = "2026-11-24T08:00:00+00:00",
+        )
+
+        val group = (repository.detail("r4") as AdminResult.Success).value
+
+        assertEquals(ReportSubject.GROUP_NAME, group.subject)
+        assertEquals("Grade 10", group.subjectName)
+        assertEquals("Grade 10", group.subjectText)
+    }
+
+    @Test
+    fun `a decision about a group name sends the name the group gets`() = runTest {
+        val sent = slot<ReportDecisionRequest>()
+        coEvery { remote.decide(capture(sent)) } returns Unit
+
+        repository.decide(
+            "r1",
+            ReportDecision(ReportStatus.RESOLVED, "Renamed", removeMessage = false, renameGroupTo = "Grade 10 A"),
+        )
+
+        assertEquals("Grade 10 A", sent.captured.renameGroupTo)
     }
 
     @Test

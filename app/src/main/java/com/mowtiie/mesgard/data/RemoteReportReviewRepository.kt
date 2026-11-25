@@ -41,6 +41,7 @@ internal class RemoteReportReviewRepository @Inject constructor(private val remo
                 resetUsername = decision.resetUsername,
                 removePicture = decision.removePicture,
                 blockDays = decision.blockDays,
+                renameGroupTo = decision.renameGroupTo,
             ),
         )
     }

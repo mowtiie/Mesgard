@@ -86,6 +86,7 @@ internal data class ReportDecision(
     val resetUsername: Boolean = false,
     val removePicture: Boolean = false,
     val blockDays: Int? = null,
+    val renameGroupTo: String? = null,
 )
 
 internal data class ReportReviewer(val userId: String, val displayName: String)

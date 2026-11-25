@@ -102,6 +102,7 @@ internal data class ReportDecisionRequest(
     val resetUsername: Boolean = false,
     val removePicture: Boolean = false,
     val blockDays: Int? = null,
+    val renameGroupTo: String? = null,
 )
 
 internal interface ReportReviewRemoteSource {
@@ -159,6 +160,7 @@ internal class SupabaseReportReviewRemoteSource @Inject constructor(private val 
                 put("reset_username", request.resetUsername)
                 put("remove_picture", request.removePicture)
                 put("block_days", request.blockDays)
+                put("rename_group_to", request.renameGroupTo)
             },
         )
     }
