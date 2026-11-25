@@ -1,5 +1,5 @@
 begin;
-select plan(33);
+select plan(35);
 
 -- Seed: organization a has the administrator a01 (the reviewer, as nobody is designated), staff a02 and a03, and
 -- students a04, a05 and a06. In group 2 the staff member a02 is a moderator and the students a04 and a05 are members.
@@ -73,6 +73,19 @@ select is(
   (public.get_group_picture_rules(tests.seed_id('30', 'a', 2)) ->> 'can_set')::boolean,
   false,
   'the rules tell a member that they cannot set the picture'
+);
+
+select tests.authenticate_as(tests.seed_id('20', 'a', 2));
+select lives_ok(
+  format($$select public.create_group_conversation(%L)$$, tests.seed_id('30', 'a', 2)),
+  'a moderator opens the conversation of the group'
+);
+select tests.authenticate_as(tests.seed_id('20', 'a', 4));
+select is(
+  (select group_avatar_version from public.list_conversation_summaries()
+   where group_id = tests.seed_id('30', 'a', 2)),
+  1,
+  'the conversation list tells which picture the group has'
 );
 
 select tests.authenticate_as(tests.seed_id('20', 'b', 4));

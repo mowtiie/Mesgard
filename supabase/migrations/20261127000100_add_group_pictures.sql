@@ -215,6 +215,7 @@ begin
   end if;
   select profile_picture_policy into chosen_policy from public.organizations where id = group_row.org_id;
   return jsonb_build_object(
+    'org_id', group_row.org_id,
     'policy', chosen_policy,
     'can_set', private.can_set_group_picture(target_group_id, (select auth.uid())),
     'can_remove', private.can_manage_group(target_group_id, (select auth.uid())),
