@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.MentionCandidate
-import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.AvatarImage
 
 /** The people that match what follows the @, above the composer. Nothing shows when nobody matches. */
 @Composable
@@ -29,7 +29,7 @@ internal fun MentionSuggestions(
                     modifier = Modifier.clickable(
                         onClickLabel = stringResource(R.string.mention_choose, candidate.displayName),
                     ) { onSelected(candidate) },
-                    leadingContent = { InitialAvatar(candidate.displayName) },
+                    leadingContent = { AvatarImage(candidate.userId, candidate.displayName) },
                     headlineContent = { Text(candidate.displayName) },
                 )
             }

@@ -45,8 +45,8 @@ import com.mowtiie.mesgard.domain.model.GroupRole
 import com.mowtiie.mesgard.domain.model.GroupSettings
 import com.mowtiie.mesgard.domain.model.HoldTarget
 import com.mowtiie.mesgard.ui.admin.messageResource
+import com.mowtiie.mesgard.ui.common.AvatarImage
 import com.mowtiie.mesgard.ui.common.EmptyState
-import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.OverflowMenu
 import com.mowtiie.mesgard.ui.common.TitledScreen
 import com.mowtiie.mesgard.ui.legalhold.PlaceHoldSheet
@@ -284,7 +284,7 @@ private fun MemberList(
         items(uiState.members, key = { it.userId }) { member ->
             val name = member.displayName ?: stringResource(R.string.group_unknown_member)
             ListItem(
-                leadingContent = { InitialAvatar(name) },
+                leadingContent = { AvatarImage(member.userId, name) },
                 headlineContent = { Text(name) },
                 supportingContent = { Text(stringResource(member.role.labelResource())) },
                 trailingContent = if (!uiState.canManage) {

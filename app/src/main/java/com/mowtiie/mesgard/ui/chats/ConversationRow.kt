@@ -149,7 +149,12 @@ private fun UnreadBadge(count: Int) {
 
 @Composable
 private fun ConversationAvatar(conversation: ConversationSummary, title: String) {
-    if (conversation.groupAvatar != null) AvatarImage(conversation.groupAvatar, title) else InitialAvatar(title)
+    val peer = conversation.peerUserId
+    when {
+        conversation.groupAvatar != null -> AvatarImage(conversation.groupAvatar, title)
+        peer != null -> AvatarImage(peer, title)
+        else -> InitialAvatar(title)
+    }
 }
 
 @Preview(showBackground = true)

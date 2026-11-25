@@ -129,6 +129,7 @@ internal class OfflineFirstConversationRepository @Inject constructor(
             item.groupAvatarVersion?.let { AvatarRef(item.orgId, id, it, isGroup = true) }
         },
         groupId = item.groupId,
+        peerUserId = item.peerUserId,
         isWithFavorite = isWithFavorite,
     )
 }

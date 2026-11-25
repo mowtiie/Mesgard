@@ -23,7 +23,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.MessageReader
-import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.AvatarImage
 
 private val SheetPadding = 24.dp
 private val SheetSpacing = 16.dp
@@ -82,7 +82,7 @@ private fun ReaderList(readers: List<MessageReader>) {
     LazyColumn {
         items(readers, key = { it.userId }) { reader ->
             ListItem(
-                leadingContent = { InitialAvatar(reader.displayName) },
+                leadingContent = { AvatarImage(reader.userId, reader.displayName) },
                 headlineContent = { Text(reader.displayName) },
                 supportingContent = {
                     Text(DateUtils.formatDateTime(context, reader.readAtEpochMillis, READ_TIME_FLAGS))

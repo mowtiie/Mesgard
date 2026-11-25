@@ -24,6 +24,7 @@ internal data class ConversationListItem(
     val groupAvatarVersion: Int?,
     val lastMessageBody: String?,
     val activityAtEpochMillis: Long,
+    val peerUserId: String? = null,
 )
 
 private const val CONVERSATION_ITEM_SELECT = """
@@ -32,7 +33,8 @@ private const val CONVERSATION_ITEM_SELECT = """
         c.pinned_at AS pinnedAtEpochMillis, c.archived_at AS archivedAtEpochMillis,
         c.marked_unread AS markedUnread, c.org_id AS orgId, c.group_path AS groupPath,
         c.group_id AS groupId, c.group_avatar_version AS groupAvatarVersion,
-        m.body AS lastMessageBody, COALESCE(m.created_at, c.created_at) AS activityAtEpochMillis
+        m.body AS lastMessageBody, COALESCE(m.created_at, c.created_at) AS activityAtEpochMillis,
+        (SELECT user_id FROM direct_peers WHERE conversation_id = c.id LIMIT 1) AS peerUserId
     FROM conversations AS c
     LEFT JOIN messages AS m ON m.id = (
         SELECT id FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC, id DESC LIMIT 1

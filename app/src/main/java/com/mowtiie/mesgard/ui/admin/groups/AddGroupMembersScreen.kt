@@ -35,11 +35,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.ui.admin.messageResource
+import com.mowtiie.mesgard.ui.common.AvatarImage
 import com.mowtiie.mesgard.ui.common.EmptyState
-import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.SearchAction
 import com.mowtiie.mesgard.ui.common.SearchAppBar
 import com.mowtiie.mesgard.ui.common.TitledScreen
+import com.mowtiie.mesgard.ui.common.avatarRef
 import com.mowtiie.mesgard.ui.common.labelResource
 
 private val ButtonPadding = 16.dp
@@ -127,7 +128,7 @@ private fun CandidateList(uiState: AddGroupMembersUiState, onToggled: (String) -
                         role = Role.Checkbox,
                         onValueChange = { onToggled(contact.userId) },
                     ),
-                    leadingContent = { InitialAvatar(contact.displayName) },
+                    leadingContent = { AvatarImage(contact.avatarRef(), contact.displayName) },
                     headlineContent = { Text(contact.displayName) },
                     supportingContent = { Text(stringResource(contact.role.labelResource())) },
                     trailingContent = { Checkbox(checked = isSelected, onCheckedChange = null) },

@@ -16,7 +16,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.AccountMembership
-import com.mowtiie.mesgard.ui.common.InitialAvatar
+import com.mowtiie.mesgard.ui.common.AvatarImage
 import com.mowtiie.mesgard.ui.common.NavigationChevron
 import com.mowtiie.mesgard.ui.common.labelResource
 
@@ -37,7 +37,7 @@ internal fun AccountSummary(
                 role = Role.Button,
                 onClick = onOpenAccount,
             ),
-            leadingContent = { InitialAvatar(it.displayName, size = SummaryAvatarSize) },
+            leadingContent = { AvatarImage(it.avatarRef, it.displayName, size = SummaryAvatarSize) },
             headlineContent = { Text(it.displayName) },
             supportingContent = {
                 Column {

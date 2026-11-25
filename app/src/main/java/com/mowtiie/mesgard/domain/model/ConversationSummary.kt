@@ -20,6 +20,8 @@ internal data class ConversationSummary(
     val groupAvatar: AvatarRef? = null,
     /** The group of a group conversation, which a member can report. */
     val groupId: String? = null,
+    /** The other person of a direct conversation, when this phone knows who it is. */
+    val peerUserId: String? = null,
     /** A direct conversation with a person who is a favorite. */
     val isWithFavorite: Boolean = false,
 )

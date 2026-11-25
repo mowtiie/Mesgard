@@ -1,8 +1,10 @@
 package com.mowtiie.mesgard.data
 
 import app.cash.turbine.test
+import com.mowtiie.mesgard.data.local.DirectPeerEntity
 import com.mowtiie.mesgard.data.remote.CONVERSATION_PAGE_SIZE
 import com.mowtiie.mesgard.data.remote.ConversationRemoteSource
+import com.mowtiie.mesgard.domain.avatar.AvatarRef
 import com.mowtiie.mesgard.domain.model.RefreshError
 import com.mowtiie.mesgard.domain.model.RefreshResult
 import com.mowtiie.mesgard.domain.repository.AuthRepository
@@ -110,6 +112,25 @@ class OfflineFirstConversationRepositoryTest {
                 assertSame(first, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a row knows the other person of a direct conversation and the picture of a group`() = runTest {
+        databaseRule.database.conversationDao().upsertAll(
+            listOf(
+                conversationEntity("direct"),
+                conversationEntity("group").copy(groupId = "g1", groupAvatarVersion = 2),
+            ),
+        )
+        databaseRule.database.directPeerDao().upsertAll(listOf(DirectPeerEntity("direct", "ana")))
+
+        repository.observeConversations().test {
+            val rows = awaitItem().associateBy { it.id }
+            assertEquals("ana", rows.getValue("direct").peerUserId)
+            assertEquals(AvatarRef(TEST_ORG_ID, "g1", 2, isGroup = true), rows.getValue("group").groupAvatar)
+            assertEquals("g1", rows.getValue("group").groupId)
             cancelAndIgnoreRemainingEvents()
         }
     }

@@ -33,9 +33,10 @@ import com.mowtiie.mesgard.R
 import com.mowtiie.mesgard.domain.model.Contact
 import com.mowtiie.mesgard.domain.model.OrgRole
 import com.mowtiie.mesgard.ui.admin.messageResource
+import com.mowtiie.mesgard.ui.common.AvatarImage
 import com.mowtiie.mesgard.ui.common.EmptyState
-import com.mowtiie.mesgard.ui.common.InitialAvatar
 import com.mowtiie.mesgard.ui.common.TitledScreen
+import com.mowtiie.mesgard.ui.common.avatarRef
 
 private val ContentPadding = 16.dp
 
@@ -109,7 +110,7 @@ internal fun ReportReviewersScreenRoute(
 private fun CandidateRow(person: Contact, isSelected: Boolean, onToggle: () -> Unit) {
     ListItem(
         modifier = Modifier.toggleable(value = isSelected, role = Role.Checkbox, onValueChange = { onToggle() }),
-        leadingContent = { InitialAvatar(person.displayName) },
+        leadingContent = { AvatarImage(person.avatarRef(), person.displayName) },
         headlineContent = { Text(person.displayName) },
         supportingContent = {
             Text(stringResource(if (person.role == OrgRole.ORG_ADMIN) R.string.role_org_admin else R.string.role_staff))
